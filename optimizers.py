@@ -133,17 +133,14 @@ class Optimizer(object):
             if blocks_to_load is None:
                 for i in range(self.model.num_blocks):
                     var_list += tf.get_collection('block{}_variables'.format(i))
-                    if not load_moving_average:
-                        var_list += tf.get_collection('block{}_ema_variables'.format(i))
+                    var_list += tf.get_collection('block{}_ema_variables'.format(i))
             else:
                 for i in blocks_to_load:
                     var_list += tf.get_collection('block{}_variables'.format(i))
-                    if not load_moving_average:
-                        var_list += tf.get_collection('block{}_ema_variables'.format(i))
+                    var_list += tf.get_collection('block{}_ema_variables'.format(i))
             if load_logits:
                 var_list += tf.get_collection('block{}_variables'.format(None))
-                if not load_moving_average:
-                    var_list += tf.get_collection('block{}_ema_variables'.format(None))
+                var_list += tf.get_collection('block{}_ema_variables'.format(None))
 
             if load_moving_average:
                 variables = {}
@@ -352,8 +349,7 @@ class Optimizer(object):
         ckpt_list = saver.last_checkpoints[::-1]
         fp = open(os.path.join(save_dir, 'checkpoints.txt'), 'w')
         for fname in ckpt_list:
-            name = fname.split(os.sep)[-1]
-            fp.write(name + '\n')
+            fp.write(fname.split(os.sep)[-1] + '\n')
         fp.close()
 
         print('Done.')
