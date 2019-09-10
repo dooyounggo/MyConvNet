@@ -79,9 +79,9 @@ def plot_learning_curve(step_losses, step_scores, eval_losses=None, eval_scores=
                          eval_scores, color='r', marker='', label='Validation')
             axes[1].set_ylabel(name)
             if validation_frequency == 1:
-                axes[0].set_xlabel('Number of Epochs')
+                axes[1].set_xlabel('Number of Epochs')
             else:
-                axes[0].set_xlabel('Number of Iterations')
+                axes[1].set_xlabel('Number of Iterations')
             if annotations is not None:
                 if len(annotations) > 0:
                     x, y = zip(*annotations)
