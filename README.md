@@ -7,7 +7,7 @@
   
   The code was verified using PyCharm.
 
-### How-to
+## How-to
 - Download all the files.
 - Preprocess your data using scripts in subsets/.
 - Edit parameters.py to change the dataset, model, directories, etc...
