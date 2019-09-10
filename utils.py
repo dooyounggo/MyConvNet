@@ -419,19 +419,19 @@ def seg_labels_to_images(y):
     color_coeff = edge_color/color_base
 
     class_inds = np.arange(num_classes, dtype=np.float32)
-    reds = (class_inds + code_length - 1) // code_length * color_coeff
-    greens = (class_inds + code_length - 1) // code_length * color_coeff
-    blues = (class_inds + code_length - 1) // code_length * color_coeff
+    reds = (class_inds + code_length - 1)//code_length*color_coeff
+    greens = (class_inds + code_length - 1)//code_length*color_coeff
+    blues = (class_inds + code_length - 1)//code_length*color_coeff
     for i in range(1, num_classes):
         idx = (i - 1) % code_length
-        reds[i] = reds[i] * code_r[idx]
-        greens[i] = greens[i] * code_g[idx]
-        blues[i] = blues[i] * code_b[idx]
+        reds[i] = reds[i]*code_r[idx]
+        greens[i] = greens[i]*code_g[idx]
+        blues[i] = blues[i]*code_b[idx]
 
     ignore = 1.0 - np.isclose(np.sum(y, axis=-1, keepdims=True), 1.0)
-    r = np.sum(y * reds, axis=-1, keepdims=True)
-    g = np.sum(y * greens, axis=-1, keepdims=True)
-    b = np.sum(y * blues, axis=-1, keepdims=True)
-    y = np.concatenate([r, g, b], axis=-1) + ignore.astype(np.float32) * edge_color
+    r = np.sum(y*reds, axis=-1, keepdims=True)
+    g = np.sum(y*greens, axis=-1, keepdims=True)
+    b = np.sum(y*blues, axis=-1, keepdims=True)
+    y = np.concatenate([r, g, b], axis=-1) + ignore.astype(np.float32)*edge_color
 
     return y
