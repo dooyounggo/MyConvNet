@@ -174,7 +174,7 @@ class Optimizer(object):
                 fp = open(os.path.join(transfer_dir, 'checkpoints.txt'), 'r')
                 ckpt_list = fp.readlines()
                 fp.close()
-                ckpt_to_load = ckpt_list[model_to_load][:-1]
+                ckpt_to_load = os.path.join(transfer_dir, ckpt_list[model_to_load].rstrip())
 
             saver_transfer.restore(self.model.session, ckpt_to_load)
         else:
@@ -352,7 +352,8 @@ class Optimizer(object):
         ckpt_list = saver.last_checkpoints[::-1]
         fp = open(os.path.join(save_dir, 'checkpoints.txt'), 'w')
         for fname in ckpt_list:
-            fp.write(fname + '\n')
+            name = fname.split(os.sep)[-1]
+            fp.write(name + '\n')
         fp.close()
 
         print('Done.')
