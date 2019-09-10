@@ -1,7 +1,7 @@
 import os
 import tensorflow as tf
 import subsets.stanford_dogs as subset
-from models.ressepnet import ResSepNet27 as ConvNet
+from models.resnet import ResNet50 as ConvNet
 from evaluators import AccuracyEvaluator as Evaluator
 from models.init_from_checkpoint import resnet_v2_50_101 as init_from_pretrained_model
 
@@ -18,7 +18,7 @@ class Parameters(object):
     _val_sample_size = None
     _test_dir = os.path.join(_root_dir, 'tfdatasets/stanford-dogs/test')
     _test_sample_size = None
-    _save_dir = 'D:/trained_models/ressepnet-27_stanforddogs-224_2'
+    _save_dir = 'D:/trained_models/resnet-50_stanforddogs-224_2'
 
     _transfer_dir = None
     _pretrained_dir = os.path.join(_root_dir, 'pretrained_models', 'resnet_v2_50', 'resnet_v2_50.ckpt')
@@ -34,7 +34,7 @@ class Parameters(object):
 
     d['max_to_keep'] = 5  # Maximum number of models to save
     d['score_threshold'] = 0.0  # A model is saved if its score is better by this threshold
-    d['model_to_load'] = None  # The (n+1)-th best model is loaded. None for the latest
+    d['model_to_load'] = None  # The (n+1)-th best model is loaded for the test. None for the latest
 
     # FIXME: Transfer learning parameters
     d['init_from_pretrained_model'] = False  # Whether to use pre-trained model in _pretrained_dir
@@ -51,7 +51,7 @@ class Parameters(object):
     d['channel_first'] = True  # If true, NCHW format is used instead of NHWC
     d['num_gpus'] = 1
     d['batch_size'] = 16
-    d['num_epochs'] = 600
+    d['num_epochs'] = 300
     d['validation_frequency'] = None  # Validate every x iterations. None for every epoch
     d['summary_frequency'] = None  # Tensorboard summary every x iterations. None for every epoch
 
@@ -101,17 +101,13 @@ class Parameters(object):
 
     # FIXME: Regularization hyperparameters
     d['l1_reg'] = 0.0  # L1 regularization factor
-    d['l2_reg'] = 0.0005  # L2 regularization factor
+    d['l2_reg'] = 0.0001  # L2 regularization factor
     d['label_smoothing'] = 0.1  # Label smoothing factor
     d['dropout_rate'] = 0.2  # Dropout rate
     d['dropout_weights'] = False
     d['dropout_logits'] = True
     d['initial_drop_rate'] = 0.0  # Initial drop rate for stochastic depth
     d['final_drop_rate'] = 0.2  # Final drop rate for stochastic depth
-
-    # FIXME: Auxiliary classifier parameters. Currently unused
-    d['aux_class_labels'] = [[0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [0, 1, 1, 2, 2, 3, 4, 4, 5, 6, 7, 7, 8]]
-    d['aux_class_weights'] = [4.0, 2.0]
 
     def __init__(self):
         print('Training directory: ', self.train_dir)
