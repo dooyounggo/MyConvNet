@@ -73,6 +73,11 @@ class SegNet(ConvNet):
                                                  lambda: self.augment_images(self.X, mask=self.Y, **kwargs),
                                                  lambda: (self.center_crop(self.X), self.center_crop(self.Y)),
                                                  name='augmentation')
+                        if kwargs.get('cutmix', False):
+                            self.X, self.Y = tf.cond(self.is_train,
+                                                     lambda: self.cutmix(self.X, self.Y),
+                                                     lambda: (self.X, self.Y),
+                                                     name='cutmix')
                         self.Xs.append(self.X)
                         self.Ys.append(self.Y)
 
@@ -125,6 +130,40 @@ class SegNet(ConvNet):
 
     def _broadcast_nans(self, y):
         return tf.broadcast_to(y, self._broadcast_shape)
+
+    def cutmix(self, x, y):
+        with tf.variable_scope('cutmix'):
+            shape_tensor = tf.shape(x)
+            batch_size = shape_tensor[0]
+            H = tf.cast(shape_tensor[1], tf.float32)
+            W = tf.cast(shape_tensor[2], tf.float32)
+
+            randval = tf.random.uniform([], dtype=tf.float32)
+            r_h = tf.random.uniform([], 0, H, dtype=tf.float32)
+            r_w = tf.random.uniform([], 0, W, dtype=tf.float32)
+            size_h = H*tf.math.sqrt(1.0 - randval)
+            size_w = W*tf.math.sqrt(1.0 - randval)
+
+            hs = tf.cast(tf.math.round(tf.math.maximum(r_h - size_h/2, 0)), dtype=tf.int32)
+            he = tf.cast(tf.math.round(tf.math.minimum(r_h + size_h/2, H)), dtype=tf.int32)
+            ws = tf.cast(tf.math.round(tf.math.maximum(r_w - size_w/2, 0)), dtype=tf.int32)
+            we = tf.cast(tf.math.round(tf.math.minimum(r_w + size_w/2, W)), dtype=tf.int32)
+
+            m = tf.ones([1, he - hs, we - ws, 1], dtype=tf.float32)
+            paddings = [[0, 0],
+                        [hs, shape_tensor[1] - he],
+                        [ws, shape_tensor[2] - we],
+                        [0, 0]]
+            m = tf.pad(m, paddings, constant_values=0.0)
+
+            idx = tf.random.uniform([batch_size], 0, batch_size, dtype=tf.int32)
+            shuffled_x = tf.gather(x, idx, axis=0)
+            shuffled_y = tf.gather(y, idx, axis=0)
+
+            x = (1.0 - m)*x + m*shuffled_x
+            y = (1.0 - m)*y + m*shuffled_y
+
+        return x, y
 
     def seg_labels_to_images(self, y):
         edge_color = 1.0
