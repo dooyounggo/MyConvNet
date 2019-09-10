@@ -18,14 +18,14 @@ class Parameters(object):
     _val_sample_size = None
     _test_dir = os.path.join(_root_dir, 'tfdatasets/oxford-iiit-pet-dataset-sualab/test')
     _test_sample_size = None
-    _save_dir = 'D:/trained_models/scn_dogcat_l2_2'
+    _save_dir = 'D:/trained_models/gcn_iiitcatdog-384'
 
     _transfer_dir = None
     _pretrained_dir = os.path.join(_root_dir, 'pretrained_models', 'resnet_v2_50_2017_04_14', 'resnet_v2_50.ckpt')
 
     d = dict()
-    d['image_size'] = (576, 576, 3)
-    d['input_size'] = (480, 480, 3)
+    d['image_size'] = (461, 461, 3)
+    d['input_size'] = (384, 384, 3)
     d['image_mean'] = 0.5       # To be calculated
     d['zero_center'] = True     # Whether to zero-center the images
     d['shuffle'] = True         # Whether to shuffle the data
@@ -34,7 +34,7 @@ class Parameters(object):
 
     d['max_to_keep'] = 5  # Maximum number of models to save
     d['score_threshold'] = 0.0  # A model is saved if its score is better by this threshold
-    d['model_to_load'] = None  # The (n+1)-th best model is loaded for the test. None for the latest
+    d['model_to_load'] = 0  # The (n+1)-th best model is loaded for the test. None for the latest
 
     # FIXME: Transfer learning parameters
     d['init_from_pretrained_model'] = False  # Whether to use pre-trained model in _pretrained_dir
@@ -51,7 +51,7 @@ class Parameters(object):
     d['channel_first'] = True  # If true, NCHW format is used instead of NHWC
     d['num_gpus'] = 1
     d['batch_size'] = 4
-    d['num_epochs'] = 300
+    d['num_epochs'] = 75
     d['validation_frequency'] = None  # Validate every x iterations. None for every epoch
     d['summary_frequency'] = None  # Tensorboard summary every x iterations. None for every epoch
 
