@@ -37,7 +37,7 @@ else:
     fp = open(os.path.join(Param.save_dir, 'checkpoints.txt'), 'r')
     ckpt_list = fp.readlines()
     fp.close()
-    ckpt_to_load = ckpt_list[model_to_load][:-1]
+    ckpt_to_load = os.path.join(Param.save_dir, ckpt_list[model_to_load].rstrip())
 
 saver.restore(model.session, ckpt_to_load)    # restore learned weights
 test_x, test_y_true, test_y_pred, _ = model.predict(test_set, verbose=True, **Param.d)
