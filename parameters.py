@@ -18,7 +18,7 @@ class Parameters(object):
     _val_sample_size = None
     _test_dir = os.path.join(_root_dir, 'tfdatasets/stanford-dogs/test')
     _test_sample_size = None
-    _save_dir = 'D:/trained_models/resnet-50_stanforddogs-224_2'
+    _save_dir = 'D:/trained_models/resnet-50_stanforddogs-224'
 
     _transfer_dir = None
     _pretrained_dir = os.path.join(_root_dir, 'pretrained_models', 'resnet_v2_50', 'resnet_v2_50.ckpt')
@@ -34,7 +34,7 @@ class Parameters(object):
 
     d['max_to_keep'] = 5  # Maximum number of models to save
     d['score_threshold'] = 0.0  # A model is saved if its score is better by this threshold
-    d['model_to_load'] = None  # The (n+1)-th best model is loaded for the test. None for the latest
+    d['model_to_load'] = 0  # The (n+1)-th best model is loaded for the test. None for the latest
 
     # FIXME: Transfer learning parameters
     d['init_from_pretrained_model'] = False  # Whether to use pre-trained model in _pretrained_dir
