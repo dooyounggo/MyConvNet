@@ -5,7 +5,7 @@
   
   Currently supports image classification and segmentation tasks.
   
-  The code was verified using PyCharm.
+  The code was verified using PyCharm on Windows.
 
 ## How To Run
 - Download all the files.
