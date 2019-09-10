@@ -190,16 +190,16 @@ class Optimizer(object):
                 tf.summary.scalar('Learning Rate', self.learning_rate)
                 tf.summary.scalar('Debug Value', self.model.debug_value)
                 tf.summary.image('Input Images',
-                                 tf.cast(self.model.input_images * 255, dtype=tf.uint8),
+                                 tf.cast(self.model.input_images*255, dtype=tf.uint8),
                                  max_outputs=4)
                 tf.summary.image('Augmented Input Images',
                                  tf.cast((tf.clip_by_value(self.model.X_all, -0.5, 0.5) + 0.5)*255, dtype=tf.uint8),
                                  max_outputs=4)
                 tf.summary.image('Debug Images 0',
-                                 tf.cast(self.model.debug_images_0 * 255, dtype=tf.uint8),
+                                 tf.cast(self.model.debug_images_0*255, dtype=tf.uint8),
                                  max_outputs=4)
                 tf.summary.image('Debug Images 1',
-                                 tf.cast(self.model.debug_images_1 * 255, dtype=tf.uint8),
+                                 tf.cast(self.model.debug_images_1*255, dtype=tf.uint8),
                                  max_outputs=4)
                 tf.summary.histogram('Image Histogram', self.model.X[0])
                 merged = tf.summary.merge_all()
