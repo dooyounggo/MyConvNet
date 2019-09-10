@@ -109,7 +109,7 @@ class ResNet(ConvNet):      # Base model. ResNet-18
             return x
 
 
-class ResNetID(ResNet):     # ResNet with identity connections and stochastic depth
+class ResNetID(ResNet):     # ResNet with identity connections (ResNet-v2) and stochastic depth
     def _build_model(self, **kwargs):
         d = dict()
 
@@ -282,3 +282,17 @@ class ResNetBot(ResNetID):     # ResNet with bottlenecks. ResNet-50
             d[name] = x
 
         return x
+
+
+class ResNet18(ResNetID):
+    pass
+
+
+class ResNet50(ResNetBot):
+    pass
+
+
+class ResNet101(ResNetBot):
+    def _init_params(self):
+        super()._init_params()
+        self.res_units = [3, 4, 23, 3]
