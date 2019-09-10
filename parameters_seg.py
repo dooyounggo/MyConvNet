@@ -18,7 +18,7 @@ class Parameters(object):
     _val_sample_size = None
     _test_dir = os.path.join(_root_dir, 'tfdatasets/oxford-iiit-pet-dataset-sualab/test')
     _test_sample_size = None
-    _save_dir = 'D:/trained_models/gcn_iiitcatdog-384'
+    _save_dir = 'D:/trained_models/gcn_iiitdogcat-384'
 
     _transfer_dir = None
     _pretrained_dir = os.path.join(_root_dir, 'pretrained_models', 'resnet_v2_50_2017_04_14', 'resnet_v2_50.ckpt')
@@ -97,7 +97,7 @@ class Parameters(object):
     d['rand_solarization'] = (0.0, 0.95)  # Solarization thresholds
     d['rand_posterization'] = (5.0, 8.0)  # Posterization bits
 
-    d['cutmix'] = False  # CutMix augmentation
+    d['cutmix'] = True  # CutMix augmentation
 
     # FIXME: Regularization hyperparameters
     d['l1_reg'] = 0.0  # L1 regularization factor
