@@ -40,7 +40,7 @@ image_dirs, label_dirs, class_names = subset.read_subset(Param.train_dir, shuffl
                                                          sample_size=Param.train_sample_size)
 train_size = len(image_dirs)
 if Param.val_dir is None:
-    val_size = int(train_size*0.2)    # FIXME
+    val_size = int(train_size*0.1)    # FIXME
     val_set = DataSet(image_dirs[:val_size], label_dirs[:val_size],
                       class_names, random=Param.d['augment_pred'], **Param.d)
     train_set = DataSet(image_dirs[val_size:], label_dirs[val_size:],
