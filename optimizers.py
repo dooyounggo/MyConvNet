@@ -242,13 +242,20 @@ class Optimizer(object):
         tf.get_default_graph().finalize()
         self.curr_epoch += start_epoch
         self.curr_step += start_step
+        step_loss, step_score = 0, 0
         start_time = time.time()
         for i in range(num_steps - start_step):
             self._update_learning_rate()
 
-            step_loss, step_Y_true, step_Y_pred = self._step(handles, merged=merged, writer=writer,
-                                                             summarize=(i + 1) % summary_frequency == 0)
-            step_score = self.evaluator.score(step_Y_true, step_Y_pred)
+            try:
+                step_loss, step_Y_true, step_Y_pred = self._step(handles, merged=merged, writer=writer,
+                                                                 summarize=(i + 1) % summary_frequency == 0)
+                step_score = self.evaluator.score(step_Y_true, step_Y_pred)
+            except tf.errors.OutOfRangeError:
+                if verbose:
+                    remainder_size = train_size - (self.steps_per_epoch - 1)*self.batch_size
+                    print('The last iteration ({} data) has been ignored'.format(remainder_size))
+
             if show_each_step:
                 step_losses.append(step_loss)
                 step_scores.append(step_score)
