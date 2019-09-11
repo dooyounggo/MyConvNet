@@ -8,7 +8,7 @@ import subsets.subset_functions as sf
 class DataSet(object):
     def __init__(self, image_dirs, label_dirs=None, class_names=None, random=False, **kwargs):
         if label_dirs is None:
-            label_dirs = [None for _ in image_dirs]
+            label_dirs = [np.nan for _ in image_dirs]
         assert len(image_dirs) == len(label_dirs), 'Number of examples mismatch, between images and labels'
 
         self._image_dirs = image_dirs
@@ -137,8 +137,8 @@ class DataSet(object):
         image = cv2.cvtColor(cv2.imread(image_dir), cv2.COLOR_BGR2RGB)
         image = self._resize_function(image, self.image_size, interpolation=cv2.INTER_LINEAR)
 
-        if label_dir is None:
-            label = np.array(np.nan)
+        if not isinstance(label_dir, str):
+            label = np.array(np.nan, dtype=np.float32)
         else:   # Note that the labels are not one-hot encoded.
             if label_dir.split('.')[-1].lower() == 'csv':   # Classification and detection
                 f = open(label_dir, 'r', encoding='utf-8')
