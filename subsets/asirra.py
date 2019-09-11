@@ -40,8 +40,8 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True):
 
 
 if __name__ == '__main__':
-    subset_dir = "D:/Dropbox/Project/Python/datasets/asirra/train/"
-    destination_dir = "D:/Dropbox/Project/Python/tfdatasets/asirra/train"
+    subset_dir = "D:/Dropbox/Project/Python/datasets/asirra/validation"
+    destination_dir = "D:/Dropbox/Project/Python/tfdatasets/asirra/validation"
     save_as_tfdata(subset_dir, destination_dir, copy=True)
 
 
@@ -60,8 +60,11 @@ def read_subset(subset_dir, shuffle=False, sample_size=None):
             image_dirs.append(full_filename)
 
     set_size = len(image_dirs)
-    assert len(image_dirs) == len(label_dirs),\
-        'Number of examples mismatch: {} images vs. {} labels'.format(len(image_dirs), len(label_dirs))
+    if len(label_dirs) == 0:
+        label_dirs = None
+    else:
+        assert len(image_dirs) == len(label_dirs),\
+            'Number of examples mismatch: {} images vs. {} labels'.format(len(image_dirs), len(label_dirs))
 
     if sample_size is not None and sample_size < set_size:
         if shuffle:
