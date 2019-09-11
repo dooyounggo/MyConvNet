@@ -2,6 +2,7 @@ import os
 import csv
 import shutil
 import numpy as np
+import subsets.subset_functions as sf
 from scipy.io import loadmat
 
 """
@@ -123,37 +124,6 @@ def read_subset(subset_dir, shuffle=False, sample_size=None):
         'Mexican_hairless', 'dingo', 'dhole', 'African_hunting_dog'
     )
 
-    filenames = os.listdir(subset_dir)
-    image_dirs = []
-    label_dirs = []
-    for fname in filenames:
-        ext = fname.split('.')[-1].lower()
-        full_filename = os.path.join(subset_dir, fname)
-        if ext == 'csv':
-            label_dirs.append(full_filename)
-        elif ext == 'jpg' or ext == 'jpeg':
-            image_dirs.append(full_filename)
-
-    set_size = len(image_dirs)
-    if len(label_dirs) == 0:
-        label_dirs = None
-    else:
-        assert len(image_dirs) == len(label_dirs), \
-            'Number of examples mismatch: {} images vs. {} labels'.format(len(image_dirs), len(label_dirs))
-
-    if sample_size is not None and sample_size < set_size:
-        if shuffle:
-            idx = np.random.choice(np.arange(set_size), size=sample_size, replace=False).astype(int)
-            image_dirs = list(np.array(image_dirs)[idx])
-            label_dirs = list(np.array(label_dirs)[idx])
-        else:
-            image_dirs = image_dirs[:sample_size]
-            label_dirs = label_dirs[:sample_size]
-    else:
-        if shuffle:
-            idx = np.arange(set_size)
-            np.random.shuffle(idx)
-            image_dirs = list(np.array(image_dirs)[idx])
-            label_dirs = list(np.array(label_dirs)[idx])
+    image_dirs, label_dirs = sf.read_subset_cls(subset_dir, shuffle=shuffle, sample_size=sample_size)
 
     return image_dirs, label_dirs, class_names
