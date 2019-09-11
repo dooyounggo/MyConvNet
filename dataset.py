@@ -2,7 +2,6 @@ import numpy as np
 import tensorflow as tf
 import csv
 import cv2
-from skimage import img_as_float
 import subsets.subset_functions as sf
 
 
@@ -156,9 +155,9 @@ class DataSet(object):
                 label = np.array(label, dtype=np.float32)
             else:   # Segmentation
                 label = cv2.imread(label_dir, cv2.IMREAD_GRAYSCALE)
+                label = label.astype(int) - 1  # Set values corresponding to edge pixels to -1
                 label = self._resize_function(label, self.image_size, interpolation=cv2.INTER_NEAREST)
                 label = np.round(label[..., 0]*255)
-                label = label - 1   # Set values corresponding to edge pixels to -1
 
         return image, label
 
@@ -172,7 +171,7 @@ class DataSet(object):
             image = np.tile(image, (1, 1, 3))
 
         if self.resize_type.lower() == 'resize':
-            image = img_as_float(cv2.resize(image, dsize=tuple(image_size[1::-1]), interpolation=interpolation))
+            image = sf.to_float(cv2.resize(image, dsize=tuple(image_size[1::-1]), interpolation=interpolation))
         elif self.resize_type.lower() == 'resize_fit':
             image = sf.resize_fit(image, image_size, interpolation=interpolation, random=False)
         elif self.resize_type.lower() == 'resize_expand':
