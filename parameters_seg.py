@@ -74,6 +74,7 @@ class Parameters(object):
 
     d['zero_pad_ratio'] = 0.1   # Zero padding ratio = (zero_padded_image_size - nn_input_size) / nn_input_size
 
+    d['rand_affine'] = False  # Bool
     d['rand_scale'] = (1.0, 1.0)  # Minimum and maximum scaling factors (x/y)
     d['rand_ratio'] = (1.0, 1.0)  # Minimum and maximum pixel aspect ratios (x/y)
     d['rand_x_trans'] = 0.0  # Range in proportion (0.2 means +-10%)
@@ -82,19 +83,21 @@ class Parameters(object):
     d['rand_shear'] = 0  # Range in degrees
     d['rand_x_reflect'] = True  # Bool
     d['rand_y_reflect'] = False  # Bool
+
     d['rand_crop'] = True  # Bool
     d['rand_crop_scale'] = (0.3**2, 1.2**2)  # Scale*input_size patch crop from an image
     d['rand_crop_ratio'] = (0.7, 1.43)
 
+    d['rand_distortion'] = True  # Bool
     d['rand_hue'] = 0.2  # Hue range in proportion
-    d['rand_saturation'] = (0.625, 1.6)  # Lower and upper bounds of random saturation factors
+    d['rand_saturation'] = (0.625, 1.5)  # Lower and upper bounds of random saturation factors
     d['rand_color_balance'] = (1.0, 1.0)  # Each color channel is multiplied by a random value
-    d['rand_equalization'] = 0.3  # Equalization probability
-    d['rand_contrast'] = (0.625, 1.6)  # Lower and upper bounds of random contrast factors
-    d['rand_brightness'] = 0.3  # Brightness range in proportion
+    d['rand_equalization'] = 0.0  # Equalization probability
+    d['rand_contrast'] = (0.625, 1.5)  # Lower and upper bounds of random contrast factors
+    d['rand_brightness'] = 0.2  # Brightness range in proportion
     d['rand_noise_mean'] = 0.0
     d['rand_noise_stddev'] = 0.0
-    d['rand_solarization'] = (0.0, 0.95)  # Solarization thresholds
+    d['rand_solarization'] = (0.0, 1.0)  # Solarization thresholds
     d['rand_posterization'] = (5.0, 8.0)  # Posterization bits
 
     d['cutmix'] = True  # CutMix augmentation
