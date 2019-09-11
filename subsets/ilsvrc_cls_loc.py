@@ -1092,8 +1092,11 @@ def read_subset(subset_dir, shuffle=False, sample_size=None):
             image_dirs.append(full_filename)
 
     set_size = len(image_dirs)
-    assert len(image_dirs) == len(label_dirs),\
-        'Number of examples mismatch: {} images vs. {} labels'.format(len(image_dirs), len(label_dirs))
+    if len(label_dirs) == 0:
+        label_dirs = None
+    else:
+        assert len(image_dirs) == len(label_dirs), \
+            'Number of examples mismatch: {} images vs. {} labels'.format(len(image_dirs), len(label_dirs))
 
     if sample_size is not None and sample_size < set_size:
         if shuffle:
