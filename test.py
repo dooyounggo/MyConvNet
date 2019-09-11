@@ -41,22 +41,21 @@ else:
 
 saver.restore(model.session, ckpt_to_load)    # restore learned weights
 test_x, test_y_true, test_y_pred, _ = model.predict(test_set, verbose=True, **Param.d)
-test_x += image_mean
 test_score = evaluator.score(test_y_true, test_y_pred)
 
 print(evaluator.name + ': {:.4f}'.format(test_score))
 
-utils.plot_class_results(test_x, test_y_true, test_y_pred, fault=False, class_names=class_names,
-                         save_dir=os.path.join(Param.save_dir, 'results/images'))
-utils.plot_class_results(test_x, test_y_true, test_y_pred, fault=True, class_names=class_names)
+utils.plot_class_results(test_x, test_y_true, test_y_pred, fault=False, shuffle=False, class_names=class_names,
+                         save_dir=os.path.join(Param.save_dir, 'results_test/images'))
+utils.plot_class_results(test_x, test_y_true, test_y_pred, fault=True, shuffle=False, class_names=class_names)
 
 gcam = model.features(test_set, model.gcam, **Param.d)[0][..., 0]
 cmap = plt.get_cmap('gnuplot2')
 gcam = cmap(gcam)[..., 0:3]
 gcam = np.clip(test_x + gcam, 0, 1)
 
-utils.plot_class_results(gcam, test_y_true, test_y_pred, fault=False, class_names=class_names,
-                         save_dir=os.path.join(Param.save_dir, 'results/grad-cams'))
+utils.plot_class_results(gcam, test_y_true, test_y_pred, fault=None, shuffle=False, class_names=class_names,
+                         save_dir=os.path.join(Param.save_dir, 'results_test/grad-cams'))
 
 cm = utils.plot_confusion_matrix(test_y_true, test_y_pred, class_names=class_names, normalize=False)
 
