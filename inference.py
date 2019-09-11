@@ -14,7 +14,8 @@ model_to_load = Param.d['model_to_load']
 
 # Load test set
 image_dirs, label_dirs, class_names = subset.read_subset(Param.test_dir, shuffle=False,
-                                                         sample_size=Param.train_sample_size)
+                                                         sample_size=Param.test_sample_size)
+Param.d['shuffle'] = False
 test_set = DataSet(image_dirs, label_dirs, class_names, **Param.d)
 
 image_mean = np.load(os.path.join(Param.save_dir, 'img_mean.npy')).astype(np.float32)    # load mean image
@@ -33,14 +34,13 @@ else:
     fp = open(os.path.join(Param.save_dir, 'checkpoints.txt'), 'r')
     ckpt_list = fp.readlines()
     fp.close()
-    ckpt_to_load = ckpt_list[model_to_load][:-1]
+    ckpt_to_load = os.path.join(Param.save_dir, ckpt_list[model_to_load].rstrip())
 
 saver.restore(model.session, ckpt_to_load)    # restore learned weights
 test_x, _, test_y_pred, _ = model.predict(test_set, verbose=True, **Param.d)
 
-utils.plot_class_results(test_x, test_y_pred, test_y_pred, fault=False, class_names=class_names,
-                         save_dir=os.path.join(Param.save_dir, 'results_test'))
-utils.plot_class_results(test_x, test_y_pred, test_y_pred, fault=True, class_names=class_names)
+utils.plot_class_results(test_x, test_y_pred, test_y_pred, fault=None, shuffle=False, class_names=class_names,
+                         save_dir=os.path.join(Param.save_dir, 'results_inference'))
 plt.show()
 
 model.session.close()
