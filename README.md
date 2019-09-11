@@ -16,9 +16,11 @@
 - Run test.py to test the trained model.
 
 ### Packages
-- Tensorflow-gpu: 1.14.0
-- Matplotlib: 3.1.0
+- tensorflow-gpu: 1.14.0
+- numpy: 1.16.4
+- matplotlib: 3.1.0
 - scikit-image: 0.15.0
+- scikit-learn: 0.21.2
 - opencv-python: 4.1.0.25
 
 ### TODO
