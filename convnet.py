@@ -214,7 +214,7 @@ class ConvNet(object):
                         self.dicts.append(self.d)
                         self.gcams.append(self.grad_cam(self.d['logits'],
                                                         self.d['block_{}'.format(self.num_blocks - 1)],
-                                                        self.Y))
+                                                        y=None))
 
                         self.logits = self.d['logits']
                         self.preds.append(self.d['pred'])
@@ -224,7 +224,7 @@ class ConvNet(object):
 
         with tf.device('/cpu:0'):
             with tf.variable_scope('calc'):
-                self.X_all = tf.concat(self.Xs, axis=0, name='x')
+                self.X_all = tf.concat(self.Xs, axis=0, name='x') + self.image_mean
                 self.Y_all = tf.concat(self.Ys, axis=0, name='y_true')
                 self.pred = tf.concat(self.preds, axis=0, name='y_pred')
                 self.loss = tf.reduce_mean(self.losses, name='mean_loss')
@@ -1185,8 +1185,12 @@ class ConvNet(object):
     def grad_cam(self, logits, conv_layer, y=None):
         eps = 1e-4
         with tf.name_scope('grad_cam'):
-            if y is not None:
-                logits = logits*y
+            if y is None:
+                axis = 1 if self.channel_first else -1
+                logits_mask = tf.stop_gradient(logits//tf.reduce_max(logits, axis=axis, keepdims=True))
+            else:
+                logits_mask = y
+            logits = logits_mask*logits
             axis = [2, 3] if self.channel_first else [1, 2]
             channel_weights = tf.reduce_sum(tf.gradients(logits, conv_layer)[0], axis=axis, keepdims=True)
             axis = 1 if self.channel_first else -1
