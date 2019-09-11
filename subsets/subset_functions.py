@@ -1,6 +1,8 @@
 import numpy as np
 import cv2
-from skimage import img_as_float32
+
+INT_TYPES = ['uint8', 'uint16', 'uint32', 'uint64', 'int8', 'int16', 'int32', 'int64']
+FLOAT_TYPES = ['float16', 'float32', 'float64']
 
 
 def random_resized_crop(image, out_size, interpolation=cv2.INTER_LINEAR,
@@ -48,7 +50,7 @@ def random_resized_crop(image, out_size, interpolation=cv2.INTER_LINEAR,
     else:
         image = crop(image, out_size, random=random)
 
-    return img_as_float32(image)
+    return to_float(image)
 
 
 def resize_with_crop(image, out_size, interpolation=cv2.INTER_LINEAR, random=False):
@@ -59,7 +61,7 @@ def resize_with_crop(image, out_size, interpolation=cv2.INTER_LINEAR, random=Fal
     if h_ratio < 1.0 or w_ratio < 1.0:
         resize_expand(image, out_size, interpolation=interpolation)
     else:
-        image = img_as_float32(image)
+        image = to_float(image)
 
     image = crop(image, out_size, random=random)
 
@@ -74,7 +76,7 @@ def resize_with_pad(image, out_size, interpolation=cv2.INTER_LINEAR, random=Fals
     if h_ratio > 1.0 or w_ratio > 1.0:
         resize_fit(image, out_size, interpolation=interpolation)
     else:
-        image = img_as_float32(image)
+        image = to_float(image)
 
     image = zero_pad(image, out_size, random=random, pad_value=pad_value)
 
@@ -91,7 +93,7 @@ def resize_fit_expand(image, out_size, interpolation=cv2.INTER_LINEAR, random=Fa
     elif h_ratio < 1.0 and w_ratio < 1.0:
         image = resize_fit(image, out_size, interpolation=interpolation, random=random)
     else:
-        image = img_as_float32(image)
+        image = to_float(image)
 
     image = crop(image, out_size, random=random)
     image = zero_pad(image, out_size, random=random, pad_value=pad_value)
@@ -112,7 +114,7 @@ def resize_fit(image, out_size, interpolation=cv2.INTER_LINEAR, random=False, pa
     image = cv2.resize(image, dsize=tuple(re_size[::-1]), interpolation=interpolation)
     image = zero_pad(image, out_size, random=random, pad_value=pad_value)
 
-    return img_as_float32(image)
+    return to_float(image)
 
 
 def resize_expand(image, out_size, interpolation=cv2.INTER_LINEAR, random=False):
@@ -128,14 +130,14 @@ def resize_expand(image, out_size, interpolation=cv2.INTER_LINEAR, random=False)
     image = cv2.resize(image, dsize=tuple(re_size[::-1]), interpolation=interpolation)
     image = crop(image, out_size, random=random)
 
-    return img_as_float32(image)
+    return to_float(image)
 
 
 def resize_with_crop_or_pad(image, out_size, random=False, pad_value=0.0, *args, **kwargs):
     image = crop(image, out_size, random=random)
     image = zero_pad(image, out_size, random=random, pad_value=pad_value)
 
-    return img_as_float32(image)
+    return to_float(image)
 
 
 def crop(image, out_size, random=False):
@@ -179,3 +181,19 @@ def zero_pad(image, out_size, random=False, pad_value=0.0):
     image_out[h_idx:h_idx + in_size[0], w_idx:w_idx + in_size[1]] = image
 
     return image_out
+
+
+def to_float(image):
+    if image.dtype in INT_TYPES:
+        image = image.astype(np.float32)/255.0
+    else:
+        return image.astype(np.float32)
+    return image
+
+
+def to_int(image):
+    if image.dtype in FLOAT_TYPES:
+        image = (image*255).astype(np.int32)
+    else:
+        image = image.astype(np.int32)
+    return image
