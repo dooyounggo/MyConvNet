@@ -273,9 +273,11 @@ class ConvNet(object):
             if self.channel_first:
                 axis = 1
                 while len(w.get_shape()) < len(self.Y.get_shape()):
-                    tf.expand_dims(w, axis=-1)
+                    w = tf.expand_dims(w, axis=-1)
             else:
                 axis = -1
+                while len(w.get_shape()) < len(self.Y.get_shape()):
+                    w = tf.expand_dims(w, axis=1)
             batch_weights = tf.reduce_sum(self.Y*w, axis=axis)
 
             with tf.variable_scope('l1_loss'):
@@ -321,23 +323,27 @@ class ConvNet(object):
             feed_dict.update({h_t: h})
 
         if return_images:
-            _X = np.empty([pred_size] + list(self.input_size), dtype=float)
+            _X = np.zeros([pred_size] + list(self.input_size), dtype=float)
         else:
-            _X = np.empty([pred_size] + [4, 4, 3], dtype=float)  # Dummy images
-        _Y_true = np.empty([pred_size] + self.logits.get_shape().as_list()[1:], dtype=float)
-        _Y_pred = np.empty([pred_size] + self.logits.get_shape().as_list()[1:], dtype=float)
-        _loss_pred = np.empty(pred_size, dtype=float)
+            _X = np.zeros([pred_size] + [4, 4, 3], dtype=float)  # Dummy images
+        _Y_true = np.zeros([pred_size] + self.pred.get_shape().as_list()[1:], dtype=float)
+        _Y_pred = np.zeros([pred_size] + self.pred.get_shape().as_list()[1:], dtype=float)
+        _loss_pred = np.zeros(pred_size, dtype=float)
         start_time = time.time()
         for i in range(num_steps):
-            X, Y_true, Y_pred, loss_pred = self.session.run([self.X_all, self.Y_all, self.pred, self.loss],
-                                                            feed_dict=feed_dict)
-            sidx = i*batch_size
-            eidx = (i + 1)*batch_size
-            if return_images:
-                _X[sidx:eidx] = X
-            _Y_true[sidx:eidx] = Y_true
-            _Y_pred[sidx:eidx] = Y_pred
-            _loss_pred[sidx:eidx] = loss_pred
+            try:
+                X, Y_true, Y_pred, loss_pred = self.session.run([self.X_all, self.Y_all, self.pred, self.loss],
+                                                                feed_dict=feed_dict)
+                sidx = i*batch_size
+                eidx = (i + 1)*batch_size
+                if return_images:
+                    _X[sidx:eidx] = X
+                _Y_true[sidx:eidx] = Y_true
+                _Y_pred[sidx:eidx] = Y_pred
+                _loss_pred[sidx:eidx] = loss_pred
+            except tf.errors.OutOfRangeError:
+                if verbose:
+                    print('The last iteration ({} data) has been ignored'.format(pred_size - i*batch_size))
 
         if verbose:
             print('Total prediction time: {:.2f} sec'.format(time.time() - start_time))
@@ -489,10 +495,10 @@ class ConvNet(object):
                     x = self.center_crop(x)
             else:
                 if rand_crop:
-                    x = tf.map_fn(self.rand_crop_image_and_mask, (x, mask), dtype=(tf.float32, tf.float32),
-                                  parallel_iterations=32, back_prop=False)
+                    x, mask = tf.map_fn(self.rand_crop_image_and_mask, (x, mask), dtype=(tf.float32, tf.float32),
+                                        parallel_iterations=32, back_prop=False)
                 else:
-                    x = (self.center_crop(x), self.center_crop(mask))
+                    x, mask = (self.center_crop(x), self.center_crop(mask))
 
         return x, mask
 
@@ -1084,11 +1090,11 @@ class ConvNet(object):
 
     def upsampling_2d_layer(self, x, scale=2, name='upsampling'):
         if self.channel_first:
-            x = tf.transpose(x, [0, 3, 1, 2])
+            x = tf.transpose(x, perm=[0, 2, 3, 1], name='tp')
         in_shape = x.get_shape()
         x = tf.image.resize_bilinear(x, [in_shape[1]*scale, in_shape[2]*scale], align_corners=False, name=name)
         if self.channel_first:
-            x = tf.transpose(x, [0, 2, 3, 1])
+            x = tf.transpose(x, perm=[0, 3, 1, 2], name='tp')
 
         return x
 
@@ -1141,7 +1147,9 @@ class ConvNet(object):
             self._params += (kernel[0]*kernel[1]*in_channels)*out_channels
 
         if biased:
-            biases = self.bias_variable([out_channels], value=biases_value)
+            bias_shape = [1, out_channels, 1, 1] if self.channel_first else [1, 1, 1, out_channels]
+            biases = self.bias_variable(bias_shape, value=biases_value)
+
             if not tf.get_variable_scope().reuse:
                 self._flops += out_size[0]*out_size[1]*out_channels
                 self._params += out_channels
