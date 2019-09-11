@@ -63,8 +63,7 @@ class SegNet(ConvNet):
                                           tf.constant(0.0, dtype=tf.float32) - tf.ones_like(self.Y, dtype=tf.float32),
                                           self.Y)
 
-                        self.Y = tf.cast(self.Y, dtype=tf.int32)
-                        self.Y = tf.one_hot(self.Y, depth=self.num_classes, dtype=tf.float32)  # one-hot encoding
+                        self.Y = tf.expand_dims(self.Y, axis=-1)  # Attach the channel dimension for augmentation
 
                         self.X = self.zero_pad(self.X)
                         self.Y = self.zero_pad(self.Y)
@@ -78,6 +77,8 @@ class SegNet(ConvNet):
                                                      lambda: self.cutmix(self.X, self.Y),
                                                      lambda: (self.X, self.Y),
                                                      name='cutmix')
+                        self.Y = tf.cast(tf.math.round(self.Y[..., 0]), dtype=tf.int32)
+                        self.Y = tf.one_hot(self.Y, depth=self.num_classes, dtype=tf.float32)  # one-hot encoding
                         self.Xs.append(self.X)
                         self.Ys.append(self.Y)
 
