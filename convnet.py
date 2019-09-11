@@ -402,19 +402,29 @@ class ConvNet(object):
         return x
 
     def augment_images(self, x, mask=None, **kwargs):
-        x, mask = self.affine_augment(x, mask, **kwargs)
-        x, mask = self.rand_crop(x, mask, **kwargs)
+        rand_affine = kwargs.get('rand_affine', True)
+        rand_crop = kwargs.get('rand_crop', True)
+        rand_distortion = kwargs.get('rand_distortion', True)
 
-        x = self.rand_hue(x, **kwargs)
-        x = self.rand_saturation(x, **kwargs)
-        x = self.rand_color_balance(x, **kwargs)
-        x = self.rand_equalization(x, **kwargs)
-        x = self.rand_contrast(x, **kwargs)
-        x = self.rand_brightness(x, **kwargs)
-        x = self.rand_noise(x, **kwargs)
-        x = tf.clip_by_value(x, -0.5, 0.5)
-        x = self.rand_solarization(x, **kwargs)
-        x = self.rand_posterization(x, **kwargs)
+        if rand_affine:
+            x, mask = self.affine_augment(x, mask, **kwargs)
+
+        if rand_crop:
+            x, mask = self.rand_crop(x, mask, **kwargs)
+        else:
+            x, mask = (self.center_crop(x), self.center_crop(mask))
+
+        if rand_distortion:
+            x = self.rand_hue(x, **kwargs)
+            x = self.rand_saturation(x, **kwargs)
+            x = self.rand_color_balance(x, **kwargs)
+            x = self.rand_equalization(x, **kwargs)
+            x = self.rand_contrast(x, **kwargs)
+            x = self.rand_brightness(x, **kwargs)
+            x = self.rand_noise(x, **kwargs)
+            x = tf.clip_by_value(x, -0.5, 0.5)
+            x = self.rand_solarization(x, **kwargs)
+            x = self.rand_posterization(x, **kwargs)
 
         if mask is None:
             return x
@@ -485,20 +495,13 @@ class ConvNet(object):
 
     def rand_crop(self, x, mask=None, **kwargs):
         with tf.variable_scope('rand_crop'):
-            rand_crop = kwargs.get('rand_crop', False)
             self.crop_scale = kwargs.get('rand_crop_scale', (1.0, 1.0))  # Size of crop windows
             self.crop_ratio = kwargs.get('rand_crop_ratio', (1.0, 1.0))  # Aspect ratio of crop windows
             if mask is None:
-                if rand_crop:
-                    x = tf.map_fn(self.rand_crop_image, x, parallel_iterations=32, back_prop=False)
-                else:
-                    x = self.center_crop(x)
+                x = tf.map_fn(self.rand_crop_image, x, parallel_iterations=32, back_prop=False)
             else:
-                if rand_crop:
-                    x, mask = tf.map_fn(self.rand_crop_image_and_mask, (x, mask), dtype=(tf.float32, tf.float32),
-                                        parallel_iterations=32, back_prop=False)
-                else:
-                    x, mask = (self.center_crop(x), self.center_crop(mask))
+                x, mask = tf.map_fn(self.rand_crop_image_and_mask, (x, mask), dtype=(tf.float32, tf.float32),
+                                    parallel_iterations=32, back_prop=False)
 
         return x, mask
 
@@ -573,7 +576,7 @@ class ConvNet(object):
         mask = tf.slice(mask, [offset_h, offset_w, 0], [size_h, size_w, -1])
         mask = tf.image.resize_nearest_neighbor(tf.expand_dims(mask, axis=0),
                                                 self.input_size[0:2], half_pixel_centers=True)
-        mask = tf.reshape(mask, self.input_size)
+        mask = tf.reshape(mask, list(self.input_size[:-1]) + [1])
 
         return image, mask
 
