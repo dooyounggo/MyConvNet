@@ -193,7 +193,7 @@ class Optimizer(object):
                                  tf.cast(self.model.input_images*255, dtype=tf.uint8),
                                  max_outputs=4)
                 tf.summary.image('Augmented Input Images',
-                                 tf.cast(tf.clip_by_value(self.model.X_all, -0.5, 0.5)*255, dtype=tf.uint8),
+                                 tf.cast(self.model.X_all*255, dtype=tf.uint8),
                                  max_outputs=4)
                 tf.summary.image('Debug Images 0',
                                  tf.cast(self.model.debug_images_0*255, dtype=tf.uint8),
