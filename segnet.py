@@ -112,10 +112,10 @@ class SegNet(ConvNet):
 
         with tf.device('/cpu:0'):
             with tf.variable_scope('calc'):
-                self.X_all = tf.concat(self.Xs, axis=0)
-                self.Y_all = tf.concat(self.Ys, axis=0)
-                self.pred = tf.concat(self.preds, axis=0)
-                self.loss = tf.reduce_mean(self.losses)
+                self.X_all = tf.concat(self.Xs, axis=0, name='x') + self.image_mean
+                self.Y_all = tf.concat(self.Ys, axis=0, name='y_true')
+                self.pred = tf.concat(self.preds, axis=0, name='y_pred')
+                self.loss = tf.reduce_mean(self.losses, name='mean_loss')
 
                 self.input_images = tf.concat(self.X_in, axis=0, name='x_in')
                 self.debug_images_0 = self.seg_labels_to_images(self.Y_all)
