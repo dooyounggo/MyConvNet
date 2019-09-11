@@ -149,7 +149,7 @@ class SCN(GCN, ResSepNet):  # Separable Convolutional Networks: GCN with separab
         return x
 
     def _conv_unit(self, x, kernel, out_channels, d, name='conv_unit'):
-        in_channels = x.get_shape()[1] if self.channel_first else x.get_shape[-1]
+        in_channels = x.get_shape()[1] if self.channel_first else x.get_shape()[-1]
         if not isinstance(kernel, list):
             kernel = [kernel, kernel]
         elif len(kernel) == 1:
