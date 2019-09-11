@@ -7,8 +7,8 @@ from skimage.io import imsave
 from skimage.transform import resize
 
 """
-Oxford-IIIT Pet dataset for two-class segmentation
-https://research.sualab.com/practice/2018/11/23/image-segmentation-deep-learning.html
+COCO-Stuff dataset for image segmentation
+https://github.com/nightrome/cocostuff
 """
 
 
