@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import cv2
 
@@ -181,6 +182,86 @@ def zero_pad(image, out_size, random=False, pad_value=0.0):
     image_out[h_idx:h_idx + in_size[0], w_idx:w_idx + in_size[1]] = image
 
     return image_out
+
+
+def read_subset_cls(subset_dir, shuffle=False, sample_size=None):
+    filenames = os.listdir(subset_dir)
+    image_dirs = []
+    label_dirs = []
+    for fname in filenames:
+        ext = fname.split('.')[-1].lower()
+        full_filename = os.path.join(subset_dir, fname)
+        if ext == 'csv':
+            label_dirs.append(full_filename)
+        elif ext == 'jpg' or ext == 'jpeg':
+            image_dirs.append(full_filename)
+
+    set_size = len(image_dirs)
+    if len(label_dirs) == 0:
+        label_dirs = None
+    else:
+        assert len(image_dirs) == len(label_dirs), \
+            'Number of examples mismatch: {} images vs. {} labels'.format(len(image_dirs), len(label_dirs))
+
+    if sample_size is not None and sample_size < set_size:
+        if shuffle:
+            idx = np.random.choice(np.arange(set_size), size=sample_size, replace=False).astype(int)
+            image_dirs = list(np.array(image_dirs)[idx])
+            if label_dirs is not None:
+                label_dirs = list(np.array(label_dirs)[idx])
+        else:
+            image_dirs = image_dirs[:sample_size]
+            if label_dirs is not None:
+                label_dirs = label_dirs[:sample_size]
+    else:
+        if shuffle:
+            idx = np.arange(set_size)
+            np.random.shuffle(idx)
+            image_dirs = list(np.array(image_dirs)[idx])
+            if label_dirs is not None:
+                label_dirs = list(np.array(label_dirs)[idx])
+
+    return image_dirs, label_dirs
+
+
+def read_subset_seg(subset_dir, shuffle=False, sample_size=None):
+    filenames = os.listdir(subset_dir)
+    image_dirs = []
+    label_dirs = []
+    for fname in filenames:
+        ext = fname.split('.')[-1].lower()
+        full_filename = os.path.join(subset_dir, fname)
+        if ext == 'png':
+            label_dirs.append(full_filename)
+        elif ext == 'jpg' or ext == 'jpeg':
+            image_dirs.append(full_filename)
+
+    set_size = len(image_dirs)
+    if len(label_dirs) == 0:
+        label_dirs = None
+    else:
+        assert len(image_dirs) == len(label_dirs), \
+            'Number of examples mismatch: {} images vs. {} labels'.format(len(image_dirs), len(label_dirs))
+
+    if sample_size is not None and sample_size < set_size:
+        if shuffle:
+            idx = np.random.choice(np.arange(set_size), size=sample_size, replace=False).astype(int)
+            image_dirs = list(np.array(image_dirs)[idx])
+            if label_dirs is not None:
+                label_dirs = list(np.array(label_dirs)[idx])
+        else:
+            image_dirs = image_dirs[:sample_size]
+            if label_dirs is not None:
+                label_dirs = label_dirs[:sample_size]
+    else:
+        if shuffle:
+            idx = np.arange(set_size)
+            np.random.shuffle(idx)
+            image_dirs = list(np.array(image_dirs)[idx])
+            if label_dirs is not None:
+                label_dirs = list(np.array(label_dirs)[idx])
+
+    return image_dirs, label_dirs
 
 
 def to_float(image):
