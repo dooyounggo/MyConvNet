@@ -197,7 +197,7 @@ def plot_class_results(images, y_true, y_pred=None, fault=None, num_rows=3, num_
     # plt.show()
 
 
-def plot_confusion_matrix(y_true, y_pred, class_names=None, normalize=False, top_confused_classes=10,
+def plot_confusion_matrix(y_true, y_pred, class_names=None, normalize=False, top_confused_classes=20,
                           figure_title='Confusion Matrix', cmap=plt.cm.Blues, max_classes=25):
     num_examples = np.sum(np.isclose(y_true.sum(axis=-1), 1))
     num_classes = y_true.shape[-1]
@@ -231,10 +231,11 @@ def plot_confusion_matrix(y_true, y_pred, class_names=None, normalize=False, top
             pairs.append('{}\n->{}'.format(class_names[confused[1][0]], class_names[confused[1][1]]))
         y_max = 1.1*max(values)
 
-        fig, axes = plt.subplots()
-        fig.subplots_adjust(top=0.95, bottom=0.35)
+        fig, axes = plt.subplots(figsize=(14, 7))
+        fig.subplots_adjust(left=0.05, right=0.95, top=0.95, bottom=0.35)
         idx = np.arange(len(values))
         axes.bar(idx, values, align='center', alpha=0.5)
+        axes.grid(alpha=0.25)
         axes.set(xticks=idx,
                  xticklabels=pairs,
                  ylim=[0, y_max],
@@ -246,13 +247,13 @@ def plot_confusion_matrix(y_true, y_pred, class_names=None, normalize=False, top
     if normalize:
         cm = cm.astype('float')/cm.sum(axis=1, keepdims=True)
 
-    are_too_many = len(class_names) > max_classes
-    if class_names is None or are_too_many:
+    too_many_classes = len(class_names) > max_classes
+    if class_names is None or too_many_classes:
         class_names = []
         for i in range(num_classes):
             class_names.append(str(i))
 
-    fig, axes = plt.subplots()
+    fig, axes = plt.subplots(figsize=(10, 8))
     img = axes.imshow(cm, interpolation='nearest', cmap=cmap)
     axes.figure.colorbar(img, ax=axes)
     axes.set(xticks=np.arange(cm.shape[1]),
@@ -262,9 +263,12 @@ def plot_confusion_matrix(y_true, y_pred, class_names=None, normalize=False, top
              ylabel='True Labels',
              xlabel='Predicted Labels')
     plt.setp(axes.get_xticklabels(), rotation=45, ha='right', rotation_mode='anchor')
+    axes.set_xticks(np.arange(cm.shape[1] - 1) + 0.5, minor=True)
+    axes.set_yticks(np.arange(cm.shape[0] - 1) + 0.5, minor=True)
+    axes.grid(which='minor', alpha=0.5)
 
-    if are_too_many:
-        print('Too many classes to show in the confusion matrix.')
+    if too_many_classes:
+        print('Too many classes to show for the confusion matrix.')
     else:
         fmt = '.2f' if normalize else 'd'
         thresh = cm.max() / 2.
