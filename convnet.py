@@ -460,11 +460,11 @@ class ConvNet(object):
                            - 0.5*W*rand_x_scale*tf.math.sin(rand_rotation) \
                            + 0.5*H*(1.0 - rand_y_scale*tf.math.cos(rand_rotation + rand_shear))
 
-            a0a = rand_x_scale*tf.math.cos(rand_rotation)
-            a1a = -rand_y_scale*tf.math.sin(rand_rotation + rand_shear)
+            a0a = rand_x_scale*tf.math.cos(rand_rotation + rand_shear)
+            a1a = -rand_y_scale*tf.math.sin(rand_rotation)
             a2a = rand_x_trans
-            b0a = rand_x_scale*tf.math.sin(rand_rotation)
-            b1a = rand_y_scale*tf.math.cos(rand_rotation + rand_shear)
+            b0a = rand_x_scale*tf.math.sin(rand_rotation + rand_shear)
+            b1a = rand_y_scale*tf.math.cos(rand_rotation)
             b2a = rand_y_trans
 
             rand_x_reflect = tf.math.round(tf.random.uniform([batch_size, 1])*kwargs.get('rand_x_reflect', False))
