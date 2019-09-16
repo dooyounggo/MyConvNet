@@ -437,15 +437,16 @@ class Optimizer(object):
             self.curr_learning_rate = (self.curr_step + 1)/warmup_steps*self.init_learning_rate
         else:
             if self.decay_method is not None:
-                if self.decay_method.lower() == 'step':  # params: (decay_epoch_0, decay_epoch_1, ...)
-                    if self.curr_epoch >= self.decay_params[self.learning_rate_update]:
-                        self.curr_learning_rate *= 0.1
-                        self.learning_rate_update += 1
-                elif self.decay_method.lower() == 'exponential':  # params: (decay_factor, decay_epoch)
-                    if self.curr_epoch//self.decay_params[1] > self.learning_rate_update:
+                if self.decay_method.lower() == 'step':  # params: (decay_factor, decay_epoch_0, decay_epoch_1, ...)
+                    if self.learning_rate_update < len(self.decay_params) - 1:
+                        while self.curr_epoch >= self.decay_params[self.learning_rate_update + 1]:
+                            self.curr_learning_rate *= self.decay_params[0]
+                            self.learning_rate_update += 1
+                elif self.decay_method.lower() == 'exponential':  # params: (decay_factor, decay_every_n_epoch)
+                    while self.curr_epoch//self.decay_params[1] > self.learning_rate_update:
                         self.curr_learning_rate *= self.decay_params[0]
                         self.learning_rate_update += 1
-                else:  # 'cosine'
+                else:  # 'cosine': no parameter required
                     total_steps = self.steps_per_epoch*self.num_epochs - warmup_steps
                     self.curr_learning_rate = 0.5*(1 + np.cos((self.curr_step - warmup_steps)*np.pi/total_steps)
                                                    )*self.init_learning_rate
