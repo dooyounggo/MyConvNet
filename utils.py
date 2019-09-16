@@ -29,14 +29,14 @@ def plot_learning_curve(step_losses, step_scores, eval_losses=None, eval_scores=
         axes[0].plot(np.arange(start_step + 1, len(step_losses) + start_step + 1), step_losses,
                      color='y', marker='', label='Training')
         axes[0].set_ylabel('Training Loss')
-        axes[0].set_xlabel('Number of Iterations')
+        # axes[0].set_xlabel('Number of Iterations')
         axes[0].set_ylim(0.0, min(loss_threshold, max(step_losses)))
     else:
         if validation_frequency is None:
             axes[0].plot(np.arange(1, len(eval_losses) + 1), eval_losses,
                          color='r', marker='', label='Validation')
             axes[0].set_ylabel('Validation Loss')
-            axes[0].set_xlabel('Number of Epochs')
+            # axes[0].set_xlabel('Number of Evaluations')
         else:
             axes[0].plot(np.arange(start_step + 1, len(step_losses) + start_step + 1), step_losses,
                          color='y', marker='', label='Training')
@@ -45,15 +45,22 @@ def plot_learning_curve(step_losses, step_scores, eval_losses=None, eval_scores=
                                    validation_frequency),
                          eval_losses, color='r', marker='', label='Validation')
             axes[0].set_ylabel('Loss')
-            if validation_frequency == 1:
-                axes[0].set_xlabel('Number of Epochs')
-            else:
-                axes[0].set_xlabel('Number of Iterations')
+            # if validation_frequency == 1:
+            #     axes[0].set_xlabel('Number of Epochs')
+            # else:
+            #     axes[0].set_xlabel('Number of Iterations')
         axes[0].set_ylim(0.0, min(loss_threshold, max(max(step_losses), max(eval_losses))))
     axes[0].legend(loc='lower left')
     axes[0].grid(True)
 
     if eval_scores is None:
+        final_score = step_scores[-1]
+        if mode.lower == 'min':
+            best_score = min(step_scores)
+        else:
+            best_score = max(step_scores)
+        axes[1].set_title('Final Training {}: {:.4f} (Best: {:.4f})'.format(name, final_score, best_score))
+
         axes[1].plot(np.arange(start_step + 1, len(step_scores) + start_step + 1), step_scores,
                      color='y', marker='', label='Training')
         axes[1].set_ylabel('Training ' + name)
@@ -61,16 +68,22 @@ def plot_learning_curve(step_losses, step_scores, eval_losses=None, eval_scores=
         if annotations is not None:
             if len(annotations) > 0:
                 x, y = zip(*annotations)
-                axes[1].set_title('Final Training {}: {:.4f}'.format(name, y[-1]))
                 axes[1].plot(x, y, color='b', marker='o', linestyle='', label='Checkpoints')
                 for i, (x, y) in enumerate(annotations):
                     axes[1].annotate('{:.4f}'.format(y), xy=(x, y), xytext=(0, -4 + (-1)**i*9), ha='center',
                                      textcoords='offset points', color='b', weight='bold')
     else:
+        final_score = eval_scores[-1]
+        if mode.lower == 'min':
+            best_score = min(eval_scores)
+        else:
+            best_score = max(eval_scores)
+        axes[1].set_title('Final Validation {}: {:.4f} (Best: {:.4f})'.format(name, final_score, best_score))
+
         if validation_frequency is None:
             axes[1].plot(np.arange(1, len(eval_scores) + 1), eval_scores, color='r', marker='', label='Validation')
             axes[1].set_ylabel('Validation ' + name)
-            axes[1].set_xlabel('Number of Epochs')
+            axes[1].set_xlabel('Number of Evaluations')
         else:
             axes[1].plot(np.arange(start_step + 1, len(step_scores) + start_step + 1), step_scores,
                          color='y', marker='', label='Training')
@@ -86,17 +99,11 @@ def plot_learning_curve(step_losses, step_scores, eval_losses=None, eval_scores=
             if annotations is not None:
                 if len(annotations) > 0:
                     x, y = zip(*annotations)
-                    axes[1].set_title('Final Validation {}: {:.4f}'.format(name, y[-1]))
                     axes[1].plot(x, y, color='b', marker='o', linestyle='', label='Checkpoints')
                     for i, (x, y) in enumerate(annotations):
                         axes[1].annotate('{:.4f}'.format(y), xy=(x, y), xytext=(0, -4 + (-1)**i*9), ha='center',
                                          textcoords='offset points', color='b', weight='bold')
-    if mode == 'max':
-        axes[1].set_ylim(0.5, 1.0)
-    elif mode == 'min':
-        axes[1].set_ylim(0.0, 0.5)
-    else:   # mode = 'all'
-        axes[1].set_ylim(0.0, 1.0)
+    axes[1].set_ylim(0.0, 1.0)
     axes[1].legend(loc='upper left')
     axes[1].grid(True)
 
