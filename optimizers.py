@@ -295,8 +295,14 @@ class Optimizer(object):
                     if show_each_step:
                         annotations.append((self.curr_step, curr_score))
                     else:
-                        annotations.append((self.curr_step // validation_frequency, curr_score))
+                        annotations.append((self.curr_step//validation_frequency, curr_score))
                     annotations = annotations[-max_to_keep:]
+
+                ckpt_list = saver.last_checkpoints[::-1]
+                fp = open(os.path.join(save_dir, 'checkpoints.txt'), 'w')
+                for fname in ckpt_list:
+                    fp.write(fname.split(os.sep)[-1] + '\n')
+                fp.close()
 
                 if show_each_step:
                     train_losses += step_losses
@@ -350,14 +356,8 @@ class Optimizer(object):
 
         if verbose:
             print('Total training time: {:.2f} sec'.format(time.time() - start_time))
-            print('Best {} score: {:.4f}'.format('evaluation' if self.val_set is not None
-                                                 else 'training', self.best_score))
-
-        ckpt_list = saver.last_checkpoints[::-1]
-        fp = open(os.path.join(save_dir, 'checkpoints.txt'), 'w')
-        for fname in ckpt_list:
-            fp.write(fname.split(os.sep)[-1] + '\n')
-        fp.close()
+            print('Best {} {}: {:.4f}'.format('evaluation' if self.val_set is not None
+                                              else 'training', self.evaluator.name, self.best_score))
 
         print('Done.')
 
