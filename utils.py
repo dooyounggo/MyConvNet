@@ -197,42 +197,74 @@ def plot_class_results(images, y_true, y_pred=None, fault=None, num_rows=3, num_
     # plt.show()
 
 
-def plot_confusion_matrix(y_true, y_pred, class_names=None, normalize=False,
+def plot_confusion_matrix(y_true, y_pred, class_names=None, normalize=False, top_confused_classes=10,
                           figure_title='Confusion Matrix', cmap=plt.cm.Blues, max_classes=25):
     num_examples = np.sum(np.isclose(y_true.sum(axis=-1), 1))
+    num_classes = y_true.shape[-1]
     if len(y_true.shape) > 1:
         y_true = np.argmax(y_true, axis=-1)
     if len(y_pred.shape) > 1:
         y_pred = np.argmax(y_pred, axis=-1)
 
     correct_examples = np.sum(y_true == y_pred).astype(np.float32)
-    accuracy = correct_examples / num_examples
+    accuracy = correct_examples/num_examples
 
-    are_too_many = len(class_names) > max_classes
-
-    if class_names is None or are_too_many:
-        class_names = []
-        for i in range(y_true.shape[0]):
-            class_names.append(str(i))
     cm = confusion_matrix(y_true, y_pred)
+
+    if top_confused_classes is not None:
+        confused_classes = []
+        for i in range(num_classes):
+            total = cm[i].sum()
+            for j in range(num_classes):
+                if i == j:
+                    wrong = 0.0
+                else:
+                    wrong = float(cm[i, j])/total
+                confused_classes.append((wrong, (i, j)))
+                confused_classes = sorted(confused_classes, key=lambda cls: cls[0], reverse=True)
+                confused_classes = confused_classes[:top_confused_classes]
+
+        values = []
+        pairs = []
+        for confused in confused_classes:
+            values.append(confused[0])
+            pairs.append('{}\n->{}'.format(class_names[confused[1][0]], class_names[confused[1][1]]))
+        y_max = 1.1*max(values)
+
+        fig, axes = plt.subplots()
+        fig.subplots_adjust(top=0.95, bottom=0.35)
+        idx = np.arange(len(values))
+        axes.bar(idx, values, align='center', alpha=0.5)
+        axes.set(xticks=idx,
+                 xticklabels=pairs,
+                 ylim=[0, y_max],
+                 title='Top-{} Confused Classes'.format(top_confused_classes))
+        plt.setp(axes.get_xticklabels(), rotation=60, ha='right', rotation_mode='anchor', va='top', size='small')
+        for i, v in enumerate(values):
+            axes.text(i + 0.05, v + 0.02*y_max, '{:.2%}'.format(v), ha='center', size='small')
+
     if normalize:
         cm = cm.astype('float')/cm.sum(axis=1, keepdims=True)
+
+    are_too_many = len(class_names) > max_classes
+    if class_names is None or are_too_many:
+        class_names = []
+        for i in range(num_classes):
+            class_names.append(str(i))
 
     fig, axes = plt.subplots()
     img = axes.imshow(cm, interpolation='nearest', cmap=cmap)
     axes.figure.colorbar(img, ax=axes)
-
     axes.set(xticks=np.arange(cm.shape[1]),
              yticks=np.arange(cm.shape[0]),
              xticklabels=class_names, yticklabels=class_names,
              title=figure_title + " (accuracy: {:.2%})".format(accuracy),
              ylabel='True Labels',
              xlabel='Predicted Labels')
-
     plt.setp(axes.get_xticklabels(), rotation=45, ha='right', rotation_mode='anchor')
 
     if are_too_many:
-        print('Too many classes to show.')
+        print('Too many classes to show in the confusion matrix.')
     else:
         fmt = '.2f' if normalize else 'd'
         thresh = cm.max() / 2.
