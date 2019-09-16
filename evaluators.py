@@ -72,7 +72,7 @@ class AccuracyEvaluator(Evaluator):
 
     @property
     def mode(self):
-        return 'all'
+        return 'max'
 
     def score(self, y_true, y_pred):
         y_t = y_true.argmax(axis=-1)
@@ -106,7 +106,7 @@ class AccuracyTopNEvaluator(Evaluator):
 
     @property
     def mode(self):
-        return 'all'
+        return 'max'
 
     def score(self, y_true, y_pred):
         y_t = np.expand_dims(y_true.argmax(axis=-1), axis=-1)
@@ -156,7 +156,7 @@ class F1Evaluator(Evaluator):
 
     @property
     def mode(self):
-        return 'all'
+        return 'max'
 
     def score(self, y_true, y_pred):
         y_t = y_true.argmax(axis=-1)
@@ -190,7 +190,7 @@ class MeanF1Evaluator(Evaluator):
 
     @property
     def mode(self):
-        return 'all'
+        return 'max'
 
     def score(self, y_true, y_pred):
         y_true_max = y_true.max(axis=-1, keepdims=True)
@@ -224,7 +224,7 @@ class IoUEvaluator(Evaluator):
 
     @property
     def mode(self):
-        return 'all'
+        return 'max'
 
     def score(self, y_true, y_pred):
         y_t = y_true.argmax(axis=-1)
@@ -263,7 +263,7 @@ class MeanIoUEvaluator(Evaluator):
 
     @property
     def mode(self):
-        return 'all'
+        return 'max'
 
     def score(self, y_true, y_pred):
         y_true_max = y_true.max(axis=-1, keepdims=True)
