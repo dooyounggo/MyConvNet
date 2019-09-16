@@ -61,6 +61,7 @@ def plot_learning_curve(step_losses, step_scores, eval_losses=None, eval_scores=
         if annotations is not None:
             if len(annotations) > 0:
                 x, y = zip(*annotations)
+                axes[1].set_title('Final Training {}: {:.4f}'.format(name, y[-1]))
                 axes[1].plot(x, y, color='b', marker='o', linestyle='', label='Checkpoints')
                 for i, (x, y) in enumerate(annotations):
                     axes[1].annotate('{:.4f}'.format(y), xy=(x, y), xytext=(0, -4 + (-1)**i*9), ha='center',
@@ -85,6 +86,7 @@ def plot_learning_curve(step_losses, step_scores, eval_losses=None, eval_scores=
             if annotations is not None:
                 if len(annotations) > 0:
                     x, y = zip(*annotations)
+                    axes[1].set_title('Final Validation {}: {:.4f}'.format(name, y[-1]))
                     axes[1].plot(x, y, color='b', marker='o', linestyle='', label='Checkpoints')
                     for i, (x, y) in enumerate(annotations):
                         axes[1].annotate('{:.4f}'.format(y), xy=(x, y), xytext=(0, -4 + (-1)**i*9), ha='center',
@@ -110,7 +112,7 @@ def plot_learning_curve(step_losses, step_scores, eval_losses=None, eval_scores=
         pkl.dump([step_losses, step_scores, eval_scores], fo)
 
 
-def plot_class_results(images, y_true, y_pred=None, fault=False, num_rows=3, num_cols=3,
+def plot_class_results(images, y_true, y_pred=None, fault=None, num_rows=3, num_cols=3, shuffle=True,
                        class_names=None, save_dir=None):
     if y_pred is None:
         y_pred = y_true
@@ -129,13 +131,19 @@ def plot_class_results(images, y_true, y_pred=None, fault=False, num_rows=3, num
     fig.subplots_adjust(left=0.075, right=0.95, bottom=0.05, top=0.9, wspace=0.3, hspace=0.3)
 
     num_images = images.shape[0]
-    if fault:
-        idx = [i for i in range(num_images) if y_true[i] != y_label[i]]
-        fig.suptitle('Incorrect Answers', fontsize=11)
+    if fault is None:
+        fig.suptitle('Results', fontsize=11)
+        idx = list(range(num_images))
     else:
-        idx = [i for i in range(num_images) if y_true[i] == y_label[i]]
-        fig.suptitle('Correct Answers', fontsize=11)
-    idx = np.random.permutation(idx)
+        if fault:
+            idx = [i for i in range(num_images) if y_true[i] != y_label[i]]
+            fig.suptitle('Incorrect Answers', fontsize=11)
+        else:
+            idx = [i for i in range(num_images) if y_true[i] == y_label[i]]
+            fig.suptitle('Correct Answers', fontsize=11)
+
+    if shuffle:
+        idx = np.random.permutation(idx)
 
     i = 0
     for row in range(num_cols):
