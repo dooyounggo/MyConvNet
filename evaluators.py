@@ -58,7 +58,7 @@ class Evaluator(object):
         """
         score_threshold = kwargs.pop('score_threshold', 1e-3)
         relative_eps = 1.0 + score_threshold
-        return curr >= best * relative_eps
+        return curr >= best*relative_eps
 
 
 class AccuracyEvaluator(Evaluator):
@@ -142,6 +142,66 @@ class AccuracyTop5Evaluator(AccuracyTopNEvaluator):
 
 
 class AccuracyTop10Evaluator(AccuracyTopNEvaluator):
+    top = 10
+
+
+class ErrorEvaluator(AccuracyEvaluator):
+    @property
+    def name(self):
+        return 'Error'
+
+    @property
+    def worst_score(self):
+        return 1.0
+
+    @property
+    def mode(self):
+        return 'min'
+
+    def score(self, y_true, y_pred):
+        return 1.0 - super().score(y_true, y_pred)
+
+    def is_better(self, curr, best, **kwargs):
+        score_threshold = kwargs.pop('score_threshold', 1e-3)
+        relative_eps = 1.0 + score_threshold
+        return curr <= best*relative_eps
+
+
+class ErrorTopNEvaluator(AccuracyTopNEvaluator):
+    @property
+    def name(self):
+        return 'Top-{} Error'.format(self.top)
+
+    @property
+    def worst_score(self):
+        return 1.0
+
+    @property
+    def mode(self):
+        return 'min'
+
+    def score(self, y_true, y_pred):
+        return 1.0 - super().score(y_true, y_pred)
+
+    def is_better(self, curr, best, **kwargs):
+        score_threshold = kwargs.pop('score_threshold', 1e-3)
+        relative_eps = 1.0 + score_threshold
+        return curr <= best*relative_eps
+
+
+class ErrorTop1Evaluator(ErrorTopNEvaluator):
+    top = 1
+
+
+class ErrorTop3Evaluator(ErrorTopNEvaluator):
+    top = 3
+
+
+class ErrorTop5Evaluator(ErrorTopNEvaluator):
+    top = 5
+
+
+class ErrorTop10Evaluator(ErrorTopNEvaluator):
     top = 10
 
 
