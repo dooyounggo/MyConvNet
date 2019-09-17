@@ -47,8 +47,6 @@ class ResSepNet(ResCBAMNet):        # ResNet-50 with separable convolutions and 
                 d['block_0' + '/conv_0' + '/bn'] = x
                 # x = self.swish(x, name='swish')
                 # d['block_0' + '/conv_0' + '/swish'] = x
-                # x = self.max_pool(x, 3, 2, padding='SAME')
-                # d['block_0' + '/conv_0' + '/maxpool'] = x
             d['block_0'] = x
 
         for i in range(1, self.num_blocks):
