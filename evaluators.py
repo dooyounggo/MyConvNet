@@ -145,6 +145,31 @@ class AccuracyTop10Evaluator(AccuracyTopNEvaluator):
     top = 10
 
 
+class AccuracyCutMixEvaluator(AccuracyEvaluator):
+    def score(self, y_true, y_pred):
+        if np.sum(np.amax(y_true, axis=-1)) == np.prod(y_true.shape[:-1]).astype(float):  # No CutMix
+            score = super().score(y_true, y_pred)
+        else:
+            y_t = np.argsort(y_true, axis=-1)
+            y_t = y_t[..., -2:]  # Pick top-2
+            y_p = np.argmax(y_pred, axis=-1)
+            y_p = np.tile(np.expand_dims(y_p, axis=-1), 2)
+            valid = np.isclose(y_true.sum(axis=-1), 1)
+            right = np.equal(y_t, y_p).sum(axis=-1)*valid
+
+            accuracies = np.empty(y_t.shape[0], dtype=float)
+            for i, (r, v) in enumerate(zip(right, valid)):
+                valid_pixels = v.sum()
+                if valid_pixels == 0:
+                    acc = 1
+                else:
+                    acc = r.sum()/valid_pixels
+                accuracies[i] = acc
+            score = np.mean(accuracies)
+
+        return score
+
+
 class ErrorEvaluator(AccuracyEvaluator):
     @property
     def name(self):
@@ -203,6 +228,28 @@ class ErrorTop5Evaluator(ErrorTopNEvaluator):
 
 class ErrorTop10Evaluator(ErrorTopNEvaluator):
     top = 10
+
+
+class ErrorCutMixEvaluator(AccuracyCutMixEvaluator):
+    @property
+    def name(self):
+        return 'Error'
+
+    @property
+    def worst_score(self):
+        return 1.0
+
+    @property
+    def mode(self):
+        return 'min'
+
+    def score(self, y_true, y_pred):
+        return 1.0 - super().score(y_true, y_pred)
+
+    def is_better(self, curr, best, **kwargs):
+        score_threshold = kwargs.pop('score_threshold', 1e-3)
+        relative_eps = 1.0 + score_threshold
+        return curr <= best*relative_eps
 
 
 class F1Evaluator(Evaluator):
