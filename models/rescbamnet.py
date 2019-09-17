@@ -33,11 +33,11 @@ class ResCBAMNet(ResNetBot):    # Residual networks with Convolutional Block Att
 
         with tf.variable_scope('block_0'):
             with tf.variable_scope('conv_0'):
-                x = self.conv_layer(X_input, kernels[0], strides[0], channels[0], padding='SAME')
+                x = self.conv_layer(X_input, kernels[0], strides[0], channels[0]//2, padding='SAME')
                 print('block_0' + '/conv_0.shape', x.get_shape().as_list())
                 d['block_0' + '/conv_0'] = x
             with tf.variable_scope('conv_1'):
-                x = self.conv_layer(X_input, kernels[0], 1, channels[0], padding='SAME')
+                x = self.conv_layer(X_input, kernels[0], 1, channels[0]//2, padding='SAME')
                 print('block_0' + '/conv_1.shape', x.get_shape().as_list())
                 d['block_0' + '/conv_1'] = x
             with tf.variable_scope('conv_2'):
