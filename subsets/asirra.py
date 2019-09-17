@@ -1,5 +1,5 @@
 """
-The Asirra dataset
+The Asirra dataset.
 https://www.kaggle.com/c/dogs-vs-cats
 """
 
