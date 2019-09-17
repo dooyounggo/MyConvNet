@@ -1,13 +1,13 @@
+"""
+The Asirra dataset
+https://www.kaggle.com/c/dogs-vs-cats
+"""
+
 import os
 import csv
 import shutil
 import numpy as np
 import subsets.subset_functions as sf
-
-"""
-The Asirra dataset
-https://www.kaggle.com/c/dogs-vs-cats
-"""
 
 
 def save_as_tfdata(subset_dir, destination_dir, copy=True):
