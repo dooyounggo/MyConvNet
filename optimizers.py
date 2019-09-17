@@ -1,3 +1,7 @@
+"""
+Define optimization operations.
+"""
+
 import os
 import time
 from abc import abstractmethod
