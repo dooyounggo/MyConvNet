@@ -1,3 +1,7 @@
+"""
+Manage datasets using the TensorFlow Data API
+"""
+
 import numpy as np
 import tensorflow as tf
 import csv
