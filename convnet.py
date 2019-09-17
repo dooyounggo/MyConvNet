@@ -7,10 +7,11 @@ ResNet-18 example code: https://github.com/dalgu90/resnet-18-tensorflow
 ResNet with Identity Mappings: https://arxiv.org/abs/1603.05027
 Squeeze-and-Excitation: https://arxiv.org/abs/1709.01507
 Convolutional Block Attention Module: https://arxiv.org/abs/1807.06521
+ResNet-D: https://arxiv.org/abs/1812.01187
 Stochastic Depth: https://arxiv.org/abs/1603.09382
 Monte Carlo Dropout: https://arxiv.org/abs/1506.02142
-ResNet-D: https://arxiv.org/abs/1812.01187
 Bag of Tricks: https://arxiv.org/abs/1812.01187
+CutMix: https://arxiv.org/abs/1905.04899
 """
 
 import time
