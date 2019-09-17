@@ -1,14 +1,14 @@
+"""
+COCO-stuff dataset for image segmentation.
+https://github.com/nightrome/cocostuff
+"""
+
 import os
 import shutil
 import numpy as np
 import subsets.subset_functions as sf
 from skimage.io import imread
 from skimage.io import imsave
-
-"""
-Oxford-IIIT Pet dataset for two-class segmentation
-https://research.sualab.com/practice/2018/11/23/image-segmentation-deep-learning.html
-"""
 
 
 def save_as_tfdata(subset_dir, destination_dir, copy=True):
