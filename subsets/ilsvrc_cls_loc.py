@@ -1,14 +1,14 @@
+"""
+IMAGENET Large Scale Visual Recognition Challenge 2017 dataset for image classification
+http://image-net.org/
+"""
+
 import os
 import csv
 import shutil
 import numpy as np
 import subsets.subset_functions as sf
 import xml.etree.ElementTree as emtree
-
-"""
-IMAGENET Large Scale Visual Recognition Challenge 2017 dataset for image classification
-http://image-net.org/
-"""
 
 class_dict =\
     {0: 'tench, Tinca tinca',
