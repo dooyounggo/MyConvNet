@@ -1,13 +1,14 @@
 """
 Initialize your networks using public checkpoints.
 Define rules to load variables in the checkpoints
+ResNet v2: https://github.com/tensorflow/models/tree/master/research/slim
 """
 
 import tensorflow as tf
 from tensorflow.python import pywrap_tensorflow
 
 
-def resnet_v2_50_101(ckpt_dir, load_moving_average=True):     # https://github.com/tensorflow/models/tree/master/research/slim
+def resnet_v2_50_101(ckpt_dir, load_moving_average=True):
     if ckpt_dir.split('_')[-1] == '50.ckpt':
         prefix = 'resnet_v2_50/'
     else:
