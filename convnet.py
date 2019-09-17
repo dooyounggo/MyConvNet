@@ -1,5 +1,5 @@
 """
-Build convolutional neural networks using TensorFlow low-level APIs
+Build convolutional neural networks using TensorFlow low-level APIs.
 
 ==================== Reference Pages ====================
 Basic code structure: http://research.sualab.com/practice/2018/01/17/image-classification-deep-learning.html
