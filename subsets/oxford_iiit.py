@@ -1,3 +1,8 @@
+"""
+Oxford-IIIT Pet dataset for classification (pre-processed).
+https://research.sualab.com/practice/2018/11/23/image-segmentation-deep-learning.html
+"""
+
 import os
 import csv
 import shutil
@@ -5,11 +10,6 @@ import numpy as np
 import subsets.subset_functions as sf
 from skimage.io import imread
 from skimage.transform import resize
-
-"""
-Oxford-IIIT Pet dataset for classification
-https://research.sualab.com/practice/2018/11/23/image-segmentation-deep-learning.html
-"""
 
 
 def save_as_tfdata(subset_dir, destination_dir, copy=True):
