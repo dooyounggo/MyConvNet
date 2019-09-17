@@ -1,3 +1,7 @@
+"""
+Inference using trained networks.
+"""
+
 import os
 import numpy as np
 import tensorflow as tf
