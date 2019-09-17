@@ -1,5 +1,5 @@
 """
-Manage datasets using the TensorFlow Data API
+Manage datasets using the TensorFlow Data API.
 """
 
 import numpy as np
