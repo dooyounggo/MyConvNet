@@ -1,14 +1,13 @@
+"""
+Caltech-UCSD Birds-200-2011 dataset for classification
+http://www.vision.caltech.edu/visipedia/CUB-200-2011.html
+"""
+
 import os
 import csv
 import shutil
 import numpy as np
 import subsets.subset_functions as sf
-from skimage.io import imread
-
-"""
-Caltech-UCSD Birds-200-2011 dataset for classification
-http://www.vision.caltech.edu/visipedia/CUB-200-2011.html
-"""
 
 
 def save_as_tfdata(subset_dir, destination_dir, copy=True):
