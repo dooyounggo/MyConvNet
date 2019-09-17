@@ -1,5 +1,5 @@
 """
-IMAGENET Large Scale Visual Recognition Challenge 2017 dataset for image classification
+IMAGENET Large Scale Visual Recognition Challenge 2017 dataset for image classification.
 http://image-net.org/
 """
 
