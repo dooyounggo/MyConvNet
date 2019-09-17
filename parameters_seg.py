@@ -1,3 +1,7 @@
+"""
+Setup various (hyper)parameters
+"""
+
 import os
 import tensorflow as tf
 import subsets.oxford_iiit_two_class_seg as subset
@@ -7,9 +11,6 @@ from models.init_from_checkpoint import resnet_v2_50_101 as init_from_pretrained
 
 
 class Parameters(object):
-    """
-    Parameter initialization
-    """
     # FIXME: Image parameters
     _root_dir = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))     # Parent directory  # FIXME
     _train_dir = os.path.join(_root_dir, 'tfdatasets/oxford-iiit-pet-dataset-sualab/train')
