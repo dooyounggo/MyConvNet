@@ -1,3 +1,8 @@
+"""
+Various utility functions.
+The code may be quite messy.
+"""
+
 import os
 import pickle as pkl
 import numpy as np
