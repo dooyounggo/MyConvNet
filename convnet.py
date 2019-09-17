@@ -10,6 +10,7 @@ Convolutional Block Attention Module: https://arxiv.org/abs/1807.06521
 Stochastic Depth: https://arxiv.org/abs/1603.09382
 Monte Carlo Dropout: https://arxiv.org/abs/1506.02142
 ResNet-D: https://arxiv.org/abs/1812.01187
+Bag of Tricks: https://arxiv.org/abs/1812.01187
 """
 
 import time
