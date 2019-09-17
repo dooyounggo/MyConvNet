@@ -1,3 +1,8 @@
+"""
+Model evaluation methods.
+Includes accuracy, IoU, etc.
+"""
+
 from abc import abstractmethod, abstractproperty
 import numpy as np
 from sklearn.metrics import accuracy_score
