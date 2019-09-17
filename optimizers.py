@@ -443,11 +443,11 @@ class Optimizer(object):
             if self.decay_method is not None:
                 if self.decay_method.lower() == 'step':  # params: (decay_factor, decay_epoch_0, decay_epoch_1, ...)
                     if self.learning_rate_update < len(self.decay_params) - 1:
-                        while self.curr_epoch >= self.decay_params[self.learning_rate_update + 1]:
+                        while (self.curr_epoch - self.warmup_epoch) >= self.decay_params[self.learning_rate_update + 1]:
                             self.curr_learning_rate *= self.decay_params[0]
                             self.learning_rate_update += 1
                 elif self.decay_method.lower() == 'exponential':  # params: (decay_factor, decay_every_n_epoch)
-                    while self.curr_epoch//self.decay_params[1] > self.learning_rate_update:
+                    while (self.curr_epoch - self.warmup_epoch)//self.decay_params[1] > self.learning_rate_update:
                         self.curr_learning_rate *= self.decay_params[0]
                         self.learning_rate_update += 1
                 else:  # 'cosine': no parameter required
