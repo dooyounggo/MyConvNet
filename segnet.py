@@ -1,4 +1,5 @@
 """
+Build segmentation networks using TensorFlow low-level APIs.
 ==================== Reference Pages ====================
 GCN: https://arxiv.org/abs/1703.02719
 """
