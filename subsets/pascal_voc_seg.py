@@ -1,3 +1,8 @@
+"""
+PASCAL VOC dataset for segmentation.
+http://host.robots.ox.ac.uk/pascal/VOC/
+"""
+
 import os
 import shutil
 import numpy as np
@@ -6,10 +11,6 @@ from skimage.io import imread
 from skimage.io import imsave
 from skimage.transform import resize
 
-"""
-PASCAL VOC dataset for segmentation
-http://host.robots.ox.ac.uk/pascal/VOC/
-"""
 
 VOC_COLORMAP = [[0, 0, 0], [128, 0, 0], [0, 128, 0], [128, 128, 0],
                 [0, 0, 128], [128, 0, 128], [0, 128, 128], [128, 128, 128],
