@@ -1,3 +1,8 @@
+"""
+Initialize your networks using public checkpoints.
+Define rules to load variables in the checkpoints
+"""
+
 import tensorflow as tf
 from tensorflow.python import pywrap_tensorflow
 
