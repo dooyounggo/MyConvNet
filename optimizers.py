@@ -56,7 +56,7 @@ class Optimizer(object):
         self.curr_epoch = 1
         self.best_score = self.evaluator.worst_score
         self.learning_rate_update = 0
-        self.curr_learning_rate = 0
+        self.curr_learning_rate = self.init_learning_rate
 
     @abstractmethod
     def _optimizer(self, **kwargs):
