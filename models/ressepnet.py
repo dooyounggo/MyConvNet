@@ -2,16 +2,17 @@ import tensorflow as tf
 from models.rescbamnet import ResCBAMNet
 
 
-class ResSepNet(ResCBAMNet):        # ResNet-50 with separable convolutions and CBAMs
+class ResSepNet(ResCBAMNet):
     def _init_params(self):
         self.channels = [32, 24, 32, 64, 128, 256, 2048]
         self.kernels = [3, 3, 5, 5, 5, 5]
         self.strides = [2, 1, 2, 2, 2, 2]
-        self.res_units = [3, 2, 4, 6, 1]
-        self.multipliers = [2, 3, 4, 5, 4]
+        self.res_units = [2, 2, 3, 3, 1]
+        self.multipliers = [3, 4, 5, 5, 2]
+        self.convs = [3, 3, 4, 4, 2]
 
         self.cam_ratio = 4
-        self.sam_kernel = 5
+        self.sam_kernel = 7
 
         self.pool_type = 'MAX'  # 'MAX', 'AVG', 'CONV'
 
@@ -30,13 +31,15 @@ class ResSepNet(ResCBAMNet):        # ResNet-50 with separable convolutions and 
         strides = self.strides
         res_units = self.res_units
         multipliers = self.multipliers
+        convs = self.convs
 
-        len_c = len(channels)
+        len_c = len(channels) - 1
         len_k = len(kernels)
         len_s = len(strides)
         len_r = len(res_units) + 1
         len_m = len(multipliers) + 1
-        self._num_blocks = min([len_c, len_k, len_s, len_r, len_m])
+        len_v = len(convs) + 1
+        self._num_blocks = min([len_c, len_k, len_s, len_r, len_m, len_v])
 
         with tf.variable_scope('block_0'):
             with tf.variable_scope('conv_0'):
@@ -58,7 +61,7 @@ class ResSepNet(ResCBAMNet):        # ResNet-50 with separable convolutions and 
                     s = 1
                 else:
                     s = strides[i]
-                x = self._res_unit(x, kernels[i], s, channels[i], multipliers[i - 1], d,
+                x = self._res_unit(x, kernels[i], s, channels[i], multipliers[i - 1], convs[i - 1], d,
                                    drop_rate=dr, name='block_{}/res_{}'.format(i, j))
             d['block_{}'.format(self._curr_block)] = x
 
@@ -90,7 +93,7 @@ class ResSepNet(ResCBAMNet):        # ResNet-50 with separable convolutions and 
 
         return d
 
-    def _res_unit(self, x, kernel, stride, out_channels, multipliers, d, drop_rate=0.0, name='res_unit'):
+    def _res_unit(self, x, kernel, stride, out_channels, multipliers, convs, d, drop_rate=0.0, name='res_unit'):
         in_channels = x.get_shape()[1] if self.channel_first else x.get_shape()[-1]
         if not isinstance(kernel, (list, tuple)):
             kernel = [kernel, kernel]
@@ -138,8 +141,11 @@ class ResSepNet(ResCBAMNet):        # ResNet-50 with separable convolutions and 
                 else:
                     pool = tf.zeros_like(x, dtype=self.dtype)
 
-                x = self.conv_layer(x, kernel, stride, out_channels*multipliers,
-                                    padding='SAME', biased=False, depthwise=True)
+                for i in range(convs):
+                    with tf.variable_scope('conv_{}'.format(i)):
+                        s = stride if i == 0 else 1
+                        x = self.conv_layer(x, kernel, s, out_channels*multipliers,
+                                            padding='SAME', biased=False, depthwise=True)
                 print(name + '/conv_1.shape', x.get_shape().as_list())
                 d[name + '/conv_1'] = x
 
@@ -175,20 +181,20 @@ class ResSepNet(ResCBAMNet):        # ResNet-50 with separable convolutions and 
         return x
 
 
-class ResSepNet27(ResSepNet):
+class ResSepNetS(ResSepNet):
     def _init_params(self):
         super()._init_params()
         self.channels = [32, 24, 24, 48, 96, 192, 2048]
-        self.res_units = [1, 1, 2, 3, 1]
+        self.res_units = [1, 1, 2, 2, 1]
 
 
-class ResSepNet51(ResSepNet):
+class ResSepNetM(ResSepNet):
     def _init_params(self):
         super()._init_params()
 
 
-class ResSepNet99(ResSepNet):
+class ResSepNetL(ResSepNet):
     def _init_params(self):
         super()._init_params()
         self.channels = [32, 24, 48, 96, 192, 384, 2048]
-        self.res_units = [6, 4, 8, 12, 2]
+        self.res_units = [3, 3, 5, 6, 2]
