@@ -798,7 +798,7 @@ class ConvNet(object):
         else:
             return weights
 
-    def bias_variable(self, shape, value=0.0, name='biases'):
+    def bias_variable(self, shape, init_value=0.0, name='biases'):
         if self.blocks_to_train is None:
             trainable = True
         elif self._curr_block in self.blocks_to_train:
@@ -806,11 +806,9 @@ class ConvNet(object):
         else:
             trainable = False
 
-        bias_shape = shape[1] if self.channel_first else shape[-1]
-
         with tf.device('/cpu:0'):
-            biases = tf.get_variable(name, bias_shape, tf.float32,
-                                     initializer=tf.constant_initializer(value=value),
+            biases = tf.get_variable(name, shape, tf.float32,
+                                     initializer=tf.constant_initializer(value=init_value),
                                      trainable=trainable)
 
             if not tf.get_variable_scope().reuse:
@@ -829,7 +827,7 @@ class ConvNet(object):
         if self.dtype is not tf.float32:
             biases = tf.cast(biases, dtype=self.dtype)
 
-        return tf.reshape(biases, shape)
+        return biases
 
     def max_pool(self, x, side_l, stride, padding='SAME'):
         if not isinstance(side_l, list):
@@ -932,32 +930,31 @@ class ConvNet(object):
             weights = self.weight_variable([kernel[0], kernel[1], in_channels, channel_multiplier],
                                            stddev=weights_stddev,
                                            name='weights')
-            conv = tf.nn.depthwise_conv2d(x, weights, strides=conv_strides, padding=padding,
-                                          data_format=data_format, rate=dilation)
+            convs = tf.nn.depthwise_conv2d(x, weights, strides=conv_strides, padding=padding,
+                                           data_format=data_format, rate=dilation)
 
             if not tf.get_variable_scope().reuse:
                 self._flops += out_size[0]*out_size[1]*kernel[0]*kernel[1]*in_channels*channel_multiplier
                 self._params += kernel[0]*kernel[1]*in_channels*channel_multiplier
         else:
             weights = self.weight_variable([kernel[0], kernel[1], in_channels, out_channels], stddev=weights_stddev)
-            conv = tf.nn.conv2d(x, weights, strides=conv_strides, padding=padding,
-                                data_format=data_format, dilations=conv_dilations)
+            convs = tf.nn.conv2d(x, weights, strides=conv_strides, padding=padding,
+                                 data_format=data_format, dilations=conv_dilations)
 
             if not tf.get_variable_scope().reuse:
                 self._flops += out_size[0]*out_size[1]*kernel[0]*kernel[1]*in_channels*out_channels
                 self._params += kernel[0]*kernel[1]*in_channels*out_channels
 
         if biased:
-            bias_shape = [1, out_channels, 1, 1] if self.channel_first else [1, 1, 1, out_channels]
-            biases = self.bias_variable(bias_shape, value=biases_value)
+            biases = self.bias_variable(out_channels, init_value=biases_value)
 
             if not tf.get_variable_scope().reuse:
                 self._flops += out_size[0]*out_size[1]*out_channels
                 self._params += out_channels
         else:
-            biases = tf.constant(0.0, dtype=tf.float32, name='0')
+            biases = tf.zeros(out_channels, dtype=self.dtype)
 
-        return conv + biases
+        return tf.nn.bias_add(convs, biases, data_format=data_format)
 
     def fc_layer(self, x, out_dim, biased=True, **kwargs):
         weights_stddev = kwargs.get('weights_stddev', None)
@@ -971,7 +968,7 @@ class ConvNet(object):
             self._params += in_dim*out_dim
 
         if biased:
-            biases = self.bias_variable([1, out_dim], value=biases_value)
+            biases = self.bias_variable(out_dim, init_value=biases_value)
 
             if not tf.get_variable_scope().reuse:
                 self._flops += out_dim
@@ -1146,24 +1143,23 @@ class ConvNet(object):
         biases_value = kwargs.get('biases_value', 0.0)
 
         weights = self.weight_variable([kernel[0], kernel[1], in_channels, out_channels], stddev=weights_stddev)
-        conv = tf.nn.conv2d_transpose(x, weights, output_shape=output_shape, strides=conv_strides,
-                                      padding=padding, data_format=data_format, dilations=conv_dilations)
+        convs = tf.nn.conv2d_transpose(x, weights, output_shape=output_shape, strides=conv_strides,
+                                       padding=padding, data_format=data_format, dilations=conv_dilations)
 
         if not tf.get_variable_scope().reuse:
             self._flops += out_size[0]*out_size[1]*kernel[0]*kernel[1]*in_channels*out_channels
             self._params += (kernel[0]*kernel[1]*in_channels)*out_channels
 
         if biased:
-            bias_shape = [1, out_channels, 1, 1] if self.channel_first else [1, 1, 1, out_channels]
-            biases = self.bias_variable(bias_shape, value=biases_value)
+            biases = self.bias_variable(out_channels, init_value=biases_value)
 
             if not tf.get_variable_scope().reuse:
                 self._flops += out_size[0]*out_size[1]*out_channels
                 self._params += out_channels
         else:
-            biases = tf.constant(0.0, dtype=tf.float32, name='0')
+            biases = tf.zeros(out_channels, dtype=self.dtype)
 
-        return conv + biases
+        return tf.nn.bias_add(convs, biases, data_format=data_format)
 
     def relu(self, x, name='relu'):
         if not tf.get_variable_scope().reuse:
