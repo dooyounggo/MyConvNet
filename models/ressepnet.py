@@ -66,12 +66,14 @@ class ResSepNet(ResCBAMNet):  # Based on EfficientNet + CBAM
             self._curr_block = None
             with tf.variable_scope('block_{}'.format(self._curr_block)):
                 with tf.variable_scope('logits'):
-                    with tf.variable_scope('conv'):
+                    with tf.variable_scope('conv_0'):
                         x = self.conv_layer(x, 1, 1, self.channels[-1], padding='SAME', biased=False, depthwise=False)
-                    x = self.batch_norm(x, shift=True, scale=True, is_training=self.is_train, scope='bn')
-                    d['logits' + '/bn'] = x
-                    x = self.relu(x, name='relu')
-                    d['logits' + '/relu'] = x
+                        print('logits' + '/conv_0.shape', x.get_shape().as_list())
+                        d['logits' + '/conv_0'] = x
+                        x = self.batch_norm(x, shift=True, scale=True, is_training=self.is_train, scope='bn')
+                        d['logits' + 'conv_0' + '/bn'] = x
+                        x = self.relu(x, name='relu')
+                        d['logits' + 'conv_0' + '/relu'] = x
 
                     axis = [2, 3] if self.channel_first else [1, 2]
                     avgpool = tf.reduce_mean(x, axis=axis)
