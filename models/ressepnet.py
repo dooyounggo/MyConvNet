@@ -152,11 +152,11 @@ class ResSepNet(ResCBAMNet):  # Based on EfficientNet + CBAM
 
             channel_mask = self._channel_mask(x, self.cam_ratio, name='channel_mask')
             d[name + '/channel_mask'] = channel_mask
-            x = x * channel_mask
+            x = x*channel_mask
 
             spatial_mask = self._spatial_mask(x, self.sam_kernel, name='spatial_mask')
             d[name + '/spatial_mask'] = spatial_mask
-            x = x * spatial_mask
+            x = x*spatial_mask
 
             with tf.variable_scope('conv_2'):
                 x = self.conv_layer(x, 1, 1, out_channels, padding='SAME', biased=False, depthwise=False)
@@ -164,8 +164,8 @@ class ResSepNet(ResCBAMNet):  # Based on EfficientNet + CBAM
                 d[name + '/conv_2'] = x
                 x = self.batch_norm(x, shift=True, scale=True, is_training=self.is_train, scope='bn')
                 d[name + '/conv_2' + '/bn'] = x
-                x = self.swish(x, name='swish')
-                d[name + '/conv_2' + '/swish'] = x
+                # x = self.swish(x, name='swish')
+                # d[name + '/conv_2' + '/swish'] = x
 
             x = skip + x*survival
             d[name] = x
