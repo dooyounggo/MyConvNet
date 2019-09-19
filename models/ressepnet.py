@@ -1,5 +1,4 @@
 import tensorflow as tf
-import numpy as np
 from models.rescbamnet import ResCBAMNet
 
 
@@ -170,26 +169,6 @@ class ResSepNet(ResCBAMNet):  # Based on EfficientNet + CBAM
 
             x = skip + x*survival
             d[name] = x
-
-        return x
-
-    def _refinement_unit(self, x):
-        in_shape = x.get_shape()
-        channels = in_shape[1] if self.channel_first else in_shape[-2]
-        multipliers = in_shape[-1]
-
-        w = self.weight_variable((channels, multipliers))
-        w = tf.expand_dims(w, axis=0)
-        if self.channel_first:
-            while len(w.get_shape()) < len(in_shape):
-                w = tf.expand_dims(w, axis=-2)
-        x = w*x
-        x = self.swish(x, name='swish')
-        x = tf.reduce_sum(x, axis=-1)
-
-        if not tf.get_variable_scope().reuse:
-            self._flops += np.prod(in_shape[1:])
-            self._params += channels*multipliers
 
         return x
 
