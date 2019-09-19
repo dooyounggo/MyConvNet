@@ -1,15 +1,15 @@
 import tensorflow as tf
+import numpy as np
 from models.rescbamnet import ResCBAMNet
 
 
-class ResSepNet(ResCBAMNet):
+class ResSepNet(ResCBAMNet):  # Based on EfficientNet + CBAM
     def _init_params(self):
-        self.channels = [32, 24, 32, 64, 128, 256, 2048]
-        self.kernels = [3, 3, 5, 5, 5, 5]
-        self.strides = [2, 1, 2, 2, 2, 2]
-        self.res_units = [2, 2, 3, 3, 1]
-        self.multipliers = [3, 4, 5, 5, 2]
-        self.convs = [3, 3, 4, 4, 2]
+        self.channels = [32, 16, 24, 40, 80, 112, 192, 320, 1280]
+        self.kernels = [3, 3, 3, 5, 3, 5, 5, 3]
+        self.strides = [2, 1, 2, 2, 2, 1, 2, 1]
+        self.res_units = [1, 2, 2, 3, 3, 4, 1]
+        self.multipliers = [1, 2, 3, 4, 5, 6, 4]
 
         self.cam_ratio = 4
         self.sam_kernel = 7
@@ -31,15 +31,13 @@ class ResSepNet(ResCBAMNet):
         strides = self.strides
         res_units = self.res_units
         multipliers = self.multipliers
-        convs = self.convs
 
         len_c = len(channels) - 1
         len_k = len(kernels)
         len_s = len(strides)
         len_r = len(res_units) + 1
         len_m = len(multipliers) + 1
-        len_v = len(convs) + 1
-        self._num_blocks = min([len_c, len_k, len_s, len_r, len_m, len_v])
+        self._num_blocks = min([len_c, len_k, len_s, len_r, len_m])
 
         with tf.variable_scope('block_0'):
             with tf.variable_scope('conv_0'):
@@ -61,7 +59,7 @@ class ResSepNet(ResCBAMNet):
                     s = 1
                 else:
                     s = strides[i]
-                x = self._res_unit(x, kernels[i], s, channels[i], multipliers[i - 1], convs[i - 1], d,
+                x = self._res_unit(x, kernels[i], s, channels[i], multipliers[i - 1], d,
                                    drop_rate=dr, name='block_{}/res_{}'.format(i, j))
             d['block_{}'.format(self._curr_block)] = x
 
@@ -93,7 +91,7 @@ class ResSepNet(ResCBAMNet):
 
         return d
 
-    def _res_unit(self, x, kernel, stride, out_channels, multipliers, convs, d, drop_rate=0.0, name='res_unit'):
+    def _res_unit(self, x, kernel, stride, out_channels, multipliers, d, drop_rate=0.0, name='res_unit'):
         in_channels = x.get_shape()[1] if self.channel_first else x.get_shape()[-1]
         if not isinstance(kernel, (list, tuple)):
             kernel = [kernel, kernel]
@@ -139,62 +137,77 @@ class ResSepNet(ResCBAMNet):
                         pool = self.conv_layer(x, kernel, stride, out_channels,
                                                padding='SAME', biased=False, depthwise=True)
                 else:
-                    pool = tf.zeros_like(x, dtype=self.dtype)
+                    pool = self.avg_pool(tf.zeros_like(x, dtype=self.dtype), kernel, stride, padding='SAME')
 
-                for i in range(convs):
+                convs = [pool]
+                for i in range(multipliers):
                     with tf.variable_scope('conv_{}'.format(i)):
-                        s = stride if i == 0 else 1
-                        x = self.conv_layer(x, kernel, s, out_channels*multipliers,
+                        c = self.conv_layer(x, kernel, stride, out_channels,
                                             padding='SAME', biased=False, depthwise=True)
+                        c = self.batch_norm(c, shift=True, scale=True, is_training=self.is_train, scope='bn')
+                        c = self.swish(c, name='swish')
+                        convs.append(c)
+                x = tf.add_n(convs)
                 print(name + '/conv_1.shape', x.get_shape().as_list())
                 d[name + '/conv_1'] = x
 
-                axis = 1 if self.channel_first else -1
-
-                x = tf.concat([x, pool], axis=axis)
-                x = self.batch_norm(x, shift=True, scale=True, is_training=self.is_train, scope='bn')
-                d[name + '/conv_1' + '/bn'] = x
-                x = self.swish(x, name='swish')
-                d[name + '/conv_1' + '/swish'] = x
-
             channel_mask = self._channel_mask(x, self.cam_ratio, name='channel_mask')
             d[name + '/channel_mask'] = channel_mask
-            x = x*channel_mask
+            x = x * channel_mask
+
+            spatial_mask = self._spatial_mask(x, self.sam_kernel, name='spatial_mask')
+            d[name + '/spatial_mask'] = spatial_mask
+            x = x * spatial_mask
 
             with tf.variable_scope('conv_2'):
                 x = self.conv_layer(x, 1, 1, out_channels, padding='SAME', biased=False, depthwise=False)
                 print(name + '/conv_2.shape', x.get_shape().as_list())
                 d[name + '/conv_2'] = x
-                x = self.batch_norm(x, shift=True, scale=True, is_training=self.is_train,
-                                    zero_scale_init=True, scope='bn')
+                x = self.batch_norm(x, shift=True, scale=True, is_training=self.is_train, scope='bn')
                 d[name + '/conv_2' + '/bn'] = x
                 x = self.swish(x, name='swish')
                 d[name + '/conv_2' + '/swish'] = x
-
-            spatial_mask = self._spatial_mask(x, self.sam_kernel, name='spatial_mask')
-            d[name + '/spatial_mask'] = spatial_mask
-            x = x*spatial_mask
 
             x = skip + x*survival
             d[name] = x
 
         return x
 
+    def _refinement_unit(self, x):
+        in_shape = x.get_shape()
+        channels = in_shape[1] if self.channel_first else in_shape[-2]
+        multipliers = in_shape[-1]
 
-class ResSepNetS(ResSepNet):
+        w = self.weight_variable((channels, multipliers))
+        w = tf.expand_dims(w, axis=0)
+        if self.channel_first:
+            while len(w.get_shape()) < len(in_shape):
+                w = tf.expand_dims(w, axis=-2)
+        x = w*x
+        x = self.swish(x, name='swish')
+        x = tf.reduce_sum(x, axis=-1)
+
+        if not tf.get_variable_scope().reuse:
+            self._flops += np.prod(in_shape[1:])
+            self._params += channels*multipliers
+
+        return x
+
+
+class ResSepNetS(ResSepNet):  # B0
     def _init_params(self):
         super()._init_params()
-        self.channels = [32, 24, 24, 48, 96, 192, 2048]
-        self.res_units = [1, 1, 2, 2, 1]
 
 
-class ResSepNetM(ResSepNet):
+class ResSepNetM(ResSepNet):  # B4
     def _init_params(self):
         super()._init_params()
+        self.channels = [48, 24, 40, 56, 112, 160, 272, 448, 1792]
+        self.res_units = [2, 4, 4, 6, 6, 8, 2]
 
 
-class ResSepNetL(ResSepNet):
+class ResSepNetL(ResSepNet):  # B7
     def _init_params(self):
         super()._init_params()
-        self.channels = [32, 24, 48, 96, 192, 384, 2048]
-        self.res_units = [3, 3, 5, 6, 2]
+        self.channels = [64, 32, 48, 80, 160, 224, 384, 640, 2560]
+        self.res_units = [4, 7, 7, 10, 10, 13, 4]
