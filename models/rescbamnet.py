@@ -9,7 +9,7 @@ class ResCBAMNet(ResNetBot):    # Residual networks with Convolutional Block Att
         self.strides = [2, 1, 2, 2, 2]
         self.res_units = [3, 4, 6, 3]
 
-        self.cam_ratio = 4
+        self.cam_ratio = 8
         self.sam_kernel = 7
 
     def _build_model(self, **kwargs):
