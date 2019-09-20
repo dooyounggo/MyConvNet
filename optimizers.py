@@ -45,7 +45,8 @@ class Optimizer(object):
 
         self.update_vars = tf.trainable_variables()
         self.update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-        self.learning_rate = tf.placeholder(self.model.dtype, name='learning_rate')
+        self.learning_rate_multiplier = tf.placeholder(dtype=tf.float32, name='learning_rate_multiplier')
+        self.learning_rate = self.init_learning_rate*self.learning_rate_multiplier
 
         self.optimization_operation = self._optimize_and_update(self._optimizer(**kwargs), **kwargs)
 
@@ -56,7 +57,7 @@ class Optimizer(object):
         self.curr_epoch = 1
         self.best_score = self.evaluator.worst_score
         self.learning_rate_update = 0
-        self.curr_learning_rate = self.init_learning_rate
+        self.curr_multiplier = 1.0
 
     @abstractmethod
     def _optimizer(self, **kwargs):
@@ -69,6 +70,7 @@ class Optimizer(object):
     def _optimize_and_update(self, optimizer, **kwargs):
         gradient_threshold = kwargs.get('gradient_threshold', 5.0)
         loss_scaling_factor = kwargs.get('loss_scaling_factor', 1.0)
+        weight_decay = kwargs.get('weight_decay', 0.0)
 
         tower_grads = []
         with tf.variable_scope(tf.get_variable_scope()):
@@ -113,8 +115,14 @@ class Optimizer(object):
 
                 avg_grads_and_vars = [gv for gv in zip(avg_grads, avg_vars)]
 
+        if weight_decay > 0.0:
+            variables = tf.get_collection('weight_variables')
+            for var in variables:
+                if var.trainable:
+                    self.update_ops.append(var.assign_sub(self.learning_rate_multiplier*weight_decay*var))
         with tf.control_dependencies(self.model.update_ops):
-            opt_op = tf.group(*([optimizer.apply_gradients(avg_grads_and_vars)] + self.update_ops))
+            with tf.control_dependencies([optimizer.apply_gradients(avg_grads_and_vars)]):
+                opt_op = tf.group(self.update_ops)
         return opt_op
 
     def train(self, save_dir='./tmp', transfer_dir=None, details=False, verbose=True, show_each_step=True, **kwargs):
@@ -328,7 +336,7 @@ class Optimizer(object):
                               '|Eval loss: {:.6f}  |Eval score: {:2.2%}  |LR: {:.6f}  '
                               '|Elapsed time: {:5.0f} sec'
                               .format(self.curr_epoch, self.num_epochs, step_loss, step_score,
-                                      eval_loss, eval_score, self.curr_learning_rate,
+                                      eval_loss, eval_score, self.init_learning_rate*self.curr_multiplier,
                                       time.time() - start_time))
                     if len(eval_losses) > 0:
                         if show_each_step:
@@ -349,7 +357,7 @@ class Optimizer(object):
                         print('[epoch {}/{}]\tTrain loss: {:.6f}  |Train score: {:2.2%}  |LR: {:.6f}  '
                               '|Elapsed time: {:5.0f} sec'
                               .format(self.curr_epoch, self.num_epochs, step_loss, step_score,
-                                      self.curr_learning_rate, time.time() - start_time))
+                                      self.curr_multiplier, time.time() - start_time))
                     plot_learning_curve(step_losses, step_scores, eval_losses=None, eval_scores=None,
                                         name=self.evaluator.name,
                                         loss_threshold=max([self.evaluator.loss_threshold, min(step_losses)*2]),
@@ -378,7 +386,7 @@ class Optimizer(object):
         feed_dict = {self.model.is_train: True,
                      self.model.monte_carlo: self.monte_carlo,
                      self.model.augmentation: self.augment_train,
-                     self.learning_rate: self.curr_learning_rate}
+                     self.learning_rate_multiplier: self.curr_multiplier}
         for h_t, h in zip(self.model.handles, handles):
             feed_dict.update({h_t: h})
 
@@ -410,7 +418,7 @@ class Optimizer(object):
         feed_dict = {self.model.is_train: True,
                      self.model.monte_carlo: False,
                      self.model.augmentation: True,
-                     self.learning_rate: 0.0}
+                     self.learning_rate_multiplier: 0.0}
         for h_t, h in zip(self.model.handles, handles):
             feed_dict.update({h_t: h})
 
@@ -438,23 +446,22 @@ class Optimizer(object):
     def _update_learning_rate(self):  # Learning rate decay
         warmup_steps = np.around(self.warmup_epoch*self.steps_per_epoch)
         if self.curr_step < warmup_steps:
-            self.curr_learning_rate = (self.curr_step + 1)/warmup_steps*self.init_learning_rate
+            self.curr_multiplier = (self.curr_step + 1)/warmup_steps
         else:
             if self.decay_method is not None:
                 if self.decay_method.lower() == 'step':  # params: (decay_factor, decay_epoch_0, decay_epoch_1, ...)
                     if self.learning_rate_update < len(self.decay_params) - 1:
                         while (self.curr_epoch - self.warmup_epoch - 1) \
                                 >= self.decay_params[self.learning_rate_update + 1]:
-                            self.curr_learning_rate *= self.decay_params[0]
+                            self.curr_multiplier *= self.decay_params[0]
                             self.learning_rate_update += 1
                 elif self.decay_method.lower() == 'exponential':  # params: (decay_factor, decay_every_n_epoch)
                     while (self.curr_epoch - self.warmup_epoch - 1)//self.decay_params[1] > self.learning_rate_update:
-                        self.curr_learning_rate *= self.decay_params[0]
+                        self.curr_multiplier *= self.decay_params[0]
                         self.learning_rate_update += 1
                 else:  # 'cosine': no parameter required
                     total_steps = self.steps_per_epoch*self.num_epochs - warmup_steps
-                    self.curr_learning_rate = 0.5*(1 + np.cos((self.curr_step - warmup_steps)*np.pi/total_steps)
-                                                   )*self.init_learning_rate
+                    self.curr_multiplier = 0.5 * (1 + np.cos((self.curr_step - warmup_steps)*np.pi/total_steps))
 
 
 class MomentumOptimizer(Optimizer):
