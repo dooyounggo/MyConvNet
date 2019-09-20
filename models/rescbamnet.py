@@ -33,21 +33,22 @@ class ResCBAMNet(ResNetBot):    # Residual networks with Convolutional Block Att
 
         with tf.variable_scope('block_0'):
             with tf.variable_scope('conv_0'):
-                x = self.conv_layer(X_input, kernels[0], strides[0], channels[0]//2, padding='SAME')
-                print('block_0' + '/conv_0.shape', x.get_shape().as_list())
-                d['block_0' + '/conv_0'] = x
-            with tf.variable_scope('conv_1'):
-                x = self.conv_layer(X_input, kernels[0], 1, channels[0]//2, padding='SAME')
-                print('block_0' + '/conv_1.shape', x.get_shape().as_list())
-                d['block_0' + '/conv_1'] = x
-            with tf.variable_scope('conv_2'):
-                x = self.conv_layer(X_input, kernels[0], 1, channels[0], padding='SAME')
-                print('block_0' + '/conv_2.shape', x.get_shape().as_list())
-                d['block_0' + '/conv_2'] = x
-            x = self.relu(x, name='relu')
-            d['block_0' + '/relu'] = x
-            x = self.max_pool(x, 3, 2, padding='SAME')
-            d['block_0' + '/maxpool'] = x
+                with tf.variable_scope('conv_0'):
+                    x = self.conv_layer(X_input, kernels[0], strides[0], channels[0]//2, padding='SAME')
+                    print('block_0' + '/conv_0' + '/conv_0.shape', x.get_shape().as_list())
+                    d['block_0' + '/conv_0' + '/conv_0'] = x
+                with tf.variable_scope('conv_1'):
+                    x = self.conv_layer(x, kernels[0], 1, channels[0]//2, padding='SAME')
+                    print('block_0' + '/conv_0' + '/conv_1.shape', x.get_shape().as_list())
+                    d['block_0' + '/conv_0' + '/conv_1'] = x
+                with tf.variable_scope('conv_2'):
+                    x = self.conv_layer(x, kernels[0], 1, channels[0], padding='SAME')
+                    print('block_0' + '/conv_0' + '/conv_2.shape', x.get_shape().as_list())
+                    d['block_0' + '/conv_0' + '/conv_2'] = x
+                x = self.relu(x, name='relu')
+                d['block_0' + '/conv_0' + '/relu'] = x
+                x = self.max_pool(x, 3, 2, padding='SAME')
+                d['block_0' + '/conv_0' + '/maxpool'] = x
             d['block_0'] = x
 
         for i in range(1, self.num_blocks):
