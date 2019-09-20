@@ -461,7 +461,7 @@ class Optimizer(object):
                         self.learning_rate_update += 1
                 else:  # 'cosine': no parameter required
                     total_steps = self.steps_per_epoch*self.num_epochs - warmup_steps
-                    self.curr_multiplier = 0.5 * (1 + np.cos((self.curr_step - warmup_steps)*np.pi/total_steps))
+                    self.curr_multiplier = 0.5*(1 + np.cos((self.curr_step - warmup_steps)*np.pi/total_steps))
 
 
 class MomentumOptimizer(Optimizer):
