@@ -269,9 +269,6 @@ class ConvNet(object):
         print('\nLoss weights: ', w)
 
         with tf.variable_scope('loss'):
-            l1_factor = tf.constant(l1_factor, dtype=tf.float32, name='L1_factor')
-            l2_factor = tf.constant(l2_factor, dtype=tf.float32, name='L2_factor')
-            ls_factor = tf.constant(ls_factor, dtype=tf.float32, name='label_smoothing_factor')
             w = tf.constant(w, dtype=tf.float32, name='class_weights')
             w = tf.expand_dims(w, axis=0)
             if self.channel_first:
@@ -285,19 +282,28 @@ class ConvNet(object):
             batch_weights = tf.reduce_sum(self.Y*w, axis=axis)
 
             with tf.variable_scope('l1_loss'):
-                # l1_reg_loss = l1_factor * tf.add_n([tf.reduce_sum(tf.abs(var)) for var in variables])
-                l1_reg_loss = tf.constant(0.0, dtype=tf.float32, name='0')
+                if l1_factor > 0.0:
+                    l1_factor = tf.constant(l1_factor, dtype=tf.float32, name='L1_factor')
+                    l1_reg_loss = l1_factor*tf.add_n([tf.reduce_sum(tf.abs(var)) for var in variables])
+                else:
+                    l1_reg_loss = tf.constant(0.0, dtype=tf.float32, name='0')
             with tf.variable_scope('l2_loss'):
-                l2_reg_loss = l2_factor*tf.math.accumulate_n([tf.nn.l2_loss(var) for var in variables])
+                if l2_factor > 0.0:
+                    l2_factor = tf.constant(l2_factor, dtype=tf.float32, name='L2_factor')
+                    l2_reg_loss = l2_factor*tf.math.accumulate_n([tf.nn.l2_loss(var) for var in variables])
+                else:
+                    l2_reg_loss = tf.constant(0.0, dtype=tf.float32, name='0')
+
+            if ls_factor > 0.0:
+                with tf.variable_scope('label_smoothing'):
+                    ls_factor = tf.constant(ls_factor, dtype=tf.float32, name='label_smoothing_factor')
+                    labels = self.Y*(1.0 - ls_factor) + ls_factor/self.num_classes
 
             with tf.variable_scope('valid_mask'):
                 sumval = tf.reduce_sum(self.Y, axis=axis)
                 valid_g = tf.greater(sumval, 1.0 - valid_eps)
                 valid_l = tf.less(sumval, 1.0 + valid_eps)
                 valid = tf.cast(tf.logical_and(valid_g, valid_l), dtype=tf.float32)
-
-            with tf.variable_scope('label_smoothing'):
-                labels = self.Y*(1.0 - ls_factor) + ls_factor/self.num_classes
 
             softmax_losses = tf.nn.softmax_cross_entropy_with_logits_v2(labels=labels, logits=self.logits, axis=axis)
             softmax_loss = tf.reduce_mean(batch_weights*valid*softmax_losses)
