@@ -10,7 +10,7 @@ class ResSepNet(ResCBAMNet):  # Based on EfficientNet + CBAM
         self.res_units = [1, 2, 2, 3, 3, 4, 1]
         self.multipliers = [1, 2, 3, 4, 5, 6, 4]
 
-        self.cam_ratio = 4
+        self.cam_ratio = 8
         self.sam_kernel = 7
 
         self.pool_type = 'MAX'  # 'MAX', 'AVG', 'CONV'
