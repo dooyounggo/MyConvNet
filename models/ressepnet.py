@@ -182,12 +182,12 @@ class ResSepNetS(ResSepNet):  # B0
 class ResSepNetM(ResSepNet):  # B4
     def _init_params(self):
         super()._init_params()
-        self.channels = [48, 24, 32, 56, 112, 160, 272, 448, 1792]
+        self.channels = [32, 24, 32, 56, 112, 160, 272, 448, 1792]
         self.res_units = [2, 4, 4, 6, 6, 8, 2]
 
 
 class ResSepNetL(ResSepNet):  # B7
     def _init_params(self):
         super()._init_params()
-        self.channels = [64, 32, 48, 80, 160, 224, 384, 640, 2560]
+        self.channels = [32, 32, 48, 80, 160, 224, 384, 640, 2560]
         self.res_units = [4, 7, 7, 10, 10, 13, 4]
