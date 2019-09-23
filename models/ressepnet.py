@@ -151,7 +151,7 @@ class ResSepNet(ResCBAMNet):  # Based on EfficientNet + CBAM
                 x = self.swish(x, name='swish')
                 d[name + '/conv_1' + '/swish'] = x
 
-            channel_mask = self._channel_mask(x, multipliers*self.cam_ratio, name='channel_mask')
+            channel_mask = self._channel_mask(x, (multipliers + 1)*self.cam_ratio, name='channel_mask')
             d[name + '/channel_mask'] = channel_mask
             x = x*channel_mask
 
