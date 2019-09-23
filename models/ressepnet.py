@@ -8,7 +8,7 @@ class ResSepNet(ResCBAMNet):  # Based on EfficientNet + CBAM
         self.kernels = [3, 3, 3, 5, 3, 5, 5, 3]
         self.strides = [2, 1, 2, 2, 2, 1, 2, 1]
         self.res_units = [1, 2, 2, 3, 3, 4, 1]
-        self.multipliers = [1, 2, 3, 4, 5, 6, 4]
+        self.multipliers = [1, 5, 5, 5, 5, 5, 5]
 
         self.cam_ratio = 8
         self.sam_kernel = 7
@@ -140,17 +140,16 @@ class ResSepNet(ResCBAMNet):  # Based on EfficientNet + CBAM
                 else:
                     pool = self.avg_pool(tf.zeros_like(x, dtype=self.dtype), kernel, stride, padding='SAME')
 
-                convs = [pool]
-                for i in range(multipliers):
-                    with tf.variable_scope('conv_{}'.format(i)):
-                        c = self.conv_layer(x, kernel, stride, out_channels,
-                                            padding='SAME', biased=False, depthwise=True)
-                        c = self.batch_norm(c, shift=True, scale=True, is_training=self.is_train, scope='bn')
-                        c = self.swish(c, name='swish')
-                        convs.append(c)
-                x = tf.add_n(convs)
+                x = self.conv_layer(x, kernel, stride, out_channels*multipliers,
+                                    padding='SAME', biased=False, depthwise=True)
+                axis = 1 if self.channel_first else -1
+                x = tf.concat([x, pool], axis=axis)
                 print(name + '/conv_1.shape', x.get_shape().as_list())
                 d[name + '/conv_1'] = x
+                x = self.batch_norm(x, shift=True, scale=True, is_training=self.is_train, scope='bn')
+                d[name + '/conv_1' + '/bn'] = x
+                x = self.swish(x, name='swish')
+                d[name + '/conv_1' + '/swish'] = x
 
             channel_mask = self._channel_mask(x, self.cam_ratio, name='channel_mask')
             d[name + '/channel_mask'] = channel_mask
