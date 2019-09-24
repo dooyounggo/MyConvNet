@@ -957,10 +957,10 @@ class ConvNet(object):
             if not tf.get_variable_scope().reuse:
                 self._flops += out_size[0]*out_size[1]*out_channels
                 self._params += out_channels
-        else:
-            biases = tf.zeros(out_channels, dtype=self.dtype)
 
-        return tf.nn.bias_add(convs, biases, data_format=data_format)
+            return tf.nn.bias_add(convs, biases, data_format=data_format)
+        else:
+            return convs
 
     def fc_layer(self, x, out_dim, biased=True, **kwargs):
         weights_stddev = kwargs.get('weights_stddev', None)
@@ -979,10 +979,10 @@ class ConvNet(object):
             if not tf.get_variable_scope().reuse:
                 self._flops += out_dim
                 self._params += out_dim
-        else:
-            biases = tf.constant(0.0, dtype=tf.float32, name='0')
 
-        return tf.matmul(x, weights) + biases
+            return tf.matmul(x, weights) + biases
+        else:
+            return tf.matmul(x, weights)
 
     def batch_norm(self, x, scale=True, shift=True, is_training=None, zero_scale_init=False, scope='bn'):
         if self.train_batch_norm is not None:
@@ -1154,7 +1154,7 @@ class ConvNet(object):
 
         if not tf.get_variable_scope().reuse:
             self._flops += out_size[0]*out_size[1]*kernel[0]*kernel[1]*in_channels*out_channels
-            self._params += (kernel[0]*kernel[1]*in_channels)*out_channels
+            self._params += kernel[0]*kernel[1]*in_channels*out_channels
 
         if biased:
             biases = self.bias_variable(out_channels, init_value=biases_value)
@@ -1162,10 +1162,10 @@ class ConvNet(object):
             if not tf.get_variable_scope().reuse:
                 self._flops += out_size[0]*out_size[1]*out_channels
                 self._params += out_channels
-        else:
-            biases = tf.zeros(out_channels, dtype=self.dtype)
 
-        return tf.nn.bias_add(convs, biases, data_format=data_format)
+            return tf.nn.bias_add(convs, biases, data_format=data_format)
+        else:
+            return convs
 
     def relu(self, x, name='relu'):
         if not tf.get_variable_scope().reuse:
