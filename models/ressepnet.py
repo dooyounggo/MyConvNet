@@ -10,7 +10,7 @@ class ResSepNet(ResCBAMNet):  # Based on EfficientNet + CBAM
         self.res_units = [1, 2, 2, 3, 3, 4, 1]
         self.multipliers = [1, 5, 5, 5, 5, 5, 5]
 
-        self.cam_ratio = 4
+        self.cam_ratio = 1
         self.sam_kernel = 7
 
         self.pool_type = 'MAX'  # 'MAX', 'AVG', 'CONV'
@@ -155,10 +155,6 @@ class ResSepNet(ResCBAMNet):  # Based on EfficientNet + CBAM
             d[name + '/channel_mask'] = channel_mask
             x = x*channel_mask
 
-            spatial_mask = self._spatial_mask(x, self.sam_kernel, name='spatial_mask')
-            d[name + '/spatial_mask'] = spatial_mask
-            x = x*spatial_mask
-
             with tf.variable_scope('conv_2'):
                 x = self.conv_layer(x, 1, 1, out_channels, padding='SAME', biased=False, depthwise=False)
                 print(name + '/conv_2.shape', x.get_shape().as_list())
@@ -167,6 +163,10 @@ class ResSepNet(ResCBAMNet):  # Based on EfficientNet + CBAM
                 d[name + '/conv_2' + '/bn'] = x
                 # x = self.swish(x, name='swish')
                 # d[name + '/conv_2' + '/swish'] = x
+
+            spatial_mask = self._spatial_mask(x, self.sam_kernel, name='spatial_mask')
+            d[name + '/spatial_mask'] = spatial_mask
+            x = x*spatial_mask
 
             x = skip + x*survival
             d[name] = x
