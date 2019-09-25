@@ -1,8 +1,8 @@
 import tensorflow as tf
-from models.resnet import ResNetBot
+from convnet import ConvNet
 
 
-class ResCBAMNet(ResNetBot):    # Residual networks with Convolutional Block Attention Modules (Based on ResNet-D)
+class ResCBAMNet(ConvNet):    # Residual networks with Convolutional Block Attention Modules (Based on ResNet-D)
     def _init_params(self):
         self.channels = [64, 256, 512, 1024, 2048]
         self.kernels = [3, 3, 3, 3, 3]
@@ -74,7 +74,7 @@ class ResCBAMNet(ResNetBot):    # Residual networks with Convolutional Block Att
 
                     axis = [2, 3] if self.channel_first else [1, 2]
                     x = tf.reduce_mean(x, axis=axis)
-                    d['avgpool'] = x
+                    d['logits' + '/avgpool'] = x
                     x = tf.nn.dropout(x, rate=self.dropout_rate_logits)
                     x = self.fc_layer(x, self.num_classes)
                     d['logits'] = x
