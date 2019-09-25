@@ -1,8 +1,8 @@
 import tensorflow as tf
-from models.rescbamnet import ResCBAMNet
+from convnet import ConvNet
 
 
-class ResSepNet(ResCBAMNet):  # Based on EfficientNet + CBAM
+class ResSepNet(ConvNet):  # Based on EfficientNet + CBAM
     def _init_params(self):
         self.channels = [32, 16, 24, 40, 80, 112, 192, 320, 1280]
         self.kernels = [3, 3, 3, 5, 3, 5, 5, 3]
@@ -71,15 +71,15 @@ class ResSepNet(ResCBAMNet):  # Based on EfficientNet + CBAM
                         print('logits' + '/conv_0.shape', x.get_shape().as_list())
                         d['logits' + '/conv_0'] = x
                         x = self.batch_norm(x, shift=True, scale=True, is_training=self.is_train, scope='bn')
-                        d['logits' + 'conv_0' + '/bn'] = x
+                        d['logits' + '/conv_0' + '/bn'] = x
                         x = self.relu(x, name='relu')
-                        d['logits' + 'conv_0' + '/relu'] = x
+                        d['logits' + '/conv_0' + '/relu'] = x
 
                     axis = [2, 3] if self.channel_first else [1, 2]
                     avgpool = tf.reduce_mean(x, axis=axis)
-                    d['logits' + 'avgpool'] = avgpool
+                    d['logits' + '/avgpool'] = avgpool
                     maxpool = tf.reduce_max(x, axis=axis)
-                    d['logits' + 'maxpool'] = maxpool
+                    d['logits' + '/maxpool'] = maxpool
 
                     eps = tf.constant(1e-4, dtype=self.dtype)  # Prevent too large gradient values resulting from sqrt
                     x = tf.math.pow(avgpool*maxpool + eps, self.logits_power)
@@ -170,6 +170,47 @@ class ResSepNet(ResCBAMNet):  # Based on EfficientNet + CBAM
 
             x = skip + x*survival
             d[name] = x
+
+        return x
+
+    def _channel_mask(self, x, reduction, name='channel_mask'):
+        in_channels = x.get_shape()[1] if self.channel_first else x.get_shape()[-1]
+        axis = [2, 3] if self.channel_first else [1, 2]
+        with tf.variable_scope(name):
+            spatial_mean = tf.reduce_mean(x, axis=axis)
+            spatial_max = tf.reduce_max(x, axis=axis)
+
+            with tf.variable_scope('fc1'):
+                spatial_mean = self.fc_layer(spatial_mean, in_channels//reduction)
+                tf.get_variable_scope().reuse_variables()
+                spatial_max = self.fc_layer(spatial_max, in_channels//reduction)
+
+            spatial_mean = self.swish(spatial_mean, name='swish_mean')
+            spatial_max = self.swish(spatial_max, name='swish_max')
+
+            with tf.variable_scope('fc2'):
+                spatial_mean = self.fc_layer(spatial_mean, in_channels)
+                tf.get_variable_scope().reuse_variables()
+                spatial_max = self.fc_layer(spatial_max, in_channels)
+
+            x = self.sigmoid(spatial_mean + spatial_max)
+            batch_size = tf.shape(x)[0]
+            shape = [batch_size, in_channels, 1, 1] if self.channel_first else [batch_size, 1, 1, in_channels]
+            x = tf.reshape(x, shape=shape)
+
+        return x
+
+    def _spatial_mask(self, x, kernel, name='spatial_mask'):
+        with tf.variable_scope(name):
+            axis = 1 if self.channel_first else -1
+            channel_mean = tf.reduce_mean(x, axis=axis, keepdims=True)
+            channel_max = tf.reduce_max(x, axis=axis, keepdims=True)
+            x = tf.concat([channel_mean, channel_max], axis=axis)
+
+            with tf.variable_scope('conv'):
+                x = self.conv_layer(x, kernel, 1, 1, padding='SAME', biased=True)
+
+            x = self.sigmoid(x)
 
         return x
 
