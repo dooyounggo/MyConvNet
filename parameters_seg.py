@@ -27,9 +27,9 @@ class Parameters(object):
     d = dict()
     d['image_size'] = (461, 461, 3)
     d['input_size'] = (384, 384, 3)
-    d['image_mean'] = 0.5       # To be calculated
-    d['zero_center'] = True     # Whether to zero-center the images
-    d['shuffle'] = True         # Whether to shuffle the data
+    d['image_mean'] = 0.5  # If None, it will be calculated using training data
+    d['zero_center'] = True  # Whether to zero-center the images. If None, 'image_mean' will have no effect
+    d['shuffle'] = True  # Whether to shuffle the data
     d['resize_type'] = 'resize_fit'     # Resize types: 'resize', 'resize_fit', 'resize_expand', 'resize_fit_expand'
     d['num_parallel_calls'] = 4  # Number of parallel operations for dataset.map function
 
