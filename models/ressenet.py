@@ -44,7 +44,7 @@ class ResSENet(ResNetID):   # Residual squeeze-and-excitation networks
                 print(name + '/conv_1.shape', x.get_shape().as_list())
                 d[name + '/conv_1'] = x
 
-            se_mask = self._se_mask(x, 16, d, name='se_mask')
+            se_mask = self._se_mask(x, 16, name='se_mask')
             d[name + '/se_mask'] = se_mask
             x = x*se_mask
 
@@ -53,7 +53,7 @@ class ResSENet(ResNetID):   # Residual squeeze-and-excitation networks
 
         return x
 
-    def _se_mask(self, x, se_r, d, name='se_mask'):
+    def _se_mask(self, x, se_r, name='se_mask'):
         in_channels = x.get_shape()[1] if self.channel_first else x.get_shape()[-1]
         axis = [2, 3] if self.channel_first else [1, 2]
         with tf.variable_scope(name):
@@ -132,7 +132,7 @@ class ResSENetBot(ResSENet):    # Residual squeeze-and-excitation networks with 
                 print(name + '/conv_2.shape', x.get_shape().as_list())
                 d[name + '/conv_2'] = x
 
-            se_mask = self._se_mask(x, 16, d, name='se_mask')
+            se_mask = self._se_mask(x, 16, name='se_mask')
             d[name + '/se_mask'] = se_mask
             x = x*se_mask
 
