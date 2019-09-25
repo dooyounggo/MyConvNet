@@ -608,20 +608,26 @@ class ConvNet(object):
 
     def rand_hue(self, x, **kwargs):
         with tf.variable_scope('rand_hue'):
-            max_delta = kwargs.get('rand_hue', 0.0) / 2
+            max_delta = kwargs.get('rand_hue', 0.0)
+
+            delta = tf.random.uniform([], -max_delta/2, max_delta/2, dtype=tf.float32)
 
             x = x + self.image_mean
-            x = tf.image.random_hue(x, max_delta)
+            x = tf.image.adjust_hue(x, delta)
             x = x - self.image_mean
 
         return x
 
     def rand_saturation(self, x, **kwargs):
         with tf.variable_scope('rand_saturation'):
-            lower, upper = kwargs.get('rand_saturation', (0.99, 1.0))
+            lower, upper = kwargs.get('rand_saturation', (1.0, 1.0))
+
+            base = float(upper / lower)
+            randval = tf.random.uniform([], dtype=tf.float32)
+            randval = lower*tf.math.pow(base, randval)
 
             x = x + self.image_mean
-            x = tf.image.random_saturation(x, lower, upper)
+            x = tf.image.adjust_saturation(x, randval)
             x = x - self.image_mean
 
         return x
