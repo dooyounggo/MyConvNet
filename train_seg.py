@@ -1,50 +1,89 @@
 import os
+import shutil
 import numpy as np
 import tensorflow as tf
 from dataset import DataSet
 import utils
 import matplotlib.pyplot as plt
+from optimizers import MomentumOptimizer as Optimizer
 from parameters_seg import subset
 from parameters_seg import ConvNet
 from parameters_seg import Evaluator
 from parameters_seg import Parameters
+from parameters_seg import init_from_pretrained_model
 
 
 Param = Parameters()
-model_to_load = Param.d['model_to_load']
+if os.path.exists(Param.save_dir):  # Check existing data
+    olddir = os.path.join(Param.save_dir, '_old')    # To store existing date in /_old
+    if os.path.exists(olddir):
+        shutil.rmtree(olddir)   # Delete older data
+    filenames = os.listdir(Param.save_dir)
+    os.makedirs(olddir)
+    for filename in filenames:
+        try:
+            full_filename = os.path.join(Param.save_dir, filename)
+            if os.path.isdir(full_filename):    # Move existing data
+                shutil.copytree(full_filename, os.path.join(olddir, filename))
+                shutil.rmtree(full_filename)
+            else:
+                shutil.copy2(full_filename, olddir)
+                os.remove(full_filename)
+        except Exception as err:
+            print(err)
+else:
+    os.makedirs(Param.save_dir)
+print('')
 
-# Load test set
-image_dirs, label_dirs, class_names = subset.read_subset(Param.test_dir, shuffle=False,
-                                                         sample_size=Param.test_sample_size)
-Param.d['shuffle'] = False
-test_set = DataSet(image_dirs, label_dirs, class_names, **Param.d)
+# Load trainval set and split into train/val sets
+image_dirs, label_dirs, class_names = subset.read_subset(Param.train_dir, shuffle=Param.d['shuffle'],
+                                                         sample_size=Param.train_sample_size)
+train_size = len(image_dirs)
+if Param.val_dir is None:
+    val_size = int(train_size*0.1)    # FIXME
+    val_set = DataSet(image_dirs[:val_size], label_dirs[:val_size],
+                      class_names, random=Param.d['augment_pred'], **Param.d)
+    train_set = DataSet(image_dirs[val_size:], label_dirs[val_size:],
+                        class_names, random=Param.d['augment_train'], **Param.d)
+else:
+    image_dirs_val, label_dirs_val, _ = subset.read_subset(Param.val_dir, shuffle=Param.d['shuffle'],
+                                                           sample_size=Param.val_sample_size)
+    val_set = DataSet(image_dirs_val, label_dirs_val, class_names, random=Param.d['augment_pred'], **Param.d)
+    train_set = DataSet(image_dirs, label_dirs, class_names, random=Param.d['augment_train'], **Param.d)
 
-image_mean = np.load(os.path.join(Param.save_dir, 'img_mean.npy')).astype(np.float32)    # load mean image
-Param.d['image_mean'] = image_mean
-Param.d['monte_carlo'] = False
+# Data check
+image_mean = Param.d['image_mean']
+weighting_method = Param.d['loss_weighting']
+if weighting_method is not None:
+    if isinstance(weighting_method, (list, tuple)):
+        w = weighting_method
+    elif weighting_method.lower() == 'balanced':
+        train_set.data_statistics(verbose=True)
+        w = train_set.balanced_weights
+        if image_mean is None:
+            Param.d['image_mean'] = train_set.image_mean
+else:
+    w = None
+    if image_mean is None:
+        train_set.data_statistics(verbose=True)
+        Param.d['image_mean'] = train_set.image_mean
+
+print('Image mean:', Param.d['image_mean'], '\n')
+np.save(os.path.join(Param.save_dir, 'img_mean'), Param.d['image_mean'])  # save image mean
+
+fp = open(os.path.join(Param.save_dir, 'parameters.txt'), 'w')
+for k, v in Param.d.items():
+    fp.write('{}:\t{}\n'.format(k, v))
+fp.close()
 
 # Initialize
-model = ConvNet(Param.d['input_size'], len(class_names), loss_weights=None, **Param.d)
+model = ConvNet(Param.d['input_size'], len(class_names), loss_weights=w, **Param.d)
+if Param.d['init_from_pretrained_model']:
+    init_from_pretrained_model(Param.pretrained_dir)
 evaluator = Evaluator()
-saver = tf.train.Saver()
+optimizer = Optimizer(model, train_set, evaluator, val_set=val_set, **Param.d)
 
-if model_to_load is None:
-    ckpt_to_load = tf.train.latest_checkpoint(Param.save_dir)
-elif isinstance(model_to_load, str):
-    ckpt_to_load = os.path.join(Param.save_dir, model_to_load)
-else:
-    fp = open(os.path.join(Param.save_dir, 'checkpoints.txt'), 'r')
-    ckpt_list = fp.readlines()
-    fp.close()
-    ckpt_to_load = os.path.join(Param.save_dir, ckpt_list[model_to_load].rstrip())
-
-saver.restore(model.session, ckpt_to_load)    # restore learned weights
-test_x, test_y_true, test_y_pred, _ = model.predict(test_set, verbose=True, **Param.d)
-test_score = evaluator.score(test_y_true, test_y_pred)
-
-print(evaluator.name + ': {:.4f}'.format(test_score))
-
-utils.plot_seg_results(test_x, test_y_true, test_y_pred, save_dir=os.path.join(Param.save_dir, 'results_test'))
-plt.show()
+train_results = optimizer.train(save_dir=Param.save_dir, transfer_dir=Param.transfer_dir,
+                                details=True, verbose=True, show_each_step=False, **Param.d)
 
 model.session.close()
