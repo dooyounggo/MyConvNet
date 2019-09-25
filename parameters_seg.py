@@ -51,37 +51,48 @@ class Parameters(object):
     d['data_type'] = tf.float32  # Try tf.float16 if your GPU supports half-precision
     d['channel_first'] = True  # If true, NCHW format is used instead of NHWC
     d['num_gpus'] = 1
-    d['batch_size'] = 4
-    d['num_epochs'] = 75
+    d['batch_size'] = 16
+    d['num_epochs'] = 300
     d['validation_frequency'] = None  # Validate every x iterations. None for every epoch
     d['summary_frequency'] = None  # Tensorboard summary every x iterations. None for every epoch
 
-    d['init_learning_rate'] = 0.0025
+    d['base_learning_rate'] = 0.1  # Learning rate = base_learning_rate*batch_size/256
     d['momentum'] = 0.9
-    d['moving_average_decay'] = 0.9994
+    d['moving_average_decay'] = 0.9997
     d['batch_norm_decay'] = 0.9994
-    d['gradient_threshold'] = 5.0
+    d['gradient_threshold'] = None
     d['loss_weighting'] = 'balanced'    # None, 'balanced', [class0_weight, class1_weight, ...]
-    d['loss_scaling_factor'] = 128
+    d['loss_scaling_factor'] = 1
 
     d['learning_rate_decay_method'] = 'cosine'  # 'step', 'exponential', 'cosine' (default)
-    d['learning_rate_decay_params'] = (0.94, 2)
-    d['learning_warmup_epoch'] = 5.0  # Linear warmup epoch
+    d['learning_rate_decay_params'] = (0.94, 18)
+    d['learning_warmup_epoch'] = 10.0  # Linear warmup epoch
+
+    # FIXME: Regularization hyperparameters
+    d['l1_reg'] = 0.0  # L1 regularization factor
+    d['l2_reg'] = 0.0  # L2 regularization factor
+    d['base_weight_decay'] = 0.00004  # Decoupled weight decay factor = base_weight_decay*batch_size/256
+    d['label_smoothing'] = 0.1  # Label smoothing factor
+    d['dropout_rate'] = 0.2  # Dropout rate
+    d['dropout_weights'] = False
+    d['dropout_logits'] = False
+    d['initial_drop_rate'] = 0.0  # Initial drop rate for stochastic depth
+    d['final_drop_rate'] = 0.2  # Final drop rate for stochastic depth
 
     # FIXME: Data augmentation parameters
     d['augment_factor'] = None  # int. Offline augmentation factor. None for no augmentation
     d['augment_train'] = True   # Online augmentation for training data
     d['augment_pred'] = False   # Online augmentation for validation or test data
 
-    d['zero_pad_ratio'] = 0.1   # Zero padding ratio = (zero_padded_image_size - nn_input_size) / nn_input_size
+    d['zero_pad_ratio'] = 0.0   # Zero padding ratio = (zero_padded_image_size - nn_input_size)/nn_input_size
 
     d['rand_affine'] = True  # Bool
     d['rand_scale'] = (1.0, 1.0)  # Minimum and maximum scaling factors (x/y)
     d['rand_ratio'] = (1.0, 1.0)  # Minimum and maximum pixel aspect ratios (x/y)
     d['rand_x_trans'] = 0.0  # Range in proportion (0.2 means +-10%)
     d['rand_y_trans'] = 0.0  # Range in proportion
-    d['rand_rotation'] = 20  # Range in degrees
-    d['rand_shear'] = 0  # Range in degrees
+    d['rand_rotation'] = 90  # Range in degrees
+    d['rand_shear'] = 30  # Range in degrees
     d['rand_x_reflect'] = True  # Bool
     d['rand_y_reflect'] = False  # Bool
 
@@ -101,18 +112,8 @@ class Parameters(object):
     d['rand_solarization'] = (0.0, 1.0)  # Solarization thresholds
     d['rand_posterization'] = (5.0, 8.0)  # Posterization bits
 
-    d['cutmix'] = True  # CutMix augmentation
-
-    # FIXME: Regularization hyperparameters
-    d['l1_reg'] = 0.0  # L1 regularization factor
-    d['l2_reg'] = 0.0  # L2 regularization factor
-    d['weight_decay'] = 0.00001  # Weight decay factor (decoupled, differs from l2_reg)
-    d['dropout_rate'] = 0.0  # Dropout rate
-    d['dropout_weights'] = False
-    d['dropout_logits'] = False
-    d['initial_drop_rate'] = 0.0  # Initial drop rate for stochastic depth
-    d['final_drop_rate'] = 0.0  # Final drop rate for stochastic depth
-
+    d['cutmix'] = False  # CutMix augmentation
+    
     def __init__(self):
         print('Training directory: ', self.train_dir)
         print('Test directory: ', self.test_dir)
