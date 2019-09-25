@@ -37,7 +37,7 @@ class Optimizer(object):
         self.num_epochs = kwargs.get('num_epochs', 100)
         self.monte_carlo = kwargs.get('monte_carlo', False)
         self.augment_train = kwargs.get('augment_train', False)
-        self.init_learning_rate = kwargs.get('init_learning_rate', 0.01)
+        self.init_learning_rate = kwargs.get('base_learning_rate', 0.1)*self.batch_size/256
 
         self.warmup_epoch = kwargs.get('learning_warmup_epoch', 0)
         self.decay_method = kwargs.get('learning_rate_decay_method', 'cosine')
@@ -70,7 +70,7 @@ class Optimizer(object):
     def _optimize_and_update(self, optimizer, **kwargs):
         gradient_threshold = kwargs.get('gradient_threshold', 5.0)
         loss_scaling_factor = kwargs.get('loss_scaling_factor', 1.0)
-        weight_decay = kwargs.get('weight_decay', 0.0)
+        weight_decay = kwargs.get('base_weight_decay', 0.0)*self.batch_size/256
 
         tower_grads = []
         with tf.variable_scope(tf.get_variable_scope()):
@@ -469,7 +469,7 @@ class MomentumOptimizer(Optimizer):
     def _optimizer(self, **kwargs):
         momentum = kwargs.get('momentum', 0.9)
         gradient_threshold = kwargs.get('gradient_threshold', 5.0)
-        print('Optimizer: SGD with momentum. Initial learning rate: {}. Gradient threshold: {}'
+        print('Optimizer: SGD with momentum. Initial learning rate: {:.6f}. Gradient threshold: {}'
               .format(self.init_learning_rate, gradient_threshold))
 
         optimizer = tf.train.MomentumOptimizer(self.learning_rate, momentum, use_nesterov=True)
