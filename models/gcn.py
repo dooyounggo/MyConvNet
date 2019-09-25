@@ -1,7 +1,6 @@
 import tensorflow as tf
 from segnet import SegNet
 from models.rescbamnet import ResCBAMNet
-from models.ressepnet import ResSepNet
 
 
 class GCN(SegNet, ResCBAMNet):     # Global Convolutional Networks
@@ -128,46 +127,5 @@ class GCN(SegNet, ResCBAMNet):     # Global Convolutional Networks
             else:
                 x = self.transposed_conv_layer(x, kernel, scale, out_channels)
         print(name + '.shape', x.get_shape().as_list())
-
-        return x
-
-
-class SCN(GCN, ResSepNet):  # Separable Convolutional Networks: GCN with separable convolution
-    def _init_params(self):
-        ResSepNet._init_params(self)
-        self.conv_channels = [64, 64, 64, 64]
-        self.conv_kernels = [9, 13, 17, 21]
-        self.conv_units = [1, 1, 1, 1]
-        self.deconv_method = 'UPSAMPLING'  # Upsampling: bilinear up-sampling, conv: transposed convolution
-
-    def _build_model(self, **kwargs):
-        d = ResSepNet._build_model(self, **kwargs)
-        return d
-
-    def _res_unit(self, x, kernel, stride, out_channels, multiplier, d, drop_rate=0.0, name='res_unit'):
-        x = ResSepNet._res_unit(self, x, kernel, stride, out_channels, multiplier, d, drop_rate=drop_rate, name=name)
-        return x
-
-    def _conv_unit(self, x, kernel, out_channels, d, name='conv_unit'):
-        in_channels = x.get_shape()[1] if self.channel_first else x.get_shape()[-1]
-        if not isinstance(kernel, list):
-            kernel = [kernel, kernel]
-        elif len(kernel) == 1:
-            kernel = [kernel[0], kernel[0]]
-
-        with tf.variable_scope(name):
-            with tf.variable_scope('conv_0'):
-                x = self.conv_layer(x, kernel, 1, in_channels, padding='SAME', biased=True, depthwise=True)
-                d[name + '/conv_0'] = x
-            with tf.variable_scope('conv_1'):
-                x = self.conv_layer(x, 1, 1, out_channels, padding='SAME', biased=True, depthwise=False)
-                d[name + '/conv_1'] = x
-            with tf.variable_scope('conv_2'):
-                x = self.conv_layer(x, kernel, 1, out_channels, padding='SAME', biased=True, depthwise=True)
-                d[name + '/conv_2'] = x
-            with tf.variable_scope('conv_3'):
-                x = self.conv_layer(x, 1, 1, out_channels, padding='SAME', biased=True, depthwise=False)
-                d[name + '/conv_3'] = x
-            print(name + '.shape', x.get_shape().as_list())
 
         return x
