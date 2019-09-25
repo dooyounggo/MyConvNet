@@ -25,7 +25,7 @@ class Parameters(object):
     _pretrained_dir = os.path.join(_root_dir, 'pretrained_models', 'resnet_v2_50', 'resnet_v2_50.ckpt')
 
     d = dict()
-    d['image_size'] = (267, 267, 3)
+    d['image_size'] = (269, 269, 3)
     d['input_size'] = (224, 224, 3)
     d['image_mean'] = 0.5  # If None, it will be calculated using training data
     d['zero_center'] = True  # Whether to zero-center the images. If None, 'image_mean' will have no effect
