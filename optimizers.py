@@ -62,7 +62,7 @@ class Optimizer(object):
     @abstractmethod
     def _optimizer(self, **kwargs):
         """
-        tf.train.Optimizer.minimize Op for a gradient update
+        tf.train.Optimizer Op for a gradient update
         This should be implemented, and should not be called manually.
         """
         pass
