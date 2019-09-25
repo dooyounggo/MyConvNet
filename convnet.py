@@ -727,9 +727,10 @@ class ConvNet(object):
     def rand_posterization(self, x, **kwargs):
         with tf.variable_scope('rand_posterization'):
             shape_tensor = tf.shape(x)
-            lower, upper = kwargs.get('rand_posterization', (8.0, 9.0))
+            lower, upper = kwargs.get('rand_posterization', (8, 8))
 
-            factors = tf.math.round(tf.random.uniform([shape_tensor[0], 1, 1, 1], lower, upper, dtype=tf.float32))
+            factors = tf.math.round(tf.random.uniform([shape_tensor[0], 1, 1, 1],
+                                                      lower - 0.5, upper + 0.5, dtype=tf.float32))
             maxvals = tf.pow(2.0, factors)
             x = tf.math.round(x*maxvals)
             x = x/maxvals
