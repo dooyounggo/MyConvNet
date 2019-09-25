@@ -62,6 +62,8 @@ if weighting_method is not None:
         w = train_set.balanced_weights
         if image_mean is None:
             Param.d['image_mean'] = train_set.image_mean
+    else:
+        w = None
 else:
     w = None
     if image_mean is None:
