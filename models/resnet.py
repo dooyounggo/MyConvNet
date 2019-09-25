@@ -59,7 +59,7 @@ class ResNet(ConvNet):      # Base model. ResNet-18
                 with tf.variable_scope('logits'):
                     axis = [2, 3] if self.channel_first else [1, 2]
                     x = tf.reduce_mean(x, axis=axis)
-                    d['avgpool'] = x
+                    d['logits' + '/avgpool'] = x
                     x = tf.nn.dropout(x, rate=self.dropout_rate_logits)
                     x = self.fc_layer(x, self.num_classes)
                     d['logits'] = x
@@ -165,7 +165,7 @@ class ResNetID(ResNet):     # ResNet with identity connections (ResNet-v2) and s
 
                     axis = [2, 3] if self.channel_first else [1, 2]
                     x = tf.reduce_mean(x, axis=axis)
-                    d['avgpool'] = x
+                    d['logits' + '/avgpool'] = x
                     x = tf.nn.dropout(x, rate=self.dropout_rate_logits)
                     x = self.fc_layer(x, self.num_classes)
                     d['logits'] = x
