@@ -51,8 +51,8 @@ class Parameters(object):
     d['data_type'] = tf.float32  # Try tf.float16 if your GPU supports half-precision
     d['channel_first'] = True  # If true, NCHW format is used instead of NHWC
     d['num_gpus'] = 1
-    d['batch_size'] = 16
-    d['num_epochs'] = 300
+    d['batch_size'] = 4
+    d['num_epochs'] = 150
     d['validation_frequency'] = None  # Validate every x iterations. None for every epoch
     d['summary_frequency'] = None  # Tensorboard summary every x iterations. None for every epoch
 
@@ -66,18 +66,18 @@ class Parameters(object):
 
     d['learning_rate_decay_method'] = 'cosine'  # 'step', 'exponential', 'cosine' (default)
     d['learning_rate_decay_params'] = (0.94, 18)
-    d['learning_warmup_epoch'] = 10.0  # Linear warmup epoch
+    d['learning_warmup_epoch'] = 5.0  # Linear warmup epoch
 
     # FIXME: Regularization hyperparameters
     d['l1_reg'] = 0.0  # L1 regularization factor
     d['l2_reg'] = 0.0  # L2 regularization factor
-    d['base_weight_decay'] = 0.00004  # Decoupled weight decay factor = base_weight_decay*batch_size/256
+    d['base_weight_decay'] = 0.00001  # Decoupled weight decay factor = base_weight_decay*batch_size/256
     d['label_smoothing'] = 0.1  # Label smoothing factor
-    d['dropout_rate'] = 0.2  # Dropout rate
+    d['dropout_rate'] = 0.0  # Dropout rate
     d['dropout_weights'] = False
     d['dropout_logits'] = False
     d['initial_drop_rate'] = 0.0  # Initial drop rate for stochastic depth
-    d['final_drop_rate'] = 0.2  # Final drop rate for stochastic depth
+    d['final_drop_rate'] = 0.0  # Final drop rate for stochastic depth
 
     # FIXME: Data augmentation parameters
     d['augment_factor'] = None  # int. Offline augmentation factor. None for no augmentation
