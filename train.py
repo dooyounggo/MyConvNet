@@ -52,20 +52,24 @@ else:
     train_set = DataSet(image_dirs, label_dirs, class_names, random=Param.d['augment_train'], **Param.d)
 
 # Data check
-# train_set.data_statistics(verbose=True)     # Comment this if your dataset is too big.
+image_mean = Param.d['image_mean']
 weighting_method = Param.d['loss_weighting']
-w = None
 if weighting_method is not None:
     if isinstance(weighting_method, (list, tuple)):
         w = weighting_method
     elif weighting_method.lower() == 'balanced':
+        train_set.data_statistics(verbose=True)
         w = train_set.balanced_weights
+        if image_mean is None:
+            Param.d['image_mean'] = train_set.image_mean
+else:
+    w = None
+    if image_mean is None:
+        train_set.data_statistics(verbose=True)
+        Param.d['image_mean'] = train_set.image_mean
 
-# image_mean = train_set.image_mean
-image_mean = 0.5
-print('Image mean: {}\n'.format(image_mean))
-np.save(os.path.join(Param.save_dir, 'img_mean'), image_mean)    # save image mean
-Param.d['image_mean'] = image_mean
+print('Image mean:', Param.d['image_mean'], '\n')
+np.save(os.path.join(Param.save_dir, 'img_mean'), Param.d['image_mean'])    # save image mean
 
 fp = open(os.path.join(Param.save_dir, 'parameters.txt'), 'w')
 for k, v in Param.d.items():
