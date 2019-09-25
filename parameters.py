@@ -106,7 +106,7 @@ class Parameters(object):
     # FIXME: Regularization hyperparameters
     d['l1_reg'] = 0.0  # L1 regularization factor
     d['l2_reg'] = 0.0  # L2 regularization factor
-    d['weight_decay'] = 0.00001  # Weight decay factor (differs from l2_reg)
+    d['weight_decay'] = 0.00001  # Weight decay factor (decoupled, differs from l2_reg)
     d['label_smoothing'] = 0.1  # Label smoothing factor
     d['dropout_rate'] = 0.2  # Dropout rate
     d['dropout_weights'] = False
