@@ -196,7 +196,7 @@ class DataSet(object):
         for idir, ldir in zip(self.image_dirs, self.label_dirs):
             image, label = self._load_function(idir, ldir)
 
-            image_mean += image.mean()/self.num_examples
+            image_mean += np.mean(image, axis=(0, 1))/self.num_examples
 
             if len(label.shape) == 0:
                 examples[int(label)] += 1
@@ -210,7 +210,7 @@ class DataSet(object):
         self._balanced_weights = self._calculate_balanced_weights()
 
         if verbose:
-            print('Image mean: {:.4f}'.format(image_mean))
+            print('Image mean:', image_mean)
             print('Number of examples per class:')
             for i in range(self.num_classes):
                 print('{}: {:4d}\t'.format(self.class_names[i], examples[i]), end='')
