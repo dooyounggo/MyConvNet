@@ -610,7 +610,7 @@ class ConvNet(object):
         with tf.variable_scope('rand_hue'):
             max_delta = kwargs.get('rand_hue', 0.0)
 
-            delta = tf.random.uniform([], -max_delta/2, max_delta/2, dtype=tf.float32)
+            delta = tf.random.uniform([], minval=-max_delta/2, maxval=max_delta/2, dtype=tf.float32)
 
             x = x + self.image_mean
             x = tf.image.adjust_hue(x, delta)
