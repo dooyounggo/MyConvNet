@@ -10,6 +10,7 @@ ResNet with Identity Mappings: https://arxiv.org/abs/1603.05027
 Squeeze-and-Excitation: https://arxiv.org/abs/1709.01507
 Convolutional Block Attention Module: https://arxiv.org/abs/1807.06521
 ResNet-D: https://arxiv.org/abs/1812.01187
+EfficientNet: https://arxiv.org/abs/1905.11946
 Stochastic Depth: https://arxiv.org/abs/1603.09382
 Monte Carlo Dropout: https://arxiv.org/abs/1506.02142
 Bag of Tricks: https://arxiv.org/abs/1812.01187
