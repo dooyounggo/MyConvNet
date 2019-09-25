@@ -75,7 +75,7 @@ class Parameters(object):
     d['label_smoothing'] = 0.1  # Label smoothing factor
     d['dropout_rate'] = 0.2  # Dropout rate
     d['dropout_weights'] = False
-    d['dropout_logits'] = False
+    d['dropout_logits'] = True
     d['initial_drop_rate'] = 0.0  # Initial drop rate for stochastic depth
     d['final_drop_rate'] = 0.2  # Final drop rate for stochastic depth
 
