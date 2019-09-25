@@ -109,8 +109,8 @@ class Parameters(object):
     d['rand_brightness'] = 0.2  # Brightness range in proportion
     d['rand_noise_mean'] = 0.0
     d['rand_noise_stddev'] = 0.0
-    d['rand_solarization'] = (0.0, 1.0)  # Solarization thresholds
-    d['rand_posterization'] = (5.0, 8.0)  # Posterization bits
+    d['rand_solarization'] = (0.0, 1.0)  # Lower and upper solarization thresholds
+    d['rand_posterization'] = (5, 8)  # Lower and upper bounds of posterization bits
 
     d['cutmix'] = False  # CutMix augmentation
 
