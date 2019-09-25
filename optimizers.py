@@ -1,5 +1,6 @@
 """
-Define optimization operations.
+Define optimization process.
+Includes gradient descent, weight decay, TensorBoard summaries, learning rate updates, validation, etc.
 """
 
 import os
@@ -21,9 +22,6 @@ class Optimizer(object):
         :param evaluator: Evaluator, for computing performance scores during training.
         :param val_set: DataSet, validation set to be used, which can be None if not used.
         :param kwargs: dict, extra arguments containing training hyperparameters.
-            - batch_size: int, batch size for each iteration.
-            - num_epochs: int, total number of epochs for training.
-            - init_learning_rate: float, initial learning rate.
         """
         self.model = model
         self.train_set = train_set
