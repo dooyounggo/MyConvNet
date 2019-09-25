@@ -20,7 +20,7 @@ def read_subset_cls(subset_dir, shuffle=False, sample_size=None):
         full_filename = os.path.join(subset_dir, fname)
         if ext == 'csv':
             label_dirs.append(full_filename)
-        elif ext == 'jpg' or ext == 'jpeg':
+        elif ext == 'jpg' or ext == 'jpeg' or ext == 'bmp':
             image_dirs.append(full_filename)
 
     set_size = len(image_dirs)
@@ -60,7 +60,7 @@ def read_subset_seg(subset_dir, shuffle=False, sample_size=None):
         full_filename = os.path.join(subset_dir, fname)
         if ext == 'png':
             label_dirs.append(full_filename)
-        elif ext == 'jpg' or ext == 'jpeg':
+        elif ext == 'jpg' or ext == 'jpeg' or ext == 'bmp':
             image_dirs.append(full_filename)
 
     set_size = len(image_dirs)
