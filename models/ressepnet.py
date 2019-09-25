@@ -94,10 +94,6 @@ class ResSepNet(ConvNet):  # Based on EfficientNet + CBAM
 
     def _res_unit(self, x, kernel, stride, out_channels, multipliers, d, drop_rate=0.0, name='res_unit'):
         in_channels = x.get_shape()[1] if self.channel_first else x.get_shape()[-1]
-        if not isinstance(kernel, (list, tuple)):
-            kernel = [kernel, kernel]
-        elif len(kernel) == 1:
-            kernel = [kernel[0], kernel[0]]
         if not isinstance(stride, (list, tuple)):
             stride = [stride, stride]
         elif len(stride) == 1:
