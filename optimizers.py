@@ -155,12 +155,12 @@ class Optimizer(object):
             if load_moving_average:
                 variables = {}
                 for var in var_list:
-                    target_emi = var.name.split(':0')[0] + '/ExponentialMovingAverage'
-                    if target_emi in var_names:
-                        variables[target_emi] = var
-                        var_names.remove(target_emi)
+                    target_ema = var.name.rstrip(':0') + '/ExponentialMovingAverage'
+                    if target_ema in var_names:
+                        variables[target_ema] = var
+                        var_names.remove(target_ema)
                     elif var.name in var_names:
-                        variables[var.name.split(':0')[0]] = var
+                        variables[var.name.rstrip(':0')] = var
                         var_names.remove(var.name)
             else:
                 variables = []
