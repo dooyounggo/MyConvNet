@@ -91,10 +91,12 @@ class ResCBAMNet(ConvNet):    # Residual networks with Convolutional Block Atten
 
         with tf.variable_scope(name):
             with tf.variable_scope('drop'):
+                batch_size = tf.shape(x)[0]
                 drop_rate = tf.constant(drop_rate, dtype=self.dtype, name='drop_rate')
                 drop_rate = tf.cond(self.is_train, lambda: drop_rate, lambda: tf.constant(0.0, dtype=self.dtype))
-                survival = tf.cast(tf.math.greater_equal(tf.random.uniform([1], dtype=self.dtype), drop_rate),
-                                   dtype=self.dtype) / (tf.constant(1.0, dtype=self.dtype) - drop_rate)
+                survival = tf.cast(tf.math.greater_equal
+                                   (tf.random.uniform([batch_size, 1, 1, 1], dtype=self.dtype), drop_rate),
+                                   dtype=self.dtype)/(tf.constant(1.0, dtype=self.dtype) - drop_rate)
 
             if stride[0] > 1 or stride[1] > 1:
                 skip = self.avg_pool(x, stride, stride, 'SAME')
