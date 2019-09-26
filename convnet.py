@@ -34,6 +34,7 @@ class ConvNet(object):
         config.gpu_options.allow_growth = True
         # config.gpu_options.per_process_gpu_memory_fraction = 0.7
         self.session = tf.Session(graph=graph, config=config)  # TF main session
+        self.top_scope = tf.get_variable_scope()
 
         self._input_size = input_shape  # Size of the network input (i.e., the first convolution layer).
         self._image_size = kwargs.get('image_size', None)
@@ -795,7 +796,8 @@ class ConvNet(object):
                 tf.add_to_collection('weight_variables', weights)
                 tf.add_to_collection('block{}_variables'.format(self._curr_block), weights)
                 tf.add_to_collection('block{}_weight_variables'.format(self._curr_block), weights)
-                self.update_ops.append(self.ema.apply([weights]))
+                with tf.variable_scope(self.top_scope):
+                    self.update_ops.append(self.ema.apply([weights]))
             weights_ema = self.ema.average(weights)
             if not tf.get_variable_scope().reuse:
                 tf.add_to_collection('block{}_ema_variables'.format(self._curr_block), weights_ema)
@@ -829,7 +831,8 @@ class ConvNet(object):
                 tf.add_to_collection('bias_variables', biases)
                 tf.add_to_collection('block{}_variables'.format(self._curr_block), biases)
                 tf.add_to_collection('block{}_bias_variables'.format(self._curr_block), biases)
-                self.update_ops.append(self.ema.apply([biases]))
+                with tf.variable_scope(self.top_scope):
+                    self.update_ops.append(self.ema.apply([biases]))
             biases_ema = self.ema.average(biases)
             if not tf.get_variable_scope().reuse:
                 tf.add_to_collection('block{}_ema_variables'.format(self._curr_block), biases_ema)
@@ -1021,7 +1024,8 @@ class ConvNet(object):
                 if not tf.get_variable_scope().reuse:
                     tf.add_to_collection('block{}_variables'.format(self._curr_block), mu)
                     tf.add_to_collection('block{}_batch_norm_variables'.format(self._curr_block), mu)
-                    self.update_ops.append(self.ema.apply([mu]))
+                    with tf.variable_scope(self.top_scope):
+                        self.update_ops.append(self.ema.apply([mu]))
                     self._flops += h*w*in_channels
                 mu_ema = self.ema.average(mu)
                 if not tf.get_variable_scope().reuse:
@@ -1032,7 +1036,8 @@ class ConvNet(object):
                 if not tf.get_variable_scope().reuse:
                     tf.add_to_collection('block{}_variables'.format(self._curr_block), sigma)
                     tf.add_to_collection('block{}_batch_norm_variables'.format(self._curr_block), sigma)
-                    self.update_ops.append(self.ema.apply([sigma]))
+                    with tf.variable_scope(self.top_scope):
+                        self.update_ops.append(self.ema.apply([sigma]))
                     self._flops += h*w*in_channels
                 sigma_ema = self.ema.average(sigma)
                 if not tf.get_variable_scope().reuse:
@@ -1044,7 +1049,8 @@ class ConvNet(object):
                     if not tf.get_variable_scope().reuse:
                         tf.add_to_collection('block{}_variables'.format(self._curr_block), beta)
                         tf.add_to_collection('block{}_batch_norm_variables'.format(self._curr_block), beta)
-                        self.update_ops.append(self.ema.apply([beta]))
+                        with tf.variable_scope(self.top_scope):
+                            self.update_ops.append(self.ema.apply([beta]))
                         self._flops += h*w*in_channels
                         self._params += in_channels
                     beta_ema = self.ema.average(beta)
@@ -1061,7 +1067,8 @@ class ConvNet(object):
                     if not tf.get_variable_scope().reuse:
                         tf.add_to_collection('block{}_variables'.format(self._curr_block), gamma)
                         tf.add_to_collection('block{}_batch_norm_variables'.format(self._curr_block), gamma)
-                        self.update_ops.append(self.ema.apply([gamma]))
+                        with tf.variable_scope(self.top_scope):
+                            self.update_ops.append(self.ema.apply([gamma]))
                         self._flops += h*w*in_channels
                         self._params += in_channels
                     gamma_ema = self.ema.average(gamma)
