@@ -413,9 +413,13 @@ class ConvNet(object):
         return x
 
     def augment_images(self, x, mask=None, **kwargs):
+        rand_blur = kwargs.get('rand_blur_stddev', 0.0) > 0.0
         rand_affine = kwargs.get('rand_affine', True)
         rand_crop = kwargs.get('rand_crop', True)
         rand_distortion = kwargs.get('rand_distortion', True)
+
+        if rand_blur:
+            x = self.gaussian_blur(x, **kwargs)
 
         if rand_affine:
             x, mask = self.affine_augment(x, mask, **kwargs)
@@ -441,6 +445,28 @@ class ConvNet(object):
             return x
         else:
             return x, mask
+
+    def gaussian_blur(self, x, **kwargs):
+        with tf.variable_scope('gaussian_blur'):
+            max_stddev = kwargs.get('rand_blur_stddev', 0.0)
+
+            column_base = -0.5*np.array([[7, 6, 5, 4, 3, 2, 1, 0, 1, 2, 3, 4, 5, 6, 7]], dtype=np.float32)**2
+            row_base = np.transpose(column_base)
+            column_base = tf.tile(tf.constant(column_base[:, :, np.newaxis, np.newaxis], dtype=tf.float32),
+                                  multiples=(1, 1, self.input_size[-1], 1))
+            row_base = tf.tile(tf.constant(row_base[:, :, np.newaxis, np.newaxis], dtype=tf.float32),
+                               multiples=(1, 1, self.input_size[-1], 1))
+            pi = tf.constant(np.pi, dtype=tf.float32)
+
+            var = tf.random.uniform([], minval=0.0, maxval=max_stddev, dtype=tf.float32)**2
+            denom = tf.math.sqrt(2*pi*var)
+            h_filt = tf.math.exp(column_base/var)/denom
+            w_filt = tf.math.exp(row_base/var)/denom
+
+            x = tf.nn.depthwise_conv2d(x, h_filt, strides=[1, 1, 1, 1], padding='SAME')
+            x = tf.nn.depthwise_conv2d(x, w_filt, strides=[1, 1, 1, 1], padding='SAME')
+
+        return x
 
     def affine_augment(self, x, mask=None, **kwargs):  # Scale, ratio, translation, rotation, shear, and reflection
         with tf.variable_scope('affine_augment'):
