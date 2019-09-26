@@ -1,6 +1,6 @@
 """
 Initialize your networks using public checkpoints.
-Define rules to load variables in the checkpoints
+Define mapping rules to load variables in the checkpoints
 ResNet v2: https://github.com/tensorflow/models/tree/master/research/slim
 """
 
@@ -8,7 +8,7 @@ import tensorflow as tf
 from tensorflow.python import pywrap_tensorflow
 
 
-def resnet_v2_50_101(ckpt_dir, load_moving_average=True):
+def resnet_v2_50_101(ckpt_dir, load_moving_average=True, verbose=True):
     if ckpt_dir.split('_')[-1] == '50.ckpt':
         prefix = 'resnet_v2_50/'
     else:
@@ -24,12 +24,13 @@ def resnet_v2_50_101(ckpt_dir, load_moving_average=True):
                       'res': 'unit_',
                       'conv': 'bottleneck_v2/conv',
                       'bn': 'BatchNorm',
-                      'weights:0': 'weights',
-                      'biases:0': 'biases',
-                      'mu:0': 'moving_mean',
-                      'sigma:0': 'moving_variance',
-                      'beta:0': 'beta',
-                      'gamma:0': 'gamma'}
+                      'weights': 'weights',
+                      'biases': 'biases',
+                      'mu': 'moving_mean',
+                      'sigma': 'moving_variance',
+                      'beta': 'beta',
+                      'gamma': 'gamma',
+                      'ExponentialMovingAverage': 'ExponentialMovingAverage'}
 
     reader = pywrap_tensorflow.NewCheckpointReader(ckpt_dir)
     var_to_shape_map = reader.get_variable_to_shape_map()
@@ -37,7 +38,7 @@ def resnet_v2_50_101(ckpt_dir, load_moving_average=True):
     variables = tf.global_variables()
     assign_dict = dict()
     for var in variables:
-        keys = var.name.split('/')
+        keys = var.name.rstrip(':0').split('/')
         if keys[-1] in key_match_dict:
             var_name_splitted = []
             block_name = '_'.join(keys[0].split('_')[:-1])
@@ -50,9 +51,11 @@ def resnet_v2_50_101(ckpt_dir, load_moving_average=True):
                     if keys[2] == 'bn':
                         var_name_splitted.append('postnorm')
                     else:
-                        var_name_splitted.append('logits_are_not_loaded')   # logits
+                        var_name_splitted.append('logits')
                 else:
                     raise(ValueError, 'block_{} is not considered as an exception'.format(block_num))
+                if keys[-2] in key_match_dict:  # To load exponential moving averages
+                    var_name_splitted.append(key_match_dict[keys[-2]])
                 var_name_splitted.append(key_match_dict[keys[-1]])
             else:
                 unit_name = '_'.join(keys[1].split('_')[:-1])
@@ -105,14 +108,26 @@ def resnet_v2_50_101(ckpt_dir, load_moving_average=True):
             var_name = prefix + '/'.join(var_name_splitted)
             if load_moving_average:
                 if var_name + '/ExponentialMovingAverage' in var_to_shape_map:
-                    print('Init. {} <===== {}'.format(var.name, var_name + '/ExponentialMovingAverage'))
-                    assign_dict[var_name] = var
+                    if var.get_shape() == var_to_shape_map[var_name + '/ExponentialMovingAverage']:
+                        assign_dict[var_name] = var
+                        if verbose:
+                            print('Init. {} <===== {}'.format(var.name, var_name + '/ExponentialMovingAverage'))
+                    elif verbose:
+                        print('Init. {} <==/== {}'.format(var.name, var_name + '/ExponentialMovingAverage'))
                 elif var_name in var_to_shape_map:
-                    print('Init. {} <===== {}'.format(var.name, var_name))
-                    assign_dict[var_name] = var
+                    if var.get_shape() == var_to_shape_map[var_name]:
+                        assign_dict[var_name] = var
+                        if verbose:
+                            print('Init. {} <===== {}'.format(var.name, var_name))
+                    elif verbose:
+                        print('Init. {} <==/== {}'.format(var.name, var_name))
             else:
                 if var_name in var_to_shape_map:
-                    print('Init. {} <===== {}'.format(var.name, var_name))
-                    assign_dict[var_name] = var
+                    if var.get_shape() == var_to_shape_map[var_name]:
+                        assign_dict[var_name] = var
+                        if verbose:
+                            print('Init. {} <===== {}'.format(var.name, var_name))
+                    elif verbose:
+                        print('Init. {} <==/== {}'.format(var.name, var_name))
 
     tf.train.init_from_checkpoint(ckpt_dir, assign_dict)
