@@ -296,10 +296,9 @@ class ConvNet(object):
                 else:
                     l2_reg_loss = tf.constant(0.0, dtype=tf.float32, name='0')
 
-            if ls_factor > 0.0:
-                with tf.variable_scope('label_smoothing'):
-                    ls_factor = tf.constant(ls_factor, dtype=tf.float32, name='label_smoothing_factor')
-                    labels = self.Y*(1.0 - ls_factor) + ls_factor/self.num_classes
+            with tf.variable_scope('label_smoothing'):
+                ls_factor = tf.constant(ls_factor, dtype=tf.float32, name='label_smoothing_factor')
+                labels = self.Y*(1.0 - ls_factor) + ls_factor/self.num_classes
 
             with tf.variable_scope('valid_mask'):
                 sumval = tf.reduce_sum(self.Y, axis=axis)
