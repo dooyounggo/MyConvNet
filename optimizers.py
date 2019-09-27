@@ -119,7 +119,8 @@ class Optimizer(object):
                 if var.trainable:
                     self.update_ops.append(var.assign_sub(self.learning_rate_multiplier*weight_decay*var))
         with tf.control_dependencies(self.model.update_ops):
-            with tf.control_dependencies([optimizer.apply_gradients(avg_grads_and_vars)]):
+            with tf.control_dependencies([optimizer.apply_gradients(avg_grads_and_vars,
+                                                                    global_step=self.model.global_step)]):
                 opt_op = tf.group(self.update_ops)
         return opt_op
 
@@ -289,7 +290,7 @@ class Optimizer(object):
                 if self.evaluator.is_better(curr_score, self.best_score, **kwargs):  # Save best model
                     self.best_score = curr_score
                     saver.save(self.model.session, os.path.join(save_dir, 'model.ckpt'),
-                               global_step=self.curr_step,
+                               global_step=self.model.global_step,
                                write_meta_graph=False)
 
                     if show_each_step:
@@ -299,7 +300,7 @@ class Optimizer(object):
                     annotations = annotations[-max_to_keep:]
                 elif self.curr_step == last_val_iter:  # Save latest model
                     saver.save(self.model.session, os.path.join(save_dir, 'model.ckpt'),
-                               global_step=self.curr_step,
+                               global_step=self.model.global_step,
                                write_meta_graph=False)
 
                     if show_each_step:
