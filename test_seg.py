@@ -4,10 +4,7 @@ import tensorflow as tf
 from dataset import DataSet
 import utils
 import matplotlib.pyplot as plt
-from parameters_seg import subset
-from parameters_seg import ConvNet
-from parameters_seg import Evaluator
-from parameters_seg import Parameters
+from parameters_seg import *
 
 
 Param = Parameters()
@@ -40,12 +37,11 @@ else:
 
 saver.restore(model.session, ckpt_to_load)    # restore learned weights
 test_x, test_y_true, test_y_pred, _ = model.predict(test_set, verbose=True, **Param.d)
-test_x += image_mean
 test_score = evaluator.score(test_y_true, test_y_pred)
 
 print(evaluator.name + ': {:.4f}'.format(test_score))
 
-utils.plot_seg_results(test_x, test_y_true, test_y_pred, save_dir=os.path.join(Param.save_dir, 'results'))
+utils.plot_seg_results(test_x, test_y_true, test_y_pred, save_dir=os.path.join(Param.save_dir, 'results_test'))
 plt.show()
 
 model.session.close()
