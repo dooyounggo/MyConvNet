@@ -5,10 +5,7 @@ from dataset import DataSet
 import utils
 import matplotlib.pyplot as plt
 import csv
-from parameters import subset
-from parameters import ConvNet
-from parameters import Evaluator
-from parameters import Parameters
+from parameters import *
 
 
 Param = Parameters()
