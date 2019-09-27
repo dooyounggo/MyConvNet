@@ -8,9 +8,7 @@ import tensorflow as tf
 from dataset import DataSet
 import utils
 import matplotlib.pyplot as plt
-from parameters import subset
-from parameters import ConvNet
-from parameters import Parameters
+from parameters import *
 
 
 Param = Parameters()
