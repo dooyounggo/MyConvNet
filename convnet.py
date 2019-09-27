@@ -1040,7 +1040,6 @@ class ConvNet(object):
         else:
             _, h, w, in_channels = x.get_shape().as_list()
 
-        num_steps = tf.cast(self.global_step, dtype=tf.float32)
         momentum = self.batch_norm_decay
         epsilon = 1e-4
         if is_training is None:
