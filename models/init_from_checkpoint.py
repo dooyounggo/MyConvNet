@@ -13,7 +13,7 @@ def resnet_v2_50_101(ckpt_dir, load_moving_average=True, verbose=True):
         prefix = 'resnet_v2_50/'
     else:
         prefix = 'resnet_v2_101/'
-    start_indices = [0, 1, 1]   # Starting indices for any blocks, units, and convolutions
+    start_idx = [0, 1, 1]   # Starting indices for any blocks, units, and convolutions
 
     exception_blocks = ['0', 'None']
     exception_convs = ['0', 'skip']
@@ -46,7 +46,7 @@ def resnet_v2_50_101(ckpt_dir, load_moving_average=True, verbose=True):
             if block_num in exception_blocks:       # FIXME
                 if block_num == '0':
                     conv_num = keys[1].split('_')[-1]
-                    var_name_splitted.append('conv' + str(int(conv_num) + start_indices[2]))
+                    var_name_splitted.append('conv' + str(int(conv_num) + start_idx[2]))
                 elif block_num == 'None':
                     if keys[2] == 'bn':
                         var_name_splitted.append('postnorm')
@@ -54,7 +54,7 @@ def resnet_v2_50_101(ckpt_dir, load_moving_average=True, verbose=True):
                         var_name_splitted.append('logits')
                 else:
                     raise(ValueError, 'block_{} is not considered as an exception'.format(block_num))
-                if keys[-2] in key_match_dict:  # To load exponential moving averages
+                if keys[-1] == 'ExponentialMovingAverage':  # To load exponential moving averages
                     var_name_splitted.append(key_match_dict[keys[-2]])
                 var_name_splitted.append(key_match_dict[keys[-1]])
             else:
@@ -65,18 +65,20 @@ def resnet_v2_50_101(ckpt_dir, load_moving_average=True, verbose=True):
                 if conv_num in exception_convs:     # FIXME
                     if unit_name in key_match_dict:
                         if conv_num == '0':
-                            var_name_splitted.append(key_match_dict[block_name] + str(int(block_num) + start_indices[0]))
-                            var_name_splitted.append(key_match_dict[unit_name] + str(int(unit_num) + start_indices[1]))
-                            if keys[-1] == 'weights:0' or keys[-1] == 'biases:0':
-                                var_name_splitted.append(key_match_dict[conv_name] + str(int(conv_num) + start_indices[2]))
-                            else:
+                            var_name_splitted.append(key_match_dict[block_name] + str(int(block_num) + start_idx[0]))
+                            var_name_splitted.append(key_match_dict[unit_name] + str(int(unit_num) + start_idx[1]))
+                            if 'bn' in keys:
                                 var_name_splitted.append('bottleneck_v2/preact')
+                            else:
+                                var_name_splitted.append(key_match_dict[conv_name] + str(int(conv_num) + start_idx[2]))
                         elif conv_num == 'skip':
-                            var_name_splitted.append(key_match_dict[block_name] + str(int(block_num) + start_indices[0]))
-                            var_name_splitted.append(key_match_dict[unit_name] + str(int(unit_num) + start_indices[1]))
+                            var_name_splitted.append(key_match_dict[block_name] + str(int(block_num) + start_idx[0]))
+                            var_name_splitted.append(key_match_dict[unit_name] + str(int(unit_num) + start_idx[1]))
                             var_name_splitted.append('bottleneck_v2/shortcut')
                         else:
                             raise (ValueError, 'conv_{} is not considered as an exception'.format(conv_num))
+                        if keys[-1] == 'ExponentialMovingAverage':  # To load exponential moving averages
+                            var_name_splitted.append(key_match_dict[keys[-2]])
                         var_name_splitted.append(key_match_dict[keys[-1]])
                 else:
                     for i, key in enumerate(keys):
@@ -103,7 +105,7 @@ def resnet_v2_50_101(ckpt_dir, load_moving_average=True, verbose=True):
                         if key_num is None:
                             var_name_splitted.append(part_name)
                         else:
-                            var_name_splitted.append(part_name + str(key_num + start_indices[i] + offset))
+                            var_name_splitted.append(part_name + str(key_num + start_idx[i] + offset))
 
             var_name = prefix + '/'.join(var_name_splitted)
             if load_moving_average:
