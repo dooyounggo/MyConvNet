@@ -110,7 +110,7 @@ class ResSENetBot(ResSENet):    # Residual squeeze-and-excitation networks with 
                 d[name + '/conv_0' + '/bn'] = x
                 # x = self.relu(x, name='relu')
                 # d[name + '/conv_0' + '/relu'] = x
-                x = self.conv_layer(x, 1, 1, out_channels//4, padding='SAME')
+                x = self.conv_layer(x, 1, 1, out_channels//4, padding='SAME', biased=False)
                 print(name + '/conv_0.shape', x.get_shape().as_list())
                 d[name + '/conv_0'] = x
 
@@ -119,7 +119,7 @@ class ResSENetBot(ResSENet):    # Residual squeeze-and-excitation networks with 
                 d[name + '/conv_1' + '/bn'] = x
                 x = self.relu(x, name='relu')
                 d[name + '/conv_1' + '/relu'] = x
-                x = self.conv_layer(x, kernel, stride, out_channels//4, padding='SAME')
+                x = self.conv_layer(x, kernel, stride, out_channels//4, padding='SAME', biased=False)
                 print(name + '/conv_1.shape', x.get_shape().as_list())
                 d[name + '/conv_1'] = x
 
