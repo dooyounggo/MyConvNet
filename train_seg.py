@@ -6,11 +6,7 @@ from dataset import DataSet
 import utils
 import matplotlib.pyplot as plt
 from optimizers import MomentumOptimizer as Optimizer
-from parameters_seg import subset
-from parameters_seg import ConvNet
-from parameters_seg import Evaluator
-from parameters_seg import Parameters
-from parameters_seg import init_from_pretrained_model
+from parameters_seg import *
 
 
 Param = Parameters()
@@ -81,7 +77,7 @@ fp.close()
 # Initialize
 model = ConvNet(Param.d['input_size'], len(class_names), loss_weights=w, **Param.d)
 if Param.d['init_from_pretrained_model']:
-    init_from_pretrained_model(Param.pretrained_dir)
+    init_from_pretrained_model(Param.pretrained_dir, load_moving_average=Param.d['load_moving_average'])
 evaluator = Evaluator()
 optimizer = Optimizer(model, train_set, evaluator, val_set=val_set, **Param.d)
 
