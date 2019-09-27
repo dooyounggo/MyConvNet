@@ -53,7 +53,6 @@ class ConvNet(object):
 
         self._blocks_to_train = kwargs.get('blocks_to_train', None)
         self._train_batch_norm = kwargs.get('train_batch_norm', True)
-        self._batch_norm_decay = kwargs.get('batch_norm_decay', 0.999)
 
         self.debug_value = 0.0
         self.debug_images_0 = np.zeros([4, 8, 8, 3], dtype=np.float32)
@@ -73,7 +72,12 @@ class ConvNet(object):
         self.backbone_only = False
         self.dicts = []
         self._update_ops = []
-        self.ema = tf.train.ExponentialMovingAverage(decay=kwargs.get('moving_average_decay', 0.999))
+
+        self.global_step = tf.train.get_or_create_global_step()
+        self.ema = tf.train.ExponentialMovingAverage(decay=kwargs.get('moving_average_decay', 0.9999),
+                                                     num_updates=self.global_step)
+        global_step = tf.cast(self.global_step, dtype=tf.float32)
+        self._batch_norm_decay = tf.minimum(kwargs.get('batch_norm_decay', 0.999), global_step/(9 + global_step))
         self._init_params()
         self._init_model(**kwargs)
 
@@ -1036,6 +1040,7 @@ class ConvNet(object):
         else:
             _, h, w, in_channels = x.get_shape().as_list()
 
+        num_steps = tf.cast(self.global_step, dtype=tf.float32)
         momentum = self.batch_norm_decay
         epsilon = 1e-4
         if is_training is None:
@@ -1132,9 +1137,8 @@ class ConvNet(object):
             update = 1.0 - momentum
             update_mu = mu.assign(momentum*mu + update*batch_mean)
             update_sigma = sigma.assign(momentum*sigma + update*batch_var)
-            if trainable:
-                tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_mu)
-                tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_sigma)
+            tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_mu)
+            tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_sigma)
 
         return x
 
