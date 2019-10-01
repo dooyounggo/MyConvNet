@@ -295,7 +295,7 @@ class Optimizer(object):
                 if self.evaluator.is_better(curr_score, self.best_score, **kwargs):  # Save best model
                     self.best_score = curr_score
                     saver.save(self.model.session, os.path.join(save_dir, 'model.ckpt'),
-                               global_step=self.curr_step,
+                               global_step=self.model.global_step,
                                write_meta_graph=False)
 
                     if show_each_step:
@@ -305,7 +305,7 @@ class Optimizer(object):
                     annotations = annotations[-max_to_keep:]
                 elif self.curr_step == last_val_iter:  # Save latest model
                     saver.save(self.model.session, os.path.join(save_dir, 'model.ckpt'),
-                               global_step=self.curr_step,
+                               global_step=self.model.global_step,
                                write_meta_graph=False)
 
                     if show_each_step:
