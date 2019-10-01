@@ -54,10 +54,6 @@ class ConvNet(object):
         self._blocks_to_train = kwargs.get('blocks_to_train', None)
         self._train_batch_norm = kwargs.get('train_batch_norm', True)
 
-        self.debug_value = 0.0
-        self.debug_images_0 = np.zeros([4, 8, 8, 3], dtype=np.float32)
-        self.debug_images_1 = np.zeros([4, 8, 8, 3], dtype=np.float32)
-
         self.handles = []
         self.Xs = []
         self.Ys = []
@@ -73,11 +69,51 @@ class ConvNet(object):
         self.dicts = []
         self._update_ops = []
 
-        self.global_step = tf.train.get_or_create_global_step()
+        with tf.device('/cpu:0'):
+            with tf.variable_scope('conditions'):
+                self.is_train = tf.placeholder(tf.bool, shape=[], name='is_train')
+                self.monte_carlo = tf.placeholder(tf.bool, shape=[], name='monte_carlo')
+                self.augmentation = tf.placeholder(tf.bool, shape=[], name='augmentation')
+                self.total_steps = tf.placeholder(tf.int64, shape=[], name='total_steps')
+
+                self.global_step = tf.train.get_or_create_global_step()
+
+            with tf.name_scope('calc'):
+                global_step = tf.cast(self.global_step, dtype=tf.float32)
+                self._batch_norm_decay = tf.minimum(kwargs.get('batch_norm_decay', 0.999),
+                                                    global_step/(9 + global_step))
+
+                self.dropout_rate = tf.cond(tf.math.logical_or(self.is_train, self.monte_carlo),
+                                            lambda: tf.constant(kwargs.get('dropout_rate', 0.0), dtype=self.dtype),
+                                            lambda: tf.constant(0.0, dtype=self.dtype, name='0'),
+                                            name='dropout_rate')
+
+                if self.dropout_weights:
+                    self.dropout_rate_weights = self.dropout_rate
+                else:
+                    self.dropout_rate_weights = tf.constant(0.0, dtype=self.dtype, name='0')
+                if self.dropout_logits:
+                    self.dropout_rate_logits = self.dropout_rate
+                else:
+                    self.dropout_rate_logits = tf.constant(0.0, dtype=self.dtype, name='0')
+                if kwargs.get('zero_center', True):
+                    self.image_mean = tf.constant(kwargs.get('image_mean', 0.5), dtype=tf.float32, name='image_mean')
+                else:
+                    self.image_mean = tf.constant(0.0, dtype=tf.float32, name='0')
+
+                skip_drop_rate = kwargs.get('skip_drop_rate', 0.0)
+                self.skip_drop_rate = tf.cond(self.is_train,
+                                              lambda: global_step/tf.cast(self.total_steps,
+                                                                          dtype=tf.float32)*skip_drop_rate,
+                                              lambda: tf.constant(0.0, dtype=tf.float32, name='0'))
+
         self.ema = tf.train.ExponentialMovingAverage(decay=kwargs.get('moving_average_decay', 0.9999),
                                                      num_updates=self.global_step)
-        global_step = tf.cast(self.global_step, dtype=tf.float32)
-        self._batch_norm_decay = tf.minimum(kwargs.get('batch_norm_decay', 0.999), global_step/(9 + global_step))
+
+        self.debug_value = self.skip_drop_rate
+        self.debug_images_0 = np.zeros([4, 8, 8, 3], dtype=np.float32)
+        self.debug_images_1 = np.zeros([4, 8, 8, 3], dtype=np.float32)
+
         self._init_params()
         self._init_model(**kwargs)
 
@@ -142,28 +178,6 @@ class ConvNet(object):
         return self._update_ops
 
     def _init_model(self, **kwargs):
-        with tf.device('/cpu:0'):
-            with tf.variable_scope('conditions'):
-                self.is_train = tf.placeholder(tf.bool, name='is_train')
-                self.monte_carlo = tf.placeholder(tf.bool, name='monte_carlo')
-                self.augmentation = tf.placeholder(tf.bool, name='augmentation')
-                self.dropout_rate = tf.cond(tf.math.logical_or(self.is_train, self.monte_carlo),
-                                            lambda: tf.constant(kwargs.get('dropout_rate', 0.0), dtype=self.dtype),
-                                            lambda: tf.constant(0.0, dtype=self.dtype),
-                                            name='dropout_rate')
-                if self.dropout_weights:
-                    self.dropout_rate_weights = self.dropout_rate
-                else:
-                    self.dropout_rate_weights = tf.constant(0.0, dtype=self.dtype)
-                if self.dropout_logits:
-                    self.dropout_rate_logits = self.dropout_rate
-                else:
-                    self.dropout_rate_logits = tf.constant(0.0, dtype=self.dtype)
-                if kwargs.get('zero_center', True):
-                    self.image_mean = kwargs.get('image_mean', 0.5)
-                else:
-                    self.image_mean = 0.0
-
         self.X_in = []
         self.Y_in = []
         if self.image_size is None:
@@ -233,7 +247,7 @@ class ConvNet(object):
                         self.bytes_in_use.append(tf.contrib.memory_stats.BytesInUse())
 
         with tf.device('/cpu:0'):
-            with tf.variable_scope('calc'):
+            with tf.name_scope('calc/'):
                 self.X_all = tf.concat(self.Xs, axis=0, name='x') + self.image_mean
                 self.Y_all = tf.concat(self.Ys, axis=0, name='y_true')
                 self.pred = tf.concat(self.preds, axis=0, name='y_pred')
@@ -333,7 +347,8 @@ class ConvNet(object):
 
         feed_dict = {self.is_train: False,
                      self.monte_carlo: monte_carlo,
-                     self.augmentation: augment_pred}
+                     self.augmentation: augment_pred,
+                     self.total_steps: num_steps}
         for h_t, h in zip(self.handles, handles):
             feed_dict.update({h_t: h})
 
@@ -803,7 +818,7 @@ class ConvNet(object):
 
         return x, y
 
-    def weight_variable(self, shape, stddev=None, name='weights'):
+    def weight_variable(self, shape, initializer=tf.initializers.he_normal(), name='weights'):
         if self.blocks_to_train is None:
             trainable = True
         elif self._curr_block in self.blocks_to_train:
@@ -812,14 +827,9 @@ class ConvNet(object):
             trainable = False
 
         with tf.device('/cpu:0'):
-            if stddev is None:
-                weights = tf.get_variable(name, shape, tf.float32,
-                                          initializer=tf.initializers.he_normal(),
-                                          trainable=trainable)
-            else:
-                weights = tf.get_variable(name, shape, tf.float32,
-                                          tf.random_normal_initializer(mean=0.0, stddev=stddev),
-                                          trainable=trainable)
+            weights = tf.get_variable(name, shape, tf.float32,
+                                      initializer=initializer,
+                                      trainable=trainable)
 
             if not tf.get_variable_scope().reuse:
                 tf.add_to_collection('weight_variables', weights)
@@ -843,7 +853,7 @@ class ConvNet(object):
         else:
             return weights
 
-    def bias_variable(self, shape, init_value=0.0, name='biases'):
+    def bias_variable(self, shape, initializer=tf.initializers.zeros(), name='biases'):
         if self.blocks_to_train is None:
             trainable = True
         elif self._curr_block in self.blocks_to_train:
@@ -853,7 +863,7 @@ class ConvNet(object):
 
         with tf.device('/cpu:0'):
             biases = tf.get_variable(name, shape, tf.float32,
-                                     initializer=tf.constant_initializer(value=init_value),
+                                     initializer=initializer,
                                      trainable=trainable)
 
             if not tf.get_variable_scope().reuse:
@@ -937,8 +947,8 @@ class ConvNet(object):
 
         return tf.nn.avg_pool(x, ksize=ksize, strides=strides, data_format=data_format, padding=padding)
 
-    def conv_layer(self, x, kernel, stride, out_channels, padding='SAME', biased=True,
-                   dilation=(1, 1), depthwise=False, **kwargs):
+    def conv_layer(self, x, kernel, stride, out_channels, padding='SAME', biased=True, depthwise=False, dilation=(1, 1),
+                   weight_initializer=tf.initializers.he_normal(), bias_initializer=tf.initializers.zeros()):
         if not isinstance(kernel, (list, tuple)):
             kernel = [kernel, kernel]
         elif len(kernel) == 1:
@@ -951,9 +961,6 @@ class ConvNet(object):
             dilation = [dilation, dilation]
         elif len(dilation) == 1:
             dilation = [dilation[0], dilation[0]]
-
-        weights_stddev = kwargs.get('weights_stddev', None)
-        biases_value = kwargs.get('biases_value', 0.0)
 
         if self.channel_first:
             _, in_channels, h, w = x.get_shape().as_list()
@@ -974,8 +981,7 @@ class ConvNet(object):
         if depthwise:
             channel_multiplier = out_channels//in_channels
             weights = self.weight_variable([kernel[0], kernel[1], in_channels, channel_multiplier],
-                                           stddev=weights_stddev,
-                                           name='weights')
+                                           initializer=weight_initializer)
             convs = tf.nn.depthwise_conv2d(x, weights, strides=conv_strides, padding=padding,
                                            data_format=data_format, rate=dilation)
 
@@ -983,7 +989,8 @@ class ConvNet(object):
                 self._flops += out_size[0]*out_size[1]*kernel[0]*kernel[1]*in_channels*channel_multiplier
                 self._params += kernel[0]*kernel[1]*in_channels*channel_multiplier
         else:
-            weights = self.weight_variable([kernel[0], kernel[1], in_channels, out_channels], stddev=weights_stddev)
+            weights = self.weight_variable([kernel[0], kernel[1], in_channels, out_channels],
+                                           initializer=weight_initializer)
             convs = tf.nn.conv2d(x, weights, strides=conv_strides, padding=padding,
                                  data_format=data_format, dilations=conv_dilations)
 
@@ -992,7 +999,7 @@ class ConvNet(object):
                 self._params += kernel[0]*kernel[1]*in_channels*out_channels
 
         if biased:
-            biases = self.bias_variable(out_channels, init_value=biases_value)
+            biases = self.bias_variable(out_channels, initializer=bias_initializer)
 
             if not tf.get_variable_scope().reuse:
                 self._flops += out_size[0]*out_size[1]*out_channels
@@ -1002,19 +1009,18 @@ class ConvNet(object):
         else:
             return convs
 
-    def fc_layer(self, x, out_dim, biased=True, **kwargs):
-        weights_stddev = kwargs.get('weights_stddev', None)
-        biases_value = kwargs.get('biases_value', 0.0)
+    def fc_layer(self, x, out_dim, biased=True,
+                 weight_initializer=tf.initializers.he_normal(), bias_initializer=tf.initializers.zeros()):
         in_dim = int(x.get_shape()[-1])
 
-        weights = self.weight_variable([in_dim, out_dim], stddev=weights_stddev)
+        weights = self.weight_variable([in_dim, out_dim], initializer=weight_initializer)
 
         if not tf.get_variable_scope().reuse:
             self._flops += in_dim*out_dim
             self._params += in_dim*out_dim
 
         if biased:
-            biases = self.bias_variable(out_dim, init_value=biases_value)
+            biases = self.bias_variable(out_dim, initializer=bias_initializer)
 
             if not tf.get_variable_scope().reuse:
                 self._flops += out_dim
@@ -1024,7 +1030,7 @@ class ConvNet(object):
         else:
             return tf.matmul(x, weights)
 
-    def batch_norm(self, x, scale=True, shift=True, is_training=None, zero_scale_init=False, scope='bn'):
+    def batch_norm(self, x, scale=True, shift=True, zero_scale_init=False, scope='bn'):
         if self.train_batch_norm is not None:
             trainable = self.train_batch_norm
         else:
@@ -1042,8 +1048,6 @@ class ConvNet(object):
 
         momentum = self.batch_norm_decay
         epsilon = 1e-4
-        if is_training is None:
-            is_training = self.is_train
         in_channels = x.get_shape()[1] if self.channel_first else x.get_shape()[-1]
 
         with tf.variable_scope(scope):
@@ -1107,14 +1111,14 @@ class ConvNet(object):
                     gamma = None
                     gamma_ema = None
 
-                mean, var, beta, gamma = tf.cond(is_training,
+                mean, var, beta, gamma = tf.cond(self.is_train,
                                                  lambda: (mu, sigma, beta, gamma),
                                                  lambda: (mu_ema, sigma_ema, beta_ema, gamma_ema))
 
             if self.dtype is not tf.float32:
                 x = tf.cast(x, dtype=tf.float32)
             data_format = 'NCHW' if self.channel_first else 'NHWC'
-            x, batch_mean, batch_var = tf.cond(is_training,
+            x, batch_mean, batch_var = tf.cond(self.is_train,
                                                lambda: tf.nn.fused_batch_norm(x,
                                                                               gamma,
                                                                               beta,
@@ -1141,18 +1145,20 @@ class ConvNet(object):
 
         return x
 
-    def upsampling_2d_layer(self, x, scale=2, name='upsampling'):
+    def upsampling_2d_layer(self, x, scale=2, out_shape=None, align_corners=False, name='upsampling'):
         if self.channel_first:
             x = tf.transpose(x, perm=[0, 2, 3, 1], name='tp')
         in_shape = x.get_shape()
-        x = tf.image.resize_bilinear(x, [in_shape[1]*scale, in_shape[2]*scale], align_corners=False, name=name)
+        if out_shape is None:
+            out_shape = [in_shape[1]*scale, in_shape[2]*scale]
+        x = tf.image.resize_bilinear(x, out_shape, align_corners=align_corners, name=name)
         if self.channel_first:
             x = tf.transpose(x, perm=[0, 3, 1, 2], name='tp')
 
         return x
 
-    def transposed_conv_layer(self, x, kernel, stride, out_channels, padding='SAME', biased=True,
-                              dilation=(1, 1), **kwargs):
+    def transposed_conv_layer(self, x, kernel, stride, out_channels, padding='SAME', biased=True, dilation=(1, 1),
+                              weight_initializer=tf.initializers.he_normal(), bias_initializer=tf.initializers.zeros()):
         if not isinstance(kernel, (list, tuple)):
             kernel = [kernel, kernel]
         elif len(kernel) == 1:
@@ -1188,10 +1194,8 @@ class ConvNet(object):
                 output_shape = [batch_size, h*stride[0], w*stride[1], out_channels]
             out_size = output_shape[1:3]
 
-        weights_stddev = kwargs.get('weights_stddev', None)
-        biases_value = kwargs.get('biases_value', 0.0)
-
-        weights = self.weight_variable([kernel[0], kernel[1], in_channels, out_channels], stddev=weights_stddev)
+        weights = self.weight_variable([kernel[0], kernel[1], in_channels, out_channels],
+                                       initializer=weight_initializer)
         convs = tf.nn.conv2d_transpose(x, weights, output_shape=output_shape, strides=conv_strides,
                                        padding=padding, data_format=data_format, dilations=conv_dilations)
 
@@ -1200,7 +1204,7 @@ class ConvNet(object):
             self._params += kernel[0]*kernel[1]*in_channels*out_channels
 
         if biased:
-            biases = self.bias_variable(out_channels, init_value=biases_value)
+            biases = self.bias_variable(out_channels, initializer=bias_initializer)
 
             if not tf.get_variable_scope().reuse:
                 self._flops += out_size[0]*out_size[1]*out_channels
@@ -1209,6 +1213,34 @@ class ConvNet(object):
             return tf.nn.bias_add(convs, biases, data_format=data_format)
         else:
             return convs
+
+    def stochastic_depth(self, x, skip, drop_rate=0.0, name='drop'):
+        with tf.variable_scope(name):
+            batch_size = tf.shape(x)[0]
+            drop_rate = tf.cond(self.is_train, lambda: drop_rate, lambda: 0.0)
+            survived = tf.cast(tf.math.greater_equal
+                               (tf.random.uniform([batch_size, 1, 1, 1], dtype=tf.float32), drop_rate),
+                               dtype=self.dtype)/tf.cast(1.0 - drop_rate, dtype=self.dtype)
+            x = x*survived + skip
+
+        return x
+
+    def drop_connections(self, x, skip, main_drop_rate=0.0, skip_drop_rate=0.0, name='drop'):
+        with tf.variable_scope(name):
+            batch_size = tf.shape(x)[0]
+            main_drop_rate = tf.cond(self.is_train, lambda: main_drop_rate, lambda: 0.0)
+            skip_drop_rate = tf.cond(self.is_train, lambda: skip_drop_rate, lambda: 0.0)
+            effective_main_drop_rate = main_drop_rate*(1.0 - skip_drop_rate)
+
+            main_s = tf.math.greater_equal(tf.random.uniform([batch_size, 1, 1, 1], dtype=tf.float32), main_drop_rate)
+            skip_s = tf.math.greater_equal(tf.random.uniform([batch_size, 1, 1, 1], dtype=tf.float32), skip_drop_rate)
+            main_survived = tf.cast(main_s or not skip_s, dtype=self.dtype)/tf.cast(1.0 - effective_main_drop_rate,
+                                                                                    dtype=self.dtype)
+            skip_survived = tf.cast(skip_s, dtype=self.dtype)/tf.cast(1.0 - skip_drop_rate, dtype=self.dtype)
+
+            x = x*main_survived + skip*skip_survived
+
+        return x
 
     def relu(self, x, name='relu'):
         if not tf.get_variable_scope().reuse:
