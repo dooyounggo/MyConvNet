@@ -70,7 +70,7 @@ class ConvNet(object):
         self._update_ops = []
 
         with tf.device('/cpu:0'):
-            with tf.variable_scope('conditions'):
+            with tf.name_scope('conditions'):
                 self.is_train = tf.placeholder(tf.bool, shape=[], name='is_train')
                 self.monte_carlo = tf.placeholder(tf.bool, shape=[], name='monte_carlo')
                 self.augmentation = tf.placeholder(tf.bool, shape=[], name='augmentation')
