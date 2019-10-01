@@ -36,7 +36,7 @@ class ResCBAMNet(ConvNet):    # Residual networks with Convolutional Block Atten
                 x = self.conv_layer(X_input, kernels[0], strides[0], channels[0]//2, padding='SAME', biased=False)
                 print('block_0' + '/conv_0.shape', x.get_shape().as_list())
                 d['block_0' + '/conv_0'] = x
-                x = self.batch_norm(x, shift=True, scale=True, is_training=self.is_train, scope='bn')
+                x = self.batch_norm(x, shift=True, scale=True, scope='bn')
                 d['block_0' + '/conv_0' + '/bn'] = x
                 x = self.relu(x, name='relu')
                 d['block_0' + '/conv_0' + '/relu'] = x
@@ -44,7 +44,7 @@ class ResCBAMNet(ConvNet):    # Residual networks with Convolutional Block Atten
                 x = self.conv_layer(x, kernels[0], 1, channels[0]//2, padding='SAME', biased=False)
                 print('block_0' + '/conv_1.shape', x.get_shape().as_list())
                 d['block_0' + '/conv_1'] = x
-                x = self.batch_norm(x, shift=True, scale=True, is_training=self.is_train, scope='bn')
+                x = self.batch_norm(x, shift=True, scale=True, scope='bn')
                 d['block_0' + '/conv_1' + '/bn'] = x
                 x = self.relu(x, name='relu')
                 d['block_0' + '/conv_1' + '/relu'] = x
@@ -52,7 +52,7 @@ class ResCBAMNet(ConvNet):    # Residual networks with Convolutional Block Atten
                 x = self.conv_layer(x, kernels[0], 1, channels[0], padding='SAME', biased=False)
                 print('block_0' + '/conv_2.shape', x.get_shape().as_list())
                 d['block_0' + '/conv_2'] = x
-                x = self.batch_norm(x, shift=True, scale=True, is_training=self.is_train, scope='bn')
+                x = self.batch_norm(x, shift=True, scale=True, scope='bn')
                 d['block_0' + '/conv_2' + '/bn'] = x
                 x = self.relu(x, name='relu')
                 d['block_0' + '/conv_2' + '/relu'] = x
@@ -75,7 +75,7 @@ class ResCBAMNet(ConvNet):    # Residual networks with Convolutional Block Atten
             self._curr_block = None
             with tf.variable_scope('block_{}'.format(self._curr_block)):
                 with tf.variable_scope('logits'):
-                    x = self.batch_norm(x, shift=True, scale=True, is_training=self.is_train, scope='bn')
+                    x = self.batch_norm(x, shift=True, scale=True, scope='bn')
                     d['logits' + '/bn'] = x
                     x = self.relu(x, name='relu')
                     d['logits' + '/relu'] = x
@@ -98,14 +98,6 @@ class ResCBAMNet(ConvNet):    # Residual networks with Convolutional Block Atten
             stride = [stride[0], stride[0]]
 
         with tf.variable_scope(name):
-            with tf.variable_scope('drop'):
-                batch_size = tf.shape(x)[0]
-                drop_rate = tf.constant(drop_rate, dtype=self.dtype, name='drop_rate')
-                drop_rate = tf.cond(self.is_train, lambda: drop_rate, lambda: tf.constant(0.0, dtype=self.dtype))
-                survival = tf.cast(tf.math.greater_equal
-                                   (tf.random.uniform([batch_size, 1, 1, 1], dtype=self.dtype), drop_rate),
-                                   dtype=self.dtype)/(tf.constant(1.0, dtype=self.dtype) - drop_rate)
-
             if stride[0] > 1 or stride[1] > 1:
                 skip = self.avg_pool(x, stride, stride, 'SAME')
             else:
@@ -116,7 +108,7 @@ class ResCBAMNet(ConvNet):    # Residual networks with Convolutional Block Atten
             d[name + '/branch'] = skip
 
             with tf.variable_scope('conv_0'):
-                x = self.batch_norm(x, shift=True, scale=True, is_training=self.is_train, scope='bn')
+                x = self.batch_norm(x, shift=True, scale=True, scope='bn')
                 d[name + '/conv_0' + '/bn'] = x
                 # x = self.relu(x, name='relu')
                 # d[name + '/conv_0' + '/relu'] = x
@@ -125,7 +117,7 @@ class ResCBAMNet(ConvNet):    # Residual networks with Convolutional Block Atten
                 d[name + '/conv_0'] = x
 
             with tf.variable_scope('conv_1'):
-                x = self.batch_norm(x, shift=True, scale=True, is_training=self.is_train, scope='bn')
+                x = self.batch_norm(x, shift=True, scale=True, scope='bn')
                 d[name + '/conv_1' + '/bn'] = x
                 x = self.relu(x, name='relu')
                 d[name + '/conv_1' + '/relu'] = x
@@ -134,8 +126,7 @@ class ResCBAMNet(ConvNet):    # Residual networks with Convolutional Block Atten
                 d[name + '/conv_1'] = x
 
             with tf.variable_scope('conv_2'):
-                x = self.batch_norm(x, shift=True, scale=True, is_training=self.is_train,
-                                    zero_scale_init=True, scope='bn')
+                x = self.batch_norm(x, shift=True, scale=True, zero_scale_init=True, scope='bn')
                 d[name + '/conv_2' + '/bn'] = x
                 x = self.relu(x, name='relu')
                 d[name + '/conv_2' + '/relu'] = x
@@ -151,7 +142,7 @@ class ResCBAMNet(ConvNet):    # Residual networks with Convolutional Block Atten
             d[name + '/spatial_mask'] = spatial_mask
             x = x*spatial_mask
 
-            x = skip + x*survival
+            x = self.stochastic_depth(x, skip, drop_rate=drop_rate)
             d[name] = x
 
         return x
