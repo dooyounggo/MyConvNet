@@ -33,7 +33,7 @@ class ResNet(ConvNet):      # Base model. ResNet-18
                 x = self.conv_layer(X_input, kernels[0], strides[0], channels[0], padding='SAME')
                 print('block_0' + '/conv_0.shape', x.get_shape().as_list())
                 d['block_0' + '/conv_0'] = x
-                x = self.batch_norm(x, shift=True, scale=True, is_training=self.is_train, scope='bn')
+                x = self.batch_norm(x, shift=True, scale=True, scope='bn')
                 d['block_0' + '/conv_0' + '/bn'] = x
                 x = self.relu(x, name='relu')
                 d['block_0' + '/conv_0' + '/relu'] = x
@@ -78,7 +78,7 @@ class ResNet(ConvNet):      # Base model. ResNet-18
         with tf.variable_scope(name):
             if in_channels == out_channels:
                 if stride[0] > 1 | stride[1] > 1:
-                    skip = tf.nn.max_pool(x, [1, stride[0], stride[1], 1], [1, stride[0], stride[1], 1], 'VALID')
+                    skip = self.max_pool(x, stride, stride, padding='VALID')
                 else:
                     skip = x
             else:
@@ -90,7 +90,7 @@ class ResNet(ConvNet):      # Base model. ResNet-18
                 x = self.conv_layer(x, kernel, stride, out_channels, padding='SAME')
                 print(name + '/conv_0.shape', x.get_shape().as_list())
                 d[name + '/conv_0'] = x
-                x = self.batch_norm(x, shift=True, scale=True, is_training=self.is_train, scope='bn')
+                x = self.batch_norm(x, shift=True, scale=True, scope='bn')
                 d[name + '/conv_0' + '/bn'] = x
                 x = self.relu(x, name='relu')
                 d[name + '/conv_0' + '/relu'] = x
@@ -99,7 +99,7 @@ class ResNet(ConvNet):      # Base model. ResNet-18
                 x = self.conv_layer(x, 3, 1, out_channels, padding='SAME')
                 print(name + '/conv_1.shape', x.get_shape().as_list())
                 d[name + '/conv_1'] = x
-                x = self.batch_norm(x, shift=True, scale=True, is_training=self.is_train, scope='bn')
+                x = self.batch_norm(x, shift=True, scale=True, scope='bn')
                 d[name + '/conv_1' + '/bn'] = x
                 x = skip + x
                 d[name + '/skip'] = x
@@ -134,7 +134,7 @@ class ResNetID(ResNet):     # ResNet with identity connections (ResNet-v2) and s
                 x = self.conv_layer(X_input, kernels[0], strides[0], channels[0], padding='SAME')
                 print('block_0' + '/conv_0.shape', x.get_shape().as_list())
                 d['block_0' + '/conv_0'] = x
-                # x = self.batch_norm(x, center=True, scale=True, is_training=self.is_train, scope='bn')
+                # x = self.batch_norm(x, center=True, scale=True, scope='bn')
                 # d['block_0' + '/conv_0' + '/bn'] = x
                 x = self.relu(x, name='relu')
                 d['block_0' + '/conv_0' + '/relu'] = x
@@ -158,7 +158,7 @@ class ResNetID(ResNet):     # ResNet with identity connections (ResNet-v2) and s
             self._curr_block = None
             with tf.variable_scope('block_{}'.format(self._curr_block)):
                 with tf.variable_scope('logits'):
-                    x = self.batch_norm(x, shift=True, scale=True, is_training=self.is_train, scope='bn')
+                    x = self.batch_norm(x, shift=True, scale=True, scope='bn')
                     d['logits' + '/bn'] = x
                     x = self.relu(x, name='relu')
                     d['logits' + '/relu'] = x
@@ -177,19 +177,13 @@ class ResNetID(ResNet):     # ResNet with identity connections (ResNet-v2) and s
         in_channels = x.get_shape()[1] if self.channel_first else x.get_shape()[-1]
         if not isinstance(stride, (list, tuple)):
             stride = [stride, stride]
-        else:
-            if len(stride) == 1:
-                stride = [stride[0], stride[0]]
+        elif len(stride) == 1:
+            stride = [stride[0], stride[0]]
 
         with tf.variable_scope(name):
-            with tf.variable_scope('drop'):
-                drop_rate = tf.constant(drop_rate, dtype=self.dtype, name='drop_rate')
-                drop_rate = tf.cond(self.is_train, lambda: drop_rate, lambda: tf.constant(0.0, dtype=self.dtype))
-                survival = tf.cast(tf.math.greater_equal(tf.random.uniform([1], dtype=self.dtype), drop_rate),
-                                   dtype=self.dtype) / (tf.constant(1.0, dtype=self.dtype) - drop_rate)
             if in_channels == out_channels:
                 if stride[0] > 1 or stride[1] > 1:
-                    skip = tf.nn.max_pool(x, [1, stride[0], stride[1], 1], [1, stride[0], stride[1], 1], 'VALID')
+                    skip = self.max_pool(x, stride, stride, padding='VALID')
                 else:
                     skip = x
             else:
@@ -198,7 +192,7 @@ class ResNetID(ResNet):     # ResNet with identity connections (ResNet-v2) and s
             d[name + '/branch'] = skip
 
             with tf.variable_scope('conv_0'):
-                x = self.batch_norm(x, shift=True, scale=True, is_training=self.is_train, scope='bn')
+                x = self.batch_norm(x, shift=True, scale=True, scope='bn')
                 d[name + '/conv_0' + '/bn'] = x
                 x = self.relu(x, name='relu')
                 d[name + '/conv_0' + '/relu'] = x
@@ -207,7 +201,7 @@ class ResNetID(ResNet):     # ResNet with identity connections (ResNet-v2) and s
                 d[name + '/conv_0'] = x
 
             with tf.variable_scope('conv_1'):
-                x = self.batch_norm(x, shift=True, scale=True, is_training=self.is_train, scope='bn')
+                x = self.batch_norm(x, shift=True, scale=True, scope='bn')
                 d[name + '/conv_1' + '/bn'] = x
                 x = self.relu(x, name='relu')
                 d[name + '/conv_1' + '/relu'] = x
@@ -215,7 +209,7 @@ class ResNetID(ResNet):     # ResNet with identity connections (ResNet-v2) and s
                 print(name + '/conv_1.shape', x.get_shape().as_list())
                 d[name + '/conv_1'] = x
 
-            x = skip + x*survival
+            x = self.stochastic_depth(x, skip, drop_rate=drop_rate)
             d[name] = x
 
         return x
@@ -236,14 +230,9 @@ class ResNetBot(ResNetID):     # ResNet with bottlenecks. ResNet-50
             stride = [stride[0], stride[0]]
 
         with tf.variable_scope(name):
-            with tf.variable_scope('drop'):
-                drop_rate = tf.constant(drop_rate, dtype=self.dtype, name='drop_rate')
-                drop_rate = tf.cond(self.is_train, lambda: drop_rate, lambda: tf.constant(0.0, dtype=self.dtype))
-                survival = tf.cast(tf.math.greater_equal(tf.random.uniform([1], dtype=self.dtype), drop_rate),
-                                   dtype=self.dtype) / (tf.constant(1.0, dtype=self.dtype) - drop_rate)
             if in_channels == out_channels:
                 if stride[0] > 1 or stride[1] > 1:
-                    skip = tf.nn.max_pool(x, [1, stride[0], stride[1], 1], [1, stride[0], stride[1], 1], 'VALID')
+                    skip = self.max_pool(x, stride, stride, padding='VALID')
                 else:
                     skip = x
             else:
@@ -252,7 +241,7 @@ class ResNetBot(ResNetID):     # ResNet with bottlenecks. ResNet-50
             d[name + '/branch'] = skip
 
             with tf.variable_scope('conv_0'):
-                x = self.batch_norm(x, shift=True, scale=True, is_training=self.is_train, scope='bn')
+                x = self.batch_norm(x, shift=True, scale=True, scope='bn')
                 d[name + '/conv_0' + '/bn'] = x
                 x = self.relu(x, name='relu')
                 d[name + '/conv_0' + '/relu'] = x
@@ -261,7 +250,7 @@ class ResNetBot(ResNetID):     # ResNet with bottlenecks. ResNet-50
                 d[name + '/conv_0'] = x
 
             with tf.variable_scope('conv_1'):
-                x = self.batch_norm(x, shift=True, scale=True, is_training=self.is_train, scope='bn')
+                x = self.batch_norm(x, shift=True, scale=True, scope='bn')
                 d[name + '/conv_1' + '/bn'] = x
                 x = self.relu(x, name='relu')
                 d[name + '/conv_1' + '/relu'] = x
@@ -270,7 +259,7 @@ class ResNetBot(ResNetID):     # ResNet with bottlenecks. ResNet-50
                 d[name + '/conv_1'] = x
 
             with tf.variable_scope('conv_2'):
-                x = self.batch_norm(x, shift=True, scale=True, is_training=self.is_train, scope='bn')
+                x = self.batch_norm(x, shift=True, scale=True, scope='bn')
                 d[name + '/conv_2' + '/bn'] = x
                 x = self.relu(x, name='relu')
                 d[name + '/conv_2' + '/relu'] = x
@@ -278,7 +267,7 @@ class ResNetBot(ResNetID):     # ResNet with bottlenecks. ResNet-50
                 print(name + '/conv_2.shape', x.get_shape().as_list())
                 d[name + '/conv_2'] = x
 
-            x = skip + x*survival
+            x = self.stochastic_depth(x, skip, drop_rate=drop_rate)
             d[name] = x
 
         return x
