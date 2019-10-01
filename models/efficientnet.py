@@ -39,7 +39,7 @@ class EfficientNet(ConvNet):
                 x = self.conv_layer(X_input, kernels[0], strides[0], channels[0], padding='SAME', biased=False)
                 print('block_0' + '/conv_0.shape', x.get_shape().as_list())
                 d['block_0' + '/conv_0'] = x
-                x = self.batch_norm(x, shift=True, scale=True, is_training=self.is_train, scope='bn')
+                x = self.batch_norm(x, shift=True, scale=True, scope='bn')
                 d['block_0' + '/conv_0' + '/bn'] = x
                 x = self.swish(x, name='swish')
                 d['block_0' + '/conv_0' + '/swish'] = x
@@ -66,7 +66,7 @@ class EfficientNet(ConvNet):
                         x = self.conv_layer(x, 1, 1, self.channels[-1], padding='SAME', biased=False, depthwise=False)
                         print('logits' + '/conv_0.shape', x.get_shape().as_list())
                         d['logits' + '/conv_0'] = x
-                        x = self.batch_norm(x, shift=True, scale=True, is_training=self.is_train, scope='bn')
+                        x = self.batch_norm(x, shift=True, scale=True, scope='bn')
                         d['logits' + '/conv_0' + '/bn'] = x
                         x = self.swish(x, name='swish')
                         d['logits' + '/conv_0' + '/swish'] = x
@@ -92,14 +92,6 @@ class EfficientNet(ConvNet):
 
         with tf.variable_scope(name):
             if stride[0] == 1 and stride[1] == 1:
-                with tf.variable_scope('drop'):
-                    batch_size = tf.shape(x)[0]
-                    drop_rate = tf.constant(drop_rate, dtype=self.dtype, name='drop_rate')
-                    drop_rate = tf.cond(self.is_train, lambda: drop_rate, lambda: tf.constant(0.0, dtype=self.dtype))
-                    survival = tf.cast(tf.math.greater_equal
-                                       (tf.random.uniform([batch_size, 1, 1, 1], dtype=self.dtype), drop_rate),
-                                       dtype=self.dtype)/(tf.constant(1.0, dtype=self.dtype) - drop_rate)
-
                 if in_channels != out_channels:
                     with tf.variable_scope('conv_skip'):
                         skip = self.conv_layer(x, 1, 1, out_channels, padding='SAME')
@@ -114,7 +106,7 @@ class EfficientNet(ConvNet):
                     x = self.conv_layer(x, 1, 1, in_channels*multiplier, padding='SAME', biased=False, depthwise=False)
                     print(name + '/conv_0.shape', x.get_shape().as_list())
                     d[name + '/conv_0'] = x
-                    x = self.batch_norm(x, shift=True, scale=True, is_training=self.is_train, scope='bn')
+                    x = self.batch_norm(x, shift=True, scale=True, scope='bn')
                     d[name + '/conv_0' + '/bn'] = x
                     x = self.swish(x, name='swish')
                     d[name + '/conv_0' + '/swish'] = x
@@ -126,7 +118,7 @@ class EfficientNet(ConvNet):
                                     padding='SAME', biased=False, depthwise=True)
                 print(name + '/conv_1.shape', x.get_shape().as_list())
                 d[name + '/conv_1'] = x
-                x = self.batch_norm(x, shift=True, scale=True, is_training=self.is_train, scope='bn')
+                x = self.batch_norm(x, shift=True, scale=True, scope='bn')
                 d[name + '/conv_1' + '/bn'] = x
                 x = self.swish(x, name='swish')
                 d[name + '/conv_1' + '/swish'] = x
@@ -139,13 +131,11 @@ class EfficientNet(ConvNet):
                 x = self.conv_layer(x, 1, 1, out_channels, padding='SAME', biased=False, depthwise=False)
                 print(name + '/conv_2.shape', x.get_shape().as_list())
                 d[name + '/conv_2'] = x
-                x = self.batch_norm(x, shift=True, scale=True, is_training=self.is_train, scope='bn')
+                x = self.batch_norm(x, shift=True, scale=True, scope='bn')
                 d[name + '/conv_2' + '/bn'] = x
-                # x = self.swish(x, name='swish')
-                # d[name + '/conv_2' + '/swish'] = x
 
             if skip is not None:
-                x = skip + x*survival
+                x = self.stochastic_depth(x, skip, drop_rate=drop_rate)
             d[name] = x
 
         return x
