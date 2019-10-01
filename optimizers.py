@@ -43,8 +43,9 @@ class Optimizer(object):
 
         self.update_vars = tf.trainable_variables()
         self.update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-        self.learning_rate_multiplier = tf.placeholder(dtype=tf.float32, name='learning_rate_multiplier')
-        self.learning_rate = self.init_learning_rate*self.learning_rate_multiplier
+        with tf.name_scope('calc/'):
+            self.learning_rate_multiplier = tf.placeholder(dtype=tf.float32, name='learning_rate_multiplier')
+            self.learning_rate = self.init_learning_rate*self.learning_rate_multiplier
 
         self.optimization_operation = self._optimize_and_update(self._optimizer(**kwargs), **kwargs)
 
@@ -86,7 +87,7 @@ class Optimizer(object):
                         tf.get_variable_scope().reuse_variables()
 
         with tf.device('/cpu:0'):
-            with tf.variable_scope('calc/mean_gradients'):
+            with tf.name_scope('calc/mean_gradients'):
                 avg_grads = []
                 avg_vars = []
                 for grads_and_vars in zip(*tower_grads):
@@ -115,9 +116,11 @@ class Optimizer(object):
 
         if weight_decay > 0.0:
             variables = tf.get_collection('weight_variables')
-            for var in variables:
-                if var.trainable:
-                    self.update_ops.append(var.assign_sub(self.learning_rate_multiplier*weight_decay*var))
+            with tf.variable_scope('weight_decay'):
+                weight_decay = self.learning_rate_multiplier*weight_decay
+                for var in variables:
+                    if var.trainable:
+                        self.update_ops.append(var.assign_sub(weight_decay*var))
         with tf.control_dependencies(self.model.update_ops):
             with tf.control_dependencies([optimizer.apply_gradients(avg_grads_and_vars,
                                                                     global_step=self.model.global_step)]):
@@ -125,7 +128,7 @@ class Optimizer(object):
         return opt_op
 
     def train(self, save_dir='./tmp', transfer_dir=None, details=False, verbose=True, show_each_step=True, **kwargs):
-        if transfer_dir is not None:        # Transfer learning setup
+        if transfer_dir is not None:  # Transfer learning setup
             model_to_load = kwargs.get('model_to_load', None)
             blocks_to_load = kwargs.get('blocks_to_load', None)
             load_logits = kwargs.get('load_logits', False)
@@ -140,7 +143,7 @@ class Optimizer(object):
                     if var.name not in var_names:
                         var_names.append(var.name)
 
-            var_list = []
+            var_list = [self.model.global_step]
             if blocks_to_load is None:
                 for i in range(self.model.num_blocks):
                     var_list += tf.get_collection('block{}_variables'.format(i))
@@ -221,6 +224,7 @@ class Optimizer(object):
         num_steps_per_epoch = np.ceil(train_size/self.batch_size).astype(int)
         self.steps_per_epoch = num_steps_per_epoch
         num_steps = num_steps_per_epoch*self.num_epochs
+        self.total_steps = num_steps
         start_step = num_steps_per_epoch*start_epoch
 
         validation_frequency = kwargs.get('validation_frequency', None)
@@ -246,11 +250,12 @@ class Optimizer(object):
         eval_loss, eval_score = np.inf, 0
         annotations = []
 
-        # self._test_drive(save_dir=save_dir)  # Run test code
-
         self.train_set.initialize(self.model.session)  # Initialize training iterator
         handles = self.train_set.get_string_handles(self.model.session)  # Get a string handle from training iterator
         tf.get_default_graph().finalize()
+
+        # self._test_drive(save_dir=save_dir)  # Run test code
+
         self.curr_epoch += start_epoch
         self.curr_step += start_step
         step_loss, step_score = 0, 0
@@ -290,7 +295,7 @@ class Optimizer(object):
                 if self.evaluator.is_better(curr_score, self.best_score, **kwargs):  # Save best model
                     self.best_score = curr_score
                     saver.save(self.model.session, os.path.join(save_dir, 'model.ckpt'),
-                               global_step=self.model.global_step,
+                               global_step=self.curr_step,
                                write_meta_graph=False)
 
                     if show_each_step:
@@ -300,7 +305,7 @@ class Optimizer(object):
                     annotations = annotations[-max_to_keep:]
                 elif self.curr_step == last_val_iter:  # Save latest model
                     saver.save(self.model.session, os.path.join(save_dir, 'model.ckpt'),
-                               global_step=self.model.global_step,
+                               global_step=self.curr_step,
                                write_meta_graph=False)
 
                     if show_each_step:
@@ -328,7 +333,6 @@ class Optimizer(object):
 
             if (i + 1) % num_steps_per_epoch == 0:      # Print and plot results every epoch
                 self.train_set.initialize(self.model.session)  # Initialize training iterator every epoch
-                # handles = self.train_set.get_string_handles(self.model.session)
                 if self.val_set is not None:
                     if verbose:
                         print('[epoch {}/{}]\tTrain loss: {:.6f}  |Train score: {:2.2%}  '
@@ -385,6 +389,7 @@ class Optimizer(object):
         feed_dict = {self.model.is_train: True,
                      self.model.monte_carlo: self.monte_carlo,
                      self.model.augmentation: self.augment_train,
+                     self.model.total_steps: self.total_steps,
                      self.learning_rate_multiplier: self.curr_multiplier}
         for h_t, h in zip(self.model.handles, handles):
             feed_dict.update({h_t: h})
@@ -392,21 +397,37 @@ class Optimizer(object):
         if summarize:       # Write summaries on TensorBoard
             assert merged is not None, 'No merged summary exists.'
             assert writer is not None, 'No summary writer exists.'
-            # run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE)
-            # run_metadata = tf.RunMetadata()
             _, loss, Y_true, Y_pred, summary = self.model.session.run([self.optimization_operation, self.model.loss,
                                                                        self.model.Y_all, self.model.pred, merged],
-                                                                      feed_dict=feed_dict
-                                                                      )
+                                                                      feed_dict=feed_dict)
             writer.add_summary(summary, self.curr_step + 1)
             # writer.add_run_metadata(run_metadata, 'step{}'.format(self.curr_step + 1))
         else:
             _, loss, Y_true, Y_pred, = self.model.session.run([self.optimization_operation, self.model.loss,
                                                                self.model.Y_all, self.model.pred],
-                                                              feed_dict=feed_dict
-                                                              )
+                                                              feed_dict=feed_dict)
 
         return loss, Y_true, Y_pred
+
+    def _update_learning_rate(self):  # Learning rate decay
+        warmup_steps = np.around(self.warmup_epoch*self.steps_per_epoch)
+        if self.curr_step < warmup_steps:
+            self.curr_multiplier = (self.curr_step + 1)/warmup_steps
+        else:
+            if self.decay_method is not None:
+                if self.decay_method.lower() == 'step':  # params: (decay_factor, decay_epoch_0, decay_epoch_1, ...)
+                    if self.learning_rate_update < len(self.decay_params) - 1:
+                        while (self.curr_epoch - self.warmup_epoch - 1) \
+                                >= self.decay_params[self.learning_rate_update + 1]:
+                            self.curr_multiplier *= self.decay_params[0]
+                            self.learning_rate_update += 1
+                elif self.decay_method.lower() == 'exponential':  # params: (decay_factor, decay_every_n_epoch)
+                    while (self.curr_epoch - self.warmup_epoch - 1)//self.decay_params[1] > self.learning_rate_update:
+                        self.curr_multiplier *= self.decay_params[0]
+                        self.learning_rate_update += 1
+                else:  # 'cosine': no parameter required
+                    total_steps = self.steps_per_epoch*self.num_epochs - warmup_steps
+                    self.curr_multiplier = 0.5*(1 + np.cos((self.curr_step - warmup_steps)*np.pi/total_steps))
 
     def _test_drive(self, save_dir):
         self.train_set.initialize(self.model.session)  # Initialize training iterator
@@ -441,26 +462,6 @@ class Optimizer(object):
                 break
 
         print('Test epoch: {:.2f} sec'.format(time.time() - start_time))
-
-    def _update_learning_rate(self):  # Learning rate decay
-        warmup_steps = np.around(self.warmup_epoch*self.steps_per_epoch)
-        if self.curr_step < warmup_steps:
-            self.curr_multiplier = (self.curr_step + 1)/warmup_steps
-        else:
-            if self.decay_method is not None:
-                if self.decay_method.lower() == 'step':  # params: (decay_factor, decay_epoch_0, decay_epoch_1, ...)
-                    if self.learning_rate_update < len(self.decay_params) - 1:
-                        while (self.curr_epoch - self.warmup_epoch - 1) \
-                                >= self.decay_params[self.learning_rate_update + 1]:
-                            self.curr_multiplier *= self.decay_params[0]
-                            self.learning_rate_update += 1
-                elif self.decay_method.lower() == 'exponential':  # params: (decay_factor, decay_every_n_epoch)
-                    while (self.curr_epoch - self.warmup_epoch - 1)//self.decay_params[1] > self.learning_rate_update:
-                        self.curr_multiplier *= self.decay_params[0]
-                        self.learning_rate_update += 1
-                else:  # 'cosine': no parameter required
-                    total_steps = self.steps_per_epoch*self.num_epochs - warmup_steps
-                    self.curr_multiplier = 0.5*(1 + np.cos((self.curr_step - warmup_steps)*np.pi/total_steps))
 
 
 class MomentumOptimizer(Optimizer):
