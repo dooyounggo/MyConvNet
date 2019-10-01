@@ -40,7 +40,7 @@ class DataSet(object):
         self._datasets = []
         self._iterators = []
         self._handles = []
-        with tf.name_scope('data/'):
+        with tf.name_scope('dataset/'):
             with tf.device('/cpu:0'):
                 main_dataset = tf.data.Dataset.from_tensor_slices((image_dirs, label_dirs))
                 for i in range(self.num_shards):
