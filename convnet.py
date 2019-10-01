@@ -1234,8 +1234,8 @@ class ConvNet(object):
 
             main_s = tf.math.greater_equal(tf.random.uniform([batch_size, 1, 1, 1], dtype=tf.float32), main_drop_rate)
             skip_s = tf.math.greater_equal(tf.random.uniform([batch_size, 1, 1, 1], dtype=tf.float32), skip_drop_rate)
-            main_survived = tf.cast(main_s or not skip_s, dtype=self.dtype)/tf.cast(1.0 - effective_main_drop_rate,
-                                                                                    dtype=self.dtype)
+            main_s = tf.logical_or(main_s, tf.logical_not(skip_s))
+            main_survived = tf.cast(main_s, dtype=self.dtype)/tf.cast(1.0 - effective_main_drop_rate, dtype=self.dtype)
             skip_survived = tf.cast(skip_s, dtype=self.dtype)/tf.cast(1.0 - skip_drop_rate, dtype=self.dtype)
 
             x = x*main_survived + skip*skip_survived
