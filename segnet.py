@@ -13,28 +13,6 @@ from convnet import ConvNet
 
 class SegNet(ConvNet):
     def _init_model(self, **kwargs):
-        with tf.device('/cpu:0'):
-            with tf.variable_scope('conditions'):
-                self.is_train = tf.placeholder(tf.bool, name='is_train')
-                self.monte_carlo = tf.placeholder(tf.bool, name='monte_carlo')
-                self.augmentation = tf.placeholder(tf.bool, name='augmentation')
-                self.dropout_rate = tf.cond(tf.math.logical_or(self.is_train, self.monte_carlo),
-                                            lambda: tf.constant(kwargs.get('dropout_rate', 0.0), dtype=self.dtype),
-                                            lambda: tf.constant(0.0, dtype=self.dtype),
-                                            name='dropout_rate')
-                self.dropout_rate_weights = tf.cond(tf.constant(self.dropout_weights, dtype=tf.bool),
-                                                    lambda: self.dropout_rate,
-                                                    lambda: tf.constant(0.0, dtype=self.dtype),
-                                                    name='dropout_rate_weights')
-                self.dropout_rate_logits = tf.cond(tf.constant(self.dropout_logits, dtype=tf.bool),
-                                                   lambda: self.dropout_rate,
-                                                   lambda: tf.constant(0.0, dtype=self.dtype),
-                                                   name='dropout_rate_logits')
-                self.image_mean = tf.cond(tf.constant(kwargs.get('zero_center'), dtype=tf.bool, name='zero_center'),
-                                          lambda: tf.constant(kwargs.get('image_mean', 0.5), dtype=tf.float32),
-                                          lambda: tf.constant(0.0, dtype=tf.float32),
-                                          name='image_mean')
-
         self.X_in = []
         self.Y_in = []
         if self.image_size is None:
