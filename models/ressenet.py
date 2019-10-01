@@ -11,14 +11,9 @@ class ResSENet(ResNetID):   # Residual squeeze-and-excitation networks
             stride = [stride[0], stride[0]]
 
         with tf.variable_scope(name):
-            with tf.variable_scope('drop'):
-                drop_rate = tf.constant(drop_rate, dtype=self.dtype, name='drop_rate')
-                drop_rate = tf.cond(self.is_train, lambda: drop_rate, lambda: tf.constant(0.0, dtype=self.dtype))
-                survival = tf.cast(tf.math.greater_equal(tf.random.uniform([1], dtype=self.dtype), drop_rate),
-                                   dtype=self.dtype)/(tf.constant(1.0, dtype=self.dtype) - drop_rate)
             if in_channels == out_channels:
                 if stride[0] > 1 or stride[1] > 1:
-                    skip = tf.nn.max_pool(x, [1, stride[0], stride[1], 1], [1, stride[0], stride[1], 1], 'VALID')
+                    skip = self.max_pool(x, stride, stride, padding='VALID')
                 else:
                     skip = x
             else:
@@ -27,7 +22,7 @@ class ResSENet(ResNetID):   # Residual squeeze-and-excitation networks
             d[name + '/branch'] = skip
 
             with tf.variable_scope('conv_0'):
-                x = self.batch_norm(x, shift=True, scale=True, is_training=self.is_train, scope='bn')
+                x = self.batch_norm(x, shift=True, scale=True, scope='bn')
                 d[name + '/conv_0' + '/bn'] = x
                 # x = self.relu(x, name='relu')
                 # d[name + '/conv_0' + '/relu'] = x
@@ -36,7 +31,7 @@ class ResSENet(ResNetID):   # Residual squeeze-and-excitation networks
                 d[name + '/conv_0'] = x
 
             with tf.variable_scope('conv_1'):
-                x = self.batch_norm(x, shift=True, scale=True, is_training=self.is_train, scope='bn')
+                x = self.batch_norm(x, shift=True, scale=True, scope='bn')
                 d[name + '/conv_1' + '/bn'] = x
                 x = self.relu(x, name='relu')
                 d[name + '/conv_1' + '/relu'] = x
@@ -48,7 +43,7 @@ class ResSENet(ResNetID):   # Residual squeeze-and-excitation networks
             d[name + '/se_mask'] = se_mask
             x = x*se_mask
 
-            x = skip + x*survival
+            x = self.stochastic_depth(x, skip, drop_rate=drop_rate)
             d[name] = x
 
         return x
@@ -90,14 +85,9 @@ class ResSENetBot(ResSENet):    # Residual squeeze-and-excitation networks with 
             stride = [stride[0], stride[0]]
 
         with tf.variable_scope(name):
-            with tf.variable_scope('drop'):
-                drop_rate = tf.constant(drop_rate, dtype=self.dtype, name='drop_rate')
-                drop_rate = tf.cond(self.is_train, lambda: drop_rate, lambda: tf.constant(0.0, dtype=self.dtype))
-                survival = tf.cast(tf.math.greater_equal(tf.random.uniform([1], dtype=self.dtype), drop_rate),
-                                   dtype=self.dtype) / (tf.constant(1.0, dtype=self.dtype) - drop_rate)
             if in_channels == out_channels:
                 if stride[0] > 1 or stride[1] > 1:
-                    skip = tf.nn.max_pool(x, [1, stride[0], stride[1], 1], [1, stride[0], stride[1], 1], 'VALID')
+                    skip = self.max_pool(x, stride, stride, padding='VALID')
                 else:
                     skip = x
             else:
@@ -106,7 +96,7 @@ class ResSENetBot(ResSENet):    # Residual squeeze-and-excitation networks with 
             d[name + '/branch'] = skip
 
             with tf.variable_scope('conv_0'):
-                x = self.batch_norm(x, shift=True, scale=True, is_training=self.is_train, scope='bn')
+                x = self.batch_norm(x, shift=True, scale=True, scope='bn')
                 d[name + '/conv_0' + '/bn'] = x
                 # x = self.relu(x, name='relu')
                 # d[name + '/conv_0' + '/relu'] = x
@@ -115,7 +105,7 @@ class ResSENetBot(ResSENet):    # Residual squeeze-and-excitation networks with 
                 d[name + '/conv_0'] = x
 
             with tf.variable_scope('conv_1'):
-                x = self.batch_norm(x, shift=True, scale=True, is_training=self.is_train, scope='bn')
+                x = self.batch_norm(x, shift=True, scale=True, scope='bn')
                 d[name + '/conv_1' + '/bn'] = x
                 x = self.relu(x, name='relu')
                 d[name + '/conv_1' + '/relu'] = x
@@ -124,7 +114,7 @@ class ResSENetBot(ResSENet):    # Residual squeeze-and-excitation networks with 
                 d[name + '/conv_1'] = x
 
             with tf.variable_scope('conv_2'):
-                x = self.batch_norm(x, shift=True, scale=True, is_training=self.is_train, scope='bn')
+                x = self.batch_norm(x, shift=True, scale=True, scope='bn')
                 d[name + '/conv_2' + '/bn'] = x
                 x = self.relu(x, name='relu')
                 d[name + '/conv_2' + '/relu'] = x
@@ -136,7 +126,7 @@ class ResSENetBot(ResSENet):    # Residual squeeze-and-excitation networks with 
             d[name + '/se_mask'] = se_mask
             x = x*se_mask
 
-            x = skip + x*survival
+            x = self.stochastic_depth(x, skip, drop_rate=drop_rate)
             d[name] = x
 
         return x
