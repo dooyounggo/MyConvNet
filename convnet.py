@@ -76,9 +76,8 @@ class ConvNet(object):
                 self.augmentation = tf.placeholder(tf.bool, shape=[], name='augmentation')
                 self.total_steps = tf.placeholder(tf.int64, shape=[], name='total_steps')
 
-                self.global_step = tf.train.get_or_create_global_step()
-
             with tf.name_scope('calc'):
+                self.global_step = tf.train.get_or_create_global_step()
                 global_step = tf.cast(self.global_step, dtype=tf.float32)
                 self._batch_norm_decay = tf.minimum(kwargs.get('batch_norm_decay', 0.999),
                                                     global_step/(9 + global_step))
