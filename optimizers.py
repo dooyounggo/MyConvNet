@@ -143,7 +143,7 @@ class Optimizer(object):
                     if var.name not in var_names:
                         var_names.append(var.name)
 
-            var_list = [self.model.global_step]
+            var_list = []
             if blocks_to_load is None:
                 for i in range(self.model.num_blocks):
                     var_list += tf.get_collection('block{}_variables'.format(i))
@@ -252,6 +252,9 @@ class Optimizer(object):
 
         self.train_set.initialize(self.model.session)  # Initialize training iterator
         handles = self.train_set.get_string_handles(self.model.session)  # Get a string handle from training iterator
+        with tf.name_scope('calc/'):
+            step_init_op = self.model.global_step.assign(start_step, name='init_global_step')
+        self.model.session.run(step_init_op)
         tf.get_default_graph().finalize()
 
         # self._test_drive(save_dir=save_dir)  # Run test code
