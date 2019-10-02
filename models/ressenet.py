@@ -54,12 +54,12 @@ class ResSENet(ResNetID):   # Residual squeeze-and-excitation networks
         with tf.variable_scope(name):
             x = tf.reduce_mean(x, axis=axis)
 
-            with tf.variable_scope('fc1'):
+            with tf.variable_scope('fc_0'):
                 x = self.fc_layer(x, in_channels//se_r)
 
             x = self.relu(x, name='relu')
 
-            with tf.variable_scope('fc2'):
+            with tf.variable_scope('fc_1'):
                 x = self.fc_layer(x, in_channels)
 
             x = self.sigmoid(x)
