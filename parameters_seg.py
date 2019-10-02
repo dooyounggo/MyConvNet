@@ -61,7 +61,7 @@ class Parameters(object):
     d['moving_average_decay'] = 0.9997
     d['batch_norm_decay'] = 0.9994
     d['gradient_threshold'] = None
-    d['loss_weighting'] = 'balanced'    # None, 'balanced', [class0_weight, class1_weight, ...]
+    d['loss_weighting'] = 'balanced'  # None, 'balanced', [class0_weight, class1_weight, ...]
     d['loss_scaling_factor'] = 1
 
     d['learning_rate_decay_method'] = 'cosine'  # 'step', 'exponential', 'cosine' (default)
@@ -78,7 +78,6 @@ class Parameters(object):
     d['dropout_logits'] = False
     d['initial_drop_rate'] = 0.0  # Initial drop rate for stochastic depth
     d['final_drop_rate'] = 0.0  # Final drop rate for stochastic depth
-    d['skip_drop_rate'] = 0.0  # Final skip connection drop rate (linearly increased from 0 as training progresses)
 
     # FIXME: Data augmentation parameters
     d['augment_factor'] = None  # int. Offline augmentation factor. None for no augmentation
