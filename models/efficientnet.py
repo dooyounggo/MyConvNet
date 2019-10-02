@@ -146,12 +146,12 @@ class EfficientNet(ConvNet):
         with tf.variable_scope(name):
             x = tf.reduce_mean(x, axis=axis)
 
-            with tf.variable_scope('fc1'):
+            with tf.variable_scope('fc_0'):
                 x = self.fc_layer(x, in_channels//se_r)
 
             x = self.swish(x, name='swish')
 
-            with tf.variable_scope('fc2'):
+            with tf.variable_scope('fc_1'):
                 x = self.fc_layer(x, in_channels)
 
             x = self.sigmoid(x)
