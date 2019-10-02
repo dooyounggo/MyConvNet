@@ -43,7 +43,7 @@ class Optimizer(object):
 
         self.update_vars = tf.trainable_variables()
         self.update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-        with tf.name_scope('calc/'):
+        with tf.variable_scope('calc/'):
             self.learning_rate_multiplier = tf.placeholder(dtype=tf.float32, name='learning_rate_multiplier')
             self.learning_rate = self.init_learning_rate*self.learning_rate_multiplier
 
@@ -75,7 +75,7 @@ class Optimizer(object):
         with tf.variable_scope(tf.get_variable_scope()):
             for i in range(self.model.num_gpus):
                 with tf.device('/gpu:' + str(i)):
-                    with tf.name_scope('gpu{}/gradients'.format(i)):
+                    with tf.variable_scope('gpu{}/gradients'.format(i)):
                         loss = loss_scaling_factor*self.model.losses[i]
                         if self.model.dtype is not tf.float32:
                             loss = tf.cast(loss, dtype=self.model.dtype)
@@ -87,7 +87,7 @@ class Optimizer(object):
                         tf.get_variable_scope().reuse_variables()
 
         with tf.device('/cpu:0'):
-            with tf.name_scope('calc/mean_gradients'):
+            with tf.variable_scope('calc/mean_gradients'):
                 avg_grads = []
                 avg_vars = []
                 for grads_and_vars in zip(*tower_grads):
@@ -252,7 +252,7 @@ class Optimizer(object):
 
         self.train_set.initialize(self.model.session)  # Initialize training iterator
         handles = self.train_set.get_string_handles(self.model.session)  # Get a string handle from training iterator
-        with tf.name_scope('calc/'):
+        with tf.variable_scope('calc/'):
             step_init_op = self.model.global_step.assign(start_step, name='init_global_step')
         self.model.session.run(step_init_op)
         tf.get_default_graph().finalize()
