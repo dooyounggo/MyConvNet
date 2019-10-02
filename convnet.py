@@ -70,13 +70,13 @@ class ConvNet(object):
         self._update_ops = []
 
         with tf.device('/cpu:0'):
-            with tf.name_scope('conditions'):
+            with tf.variable_scope('conditions'):
                 self.is_train = tf.placeholder(tf.bool, shape=[], name='is_train')
                 self.monte_carlo = tf.placeholder(tf.bool, shape=[], name='monte_carlo')
                 self.augmentation = tf.placeholder(tf.bool, shape=[], name='augmentation')
                 self.total_steps = tf.placeholder(tf.int64, shape=[], name='total_steps')
 
-            with tf.name_scope('calc'):
+            with tf.variable_scope('calc'):
                 self.global_step = tf.train.get_or_create_global_step()
                 global_step = tf.cast(self.global_step, dtype=tf.float32)
                 self._batch_norm_decay = tf.minimum(kwargs.get('batch_norm_decay', 0.999),
@@ -100,16 +100,12 @@ class ConvNet(object):
                 else:
                     self.image_mean = tf.constant(0.0, dtype=tf.float32, name='0')
 
-                skip_drop_rate = kwargs.get('skip_drop_rate', 0.0)
-                self.skip_drop_rate = tf.cond(self.is_train,
-                                              lambda: global_step/tf.cast(self.total_steps,
-                                                                          dtype=tf.float32)*skip_drop_rate,
-                                              lambda: tf.constant(0.0, dtype=tf.float32, name='0'))
+                self.linear_multiplier = global_step/tf.cast(self.total_steps, dtype=tf.float32)
 
         self.ema = tf.train.ExponentialMovingAverage(decay=kwargs.get('moving_average_decay', 0.9999),
                                                      num_updates=self.global_step)
 
-        self.debug_value = self.skip_drop_rate
+        self.debug_value = self.linear_multiplier
         self.debug_images_0 = np.zeros([4, 8, 8, 3], dtype=np.float32)
         self.debug_images_1 = np.zeros([4, 8, 8, 3], dtype=np.float32)
 
@@ -246,7 +242,7 @@ class ConvNet(object):
                         self.bytes_in_use.append(tf.contrib.memory_stats.BytesInUse())
 
         with tf.device('/cpu:0'):
-            with tf.name_scope('calc/'):
+            with tf.variable_scope('calc/'):
                 self.X_all = tf.concat(self.Xs, axis=0, name='x') + self.image_mean
                 self.Y_all = tf.concat(self.Ys, axis=0, name='y_true')
                 self.pred = tf.concat(self.preds, axis=0, name='y_pred')
@@ -1156,7 +1152,8 @@ class ConvNet(object):
 
         return x
 
-    def transposed_conv_layer(self, x, kernel, stride, out_channels, padding='SAME', biased=True, dilation=(1, 1),
+    def transposed_conv_layer(self, x, kernel, stride, out_channels, padding='SAME', biased=True, output_shape=None,
+                              dilation=(1, 1),
                               weight_initializer=tf.initializers.he_normal(), bias_initializer=tf.initializers.zeros()):
         if not isinstance(kernel, (list, tuple)):
             kernel = [kernel, kernel]
@@ -1177,23 +1174,25 @@ class ConvNet(object):
             conv_strides = [1, 1, stride[0], stride[1]]
             conv_dilations = [1, 1, dilation[0], dilation[1]]
             data_format = 'NCHW'
-            if padding.lower() == 'valid':
-                output_shape = [batch_size, out_channels, h*stride[0] - kernel[0] + 1, w*stride[1] - kernel[1] + 1]
-            else:
-                output_shape = [batch_size, out_channels, h*stride[0], w*stride[1]]
+            if output_shape is None:
+                if padding.lower() == 'valid':
+                    output_shape = [batch_size, out_channels, h*stride[0] - kernel[0] + 1, w*stride[1] - kernel[1] + 1]
+                else:
+                    output_shape = [batch_size, out_channels, h*stride[0], w*stride[1]]
             out_size = output_shape[2:4]
         else:
             _, h, w, in_channels = x.get_shape().as_list()
             conv_strides = [1, stride[0], stride[1], 1]
             conv_dilations = [1, dilation[0], dilation[1], 1]
             data_format = 'NHWC'
-            if padding.lower() == 'valid':
-                output_shape = [batch_size, h*stride[0] - kernel[0] + 1, w*stride[1] - kernel[1] + 1, out_channels]
-            else:
-                output_shape = [batch_size, h*stride[0], w*stride[1], out_channels]
+            if output_shape is None:
+                if padding.lower() == 'valid':
+                    output_shape = [batch_size, h*stride[0] - kernel[0] + 1, w*stride[1] - kernel[1] + 1, out_channels]
+                else:
+                    output_shape = [batch_size, h*stride[0], w*stride[1], out_channels]
             out_size = output_shape[1:3]
 
-        weights = self.weight_variable([kernel[0], kernel[1], in_channels, out_channels],
+        weights = self.weight_variable([kernel[0], kernel[1], out_channels, in_channels],
                                        initializer=weight_initializer)
         convs = tf.nn.conv2d_transpose(x, weights, output_shape=output_shape, strides=conv_strides,
                                        padding=padding, data_format=data_format, dilations=conv_dilations)
@@ -1217,25 +1216,26 @@ class ConvNet(object):
         with tf.variable_scope(name):
             batch_size = tf.shape(x)[0]
             drop_rate = tf.cond(self.is_train, lambda: drop_rate, lambda: 0.0)
-            survived = tf.cast(tf.math.greater_equal
-                               (tf.random.uniform([batch_size, 1, 1, 1], dtype=tf.float32), drop_rate),
-                               dtype=self.dtype)/tf.cast(1.0 - drop_rate, dtype=self.dtype)
+
+            s = tf.math.greater_equal(tf.random.uniform([batch_size, 1, 1, 1], dtype=tf.float32), drop_rate)
+            survived = tf.cast(tf.cast(s, dtype=tf.float32)/(1.0 - drop_rate), dtype=self.dtype)
+
             x = x*survived + skip
 
         return x
 
-    def drop_connections(self, x, skip, main_drop_rate=0.0, skip_drop_rate=0.0, name='drop'):
+    def drop_connections(self, x, skip, drop_rate=0.0, name='drop'):
         with tf.variable_scope(name):
             batch_size = tf.shape(x)[0]
-            main_drop_rate = tf.cond(self.is_train, lambda: main_drop_rate, lambda: 0.0)
-            skip_drop_rate = tf.cond(self.is_train, lambda: skip_drop_rate, lambda: 0.0)
-            effective_main_drop_rate = main_drop_rate*(1.0 - skip_drop_rate)
+            main_drop_rate = tf.cond(self.is_train, lambda: drop_rate, lambda: 0.0)
+            skip_drop_rate = tf.cond(self.is_train, lambda: drop_rate, lambda: 0.0)*self.linear_multiplier
+            eff_skip_drop_rate = (1.0 - main_drop_rate)*skip_drop_rate
 
             main_s = tf.math.greater_equal(tf.random.uniform([batch_size, 1, 1, 1], dtype=tf.float32), main_drop_rate)
             skip_s = tf.math.greater_equal(tf.random.uniform([batch_size, 1, 1, 1], dtype=tf.float32), skip_drop_rate)
-            main_s = tf.logical_or(main_s, tf.logical_not(skip_s))
-            main_survived = tf.cast(main_s, dtype=self.dtype)/tf.cast(1.0 - effective_main_drop_rate, dtype=self.dtype)
-            skip_survived = tf.cast(skip_s, dtype=self.dtype)/tf.cast(1.0 - skip_drop_rate, dtype=self.dtype)
+            skip_s = tf.logical_or(skip_s, tf.logical_not(main_s))
+            main_survived = tf.cast(tf.cast(main_s, dtype=tf.float32)/(1.0 - main_drop_rate), dtype=self.dtype)
+            skip_survived = tf.cast(tf.cast(skip_s, dtype=tf.float32)/(1.0 - eff_skip_drop_rate), dtype=self.dtype)
 
             x = x*main_survived + skip*skip_survived
 
@@ -1264,7 +1264,7 @@ class ConvNet(object):
 
     def grad_cam(self, logits, conv_layer, y=None):
         eps = 1e-4
-        with tf.name_scope('grad_cam'):
+        with tf.variable_scope('grad_cam'):
             if y is None:
                 axis = 1 if self.channel_first else -1
                 logits_mask = tf.stop_gradient(logits//tf.reduce_max(logits, axis=axis, keepdims=True))
