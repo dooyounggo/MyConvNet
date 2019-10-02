@@ -2,7 +2,7 @@ import tensorflow as tf
 from convnet import ConvNet
 
 
-class ResCBAMNet(ConvNet):    # Residual networks with Convolutional Block Attention Modules (Based on ResNet-D)
+class ResCBAMNet(ConvNet):    # Residual networks with Convolutional Block Attention Modules (Based on ResNet-D-v2)
     def _init_params(self):
         self.channels = [64, 256, 512, 1024, 2048]
         self.kernels = [3, 3, 3, 3, 3]
