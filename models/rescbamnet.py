@@ -154,7 +154,7 @@ class ResCBAMNet(ConvNet):    # Residual networks with Convolutional Block Atten
             spatial_mean = tf.reduce_mean(x, axis=axis)
             spatial_max = tf.reduce_max(x, axis=axis)
 
-            with tf.variable_scope('fc_0'):
+            with tf.variable_scope('fc1'):
                 spatial_mean = self.fc_layer(spatial_mean, in_channels//reduction)
                 tf.get_variable_scope().reuse_variables()
                 spatial_max = self.fc_layer(spatial_max, in_channels//reduction)
@@ -162,7 +162,7 @@ class ResCBAMNet(ConvNet):    # Residual networks with Convolutional Block Atten
             spatial_mean = self.relu(spatial_mean, name='relu_mean')
             spatial_max = self.relu(spatial_max, name='relu_max')
 
-            with tf.variable_scope('fc_1'):
+            with tf.variable_scope('fc2'):
                 spatial_mean = self.fc_layer(spatial_mean, in_channels)
                 tf.get_variable_scope().reuse_variables()
                 spatial_max = self.fc_layer(spatial_max, in_channels)
