@@ -291,6 +291,8 @@ class Optimizer(object):
                     eval_scores.append(eval_score)
                     eval_losses.append(eval_loss)
 
+                    del eval_Y_true, eval_Y_pred
+
                     curr_score = eval_score
                 else:
                     curr_score = step_score
