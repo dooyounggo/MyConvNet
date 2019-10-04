@@ -123,9 +123,9 @@ class EfficientNet(ConvNet):
                 x = self.swish(x, name='swish')
                 d[name + '/conv_1' + '/swish'] = x
 
-            channel_mask = self._se_mask(x, multiplier*self.se_reduction, name='channel_mask')
-            d[name + '/channel_mask'] = channel_mask
-            x = x*channel_mask
+            se_mask = self._se_mask(x, multiplier*self.se_reduction, name='se_mask')
+            d[name + '/se_mask'] = se_mask
+            x = x*se_mask
 
             with tf.variable_scope('conv_2'):
                 x = self.conv_layer(x, 1, 1, out_channels, padding='SAME', biased=False, depthwise=False)
@@ -140,14 +140,14 @@ class EfficientNet(ConvNet):
 
         return x
 
-    def _se_mask(self, x, se_r, name='se_mask'):
+    def _se_mask(self, x, reduction, name='se_mask'):
         in_channels = x.get_shape()[1] if self.channel_first else x.get_shape()[-1]
         axis = [2, 3] if self.channel_first else [1, 2]
         with tf.variable_scope(name):
             x = tf.reduce_mean(x, axis=axis)
 
             with tf.variable_scope('fc_0'):
-                x = self.fc_layer(x, in_channels//se_r)
+                x = self.fc_layer(x, in_channels//reduction)
 
             x = self.swish(x, name='swish')
 
