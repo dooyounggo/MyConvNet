@@ -46,7 +46,7 @@ class Parameters(object):
 
     d['blocks_to_train'] = None  # Blocks to train. None for all blocks and [None] for logits only
     d['update_batch_norm'] = True  # Whether to update batch means and variances. None to follow blocks_to_train
-    
+
     # FIXME: Training hyperparameters
     d['data_type'] = tf.float32  # Try tf.float16 if your GPU supports half-precision
     d['channel_first'] = True  # If true, NCHW format is used instead of NHWC
