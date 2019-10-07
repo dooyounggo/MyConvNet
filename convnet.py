@@ -52,7 +52,7 @@ class ConvNet(object):
         self._dropout_logits = kwargs.get('dropout_logits', False)
 
         self._blocks_to_train = kwargs.get('blocks_to_train', None)
-        self._train_batch_norm = kwargs.get('train_batch_norm', True)
+        self._update_batch_norm = kwargs.get('update_batch_norm', True)
 
         self.handles = []
         self.Xs = []
@@ -161,8 +161,8 @@ class ConvNet(object):
         return self._blocks_to_train
 
     @property
-    def train_batch_norm(self):
-        return self._train_batch_norm
+    def update_batch_norm(self):
+        return self._update_batch_norm
 
     @property
     def batch_norm_decay(self):
@@ -223,7 +223,8 @@ class ConvNet(object):
                         if self.dtype is not tf.float32:
                             with tf.name_scope('gpu{}/cast/'.format(i)):
                                 self.X = tf.cast(self.X, dtype=self.dtype)
-                        self.d = self._build_model(**kwargs)
+                        with tf.name_scope('nn'):
+                            self.d = self._build_model(**kwargs)
                         if self.dtype is not tf.float32:
                             with tf.name_scope('gpu{}/cast/'.format(i)):
                                 self.d['logits'] = tf.cast(self.d['logits'], dtype=tf.float32)
@@ -1025,25 +1026,28 @@ class ConvNet(object):
         else:
             return tf.matmul(x, weights)
 
-    def batch_norm(self, x, scale=True, shift=True, zero_scale_init=False, scope='bn'):
-        if self.train_batch_norm is not None:
-            trainable = self.train_batch_norm
+    def batch_norm(self, x, scale=True, shift=True, zero_scale_init=False, epsilon=1e-4, scope='bn'):
+        if self.update_batch_norm is not None:
+            update = self.update_batch_norm
         else:
             if self.blocks_to_train is None:
-                trainable = True
+                update = True
             elif self._curr_block in self.blocks_to_train:
-                trainable = True
+                update = True
             else:
-                trainable = False
+                update = False
+        if self.blocks_to_train is None:
+            trainable = True
+        elif self._curr_block in self.blocks_to_train:
+            trainable = True
+        else:
+            trainable = False
 
         if self.channel_first:
             _, in_channels, h, w = x.get_shape().as_list()
         else:
             _, h, w, in_channels = x.get_shape().as_list()
-
         momentum = self.batch_norm_decay
-        epsilon = 1e-4
-        in_channels = x.get_shape()[1] if self.channel_first else x.get_shape()[-1]
 
         with tf.variable_scope(scope):
             with tf.device('/cpu:0'):
@@ -1132,11 +1136,93 @@ class ConvNet(object):
             if self.dtype is not tf.float32:
                 x = tf.cast(x, dtype=self.dtype)
 
-            update = 1.0 - momentum
-            update_mu = mu.assign(momentum*mu + update*batch_mean)
-            update_sigma = sigma.assign(momentum*sigma + update*batch_var)
-            tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_mu)
-            tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_sigma)
+            if update:
+                update = 1.0 - momentum
+                update_mu = mu.assign(momentum*mu + update*batch_mean)
+                update_sigma = sigma.assign(momentum*sigma + update*batch_var)
+                tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_mu)
+                tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_sigma)
+
+        return x
+
+    def group_norm(self, x, num_groups=8, scale=True, shift=True, epsilon=1e-4, scope='sn'):
+        if self.blocks_to_train is None:
+            trainable = True
+        elif self._curr_block in self.blocks_to_train:
+            trainable = True
+        else:
+            trainable = False
+
+        batch_size = tf.shape(x)[0]
+        in_shape = x.get_shape().as_list()
+        if len(in_shape) > 2:
+            if self.channel_first:
+                _, in_channels, h, w = in_shape
+                x_shape = [batch_size, num_groups, in_channels//num_groups, h, w]
+                axis = [2, 3, 4]
+                var_shape = [1, in_channels, 1, 1]
+            else:
+                _, h, w, in_channels = in_shape
+                x_shape = [batch_size, h, w, in_channels//num_groups, num_groups]
+                axis = [1, 2, 3]
+                var_shape = [1, 1, 1, in_channels]
+        else:
+            in_channels = in_shape[1]
+            h, w = 1, 1
+            x_shape = [batch_size, num_groups, in_channels//num_groups]
+            axis = [2]
+            var_shape = [1, in_channels]
+
+        with tf.variable_scope(scope):
+            with tf.device('/cpu:0'):
+                if shift:
+                    beta = tf.get_variable('beta', in_channels, dtype=tf.float32,
+                                           initializer=tf.zeros_initializer(), trainable=trainable)
+                    if not tf.get_variable_scope().reuse:
+                        tf.add_to_collection('block{}_variables'.format(self._curr_block), beta)
+                        tf.add_to_collection('block{}_batch_norm_variables'.format(self._curr_block), beta)
+                        with tf.variable_scope(self.top_scope):
+                            self.update_ops.append(self.ema.apply([beta]))
+                        self._flops += h*w*in_channels
+                        self._params += in_channels
+                    beta_ema = self.ema.average(beta)
+                    if not tf.get_variable_scope().reuse:
+                        tf.add_to_collection('block{}_ema_variables'.format(self._curr_block), beta_ema)
+                else:
+                    beta = None
+                    beta_ema = None
+
+                if scale:
+                    gamma = tf.get_variable('gamma', in_channels, dtype=tf.float32,
+                                            initializer=tf.ones_initializer(), trainable=trainable)
+                    if not tf.get_variable_scope().reuse:
+                        tf.add_to_collection('block{}_variables'.format(self._curr_block), gamma)
+                        tf.add_to_collection('block{}_batch_norm_variables'.format(self._curr_block), gamma)
+                        with tf.variable_scope(self.top_scope):
+                            self.update_ops.append(self.ema.apply([gamma]))
+                        self._flops += h*w*in_channels
+                        self._params += in_channels
+                    gamma_ema = self.ema.average(gamma)
+                    if not tf.get_variable_scope().reuse:
+                        tf.add_to_collection('block{}_ema_variables'.format(self._curr_block), gamma_ema)
+                else:
+                    gamma = None
+                    gamma_ema = None
+
+                beta, gamma = tf.cond(self.is_train,
+                                      lambda: (beta, gamma),
+                                      lambda: (beta_ema, gamma_ema))
+                beta = tf.reshape(beta, var_shape)
+                gamma = tf.reshape(gamma, var_shape)
+
+            if self.dtype is not tf.float32:
+                x = tf.cast(x, dtype=tf.float32)
+            x = tf.reshape(x, shape=x_shape)
+            mean, var = tf.nn.moments(x, axes=axis, keepdims=True)
+            x = (x - mean)/tf.math.sqrt(var + epsilon)
+            x = tf.reshape(x, shape=[batch_size] + in_shape[1:])*gamma + beta
+            if self.dtype is not tf.float32:
+                x = tf.cast(x, dtype=self.dtype)
 
         return x
 
