@@ -45,8 +45,8 @@ class Parameters(object):
     d['start_epoch'] = 0  # Start epoch to continue training from
 
     d['blocks_to_train'] = None  # Blocks to train. None for all blocks and [None] for logits only
-    d['train_batch_norm'] = True  # Whether to train batch normalization variables. None to follow blocks_to_train
-
+    d['update_batch_norm'] = True  # Whether to update batch means and variances. None to follow blocks_to_train
+    
     # FIXME: Training hyperparameters
     d['data_type'] = tf.float32  # Try tf.float16 if your GPU supports half-precision
     d['channel_first'] = True  # If true, NCHW format is used instead of NHWC
