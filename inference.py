@@ -13,10 +13,15 @@ from parameters import *
 
 Param = Parameters()
 model_to_load = Param.d['model_to_load']
+idx_start = 0
+idx_end = 10000
 
 # Load test set
 image_dirs, label_dirs, class_names = subset.read_subset(Param.test_dir, shuffle=False,
                                                          sample_size=Param.test_sample_size)
+num_data = len(image_dirs)
+image_dirs = image_dirs[idx_start:min(num_data, idx_end)]
+label_dirs = label_dirs[idx_start:min(num_data, idx_end)]
 Param.d['shuffle'] = False
 test_set = DataSet(image_dirs, label_dirs, class_names, **Param.d)
 
@@ -42,7 +47,7 @@ saver.restore(model.session, ckpt_to_load)    # restore learned weights
 test_x, _, test_y_pred, _ = model.predict(test_set, verbose=True, **Param.d)
 
 utils.plot_class_results(test_x, test_y_pred, test_y_pred, fault=None, shuffle=False, class_names=class_names,
-                         save_dir=os.path.join(Param.save_dir, 'results_inference'))
+                         save_dir=os.path.join(Param.save_dir, 'results_inference'), start_idx=idx_start)
 plt.show()
 
 model.session.close()
