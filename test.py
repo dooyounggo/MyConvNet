@@ -10,10 +10,15 @@ from parameters import *
 
 Param = Parameters()
 model_to_load = Param.d['model_to_load']
+idx_start = 0
+idx_end = 10000
 
 # Load test set
 image_dirs, label_dirs, class_names = subset.read_subset(Param.test_dir, shuffle=False,
                                                          sample_size=Param.test_sample_size)
+num_data = len(image_dirs)
+image_dirs = image_dirs[idx_start:min(num_data, idx_end)]
+label_dirs = label_dirs[idx_start:min(num_data, idx_end)]
 Param.d['shuffle'] = False
 test_set = DataSet(image_dirs, label_dirs, class_names, **Param.d)
 
@@ -43,7 +48,7 @@ test_score = evaluator.score(test_y_true, test_y_pred)
 print(evaluator.name + ': {:.4f}'.format(test_score))
 
 utils.plot_class_results(test_x, test_y_true, test_y_pred, fault=False, shuffle=False, class_names=class_names,
-                         save_dir=os.path.join(Param.save_dir, 'results_test/images'))
+                         save_dir=os.path.join(Param.save_dir, 'results_test/images'), start_idx=idx_start)
 utils.plot_class_results(test_x, test_y_true, test_y_pred, fault=True, shuffle=False, class_names=class_names)
 
 gcam = model.features(test_set, model.gcam, **Param.d)[0][..., 0]
@@ -52,7 +57,7 @@ gcam = cmap(gcam)[..., 0:3]
 gcam = np.clip(test_x + gcam, 0, 1)
 
 utils.plot_class_results(gcam, test_y_true, test_y_pred, fault=None, shuffle=False, class_names=class_names,
-                         save_dir=os.path.join(Param.save_dir, 'results_test/grad-cams'))
+                         save_dir=os.path.join(Param.save_dir, 'results_test/grad-cams'), start_idx=idx_start)
 
 cm = utils.plot_confusion_matrix(test_y_true, test_y_pred, class_names=class_names, normalize=False)
 
