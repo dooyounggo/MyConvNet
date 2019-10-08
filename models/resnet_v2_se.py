@@ -1,8 +1,8 @@
 import tensorflow as tf
-from models.resnet import ResNetID
+from models.resnet_v2 import ResNetID
 
 
-class ResSENet(ResNetID):   # Residual squeeze-and-excitation networks
+class ResNetSE(ResNetID):   # Residual squeeze-and-excitation networks
     def _res_unit(self, x, kernel, stride, out_channels, d, drop_rate=0.0, name='res_unit'):
         in_channels = x.get_shape()[1] if self.channel_first else x.get_shape()[-1]
         if not isinstance(stride, (list, tuple)):
@@ -48,18 +48,18 @@ class ResSENet(ResNetID):   # Residual squeeze-and-excitation networks
 
         return x
 
-    def _se_mask(self, x, se_r, name='se_mask'):
+    def _se_mask(self, x, reduction, name='se_mask'):
         in_channels = x.get_shape()[1] if self.channel_first else x.get_shape()[-1]
         axis = [2, 3] if self.channel_first else [1, 2]
         with tf.variable_scope(name):
             x = tf.reduce_mean(x, axis=axis)
 
-            with tf.variable_scope('fc_0'):
-                x = self.fc_layer(x, in_channels//se_r)
+            with tf.variable_scope('fc1'):
+                x = self.fc_layer(x, in_channels//reduction)
 
             x = self.relu(x, name='relu')
 
-            with tf.variable_scope('fc_1'):
+            with tf.variable_scope('fc2'):
                 x = self.fc_layer(x, in_channels)
 
             x = self.sigmoid(x)
@@ -70,7 +70,7 @@ class ResSENet(ResNetID):   # Residual squeeze-and-excitation networks
         return x
 
 
-class ResSENetBot(ResSENet):    # Residual squeeze-and-excitation networks with bottlenecks
+class ResNetSEBot(ResNetSE):    # Residual squeeze-and-excitation networks with bottlenecks
     def _init_params(self):
         self.channels = [64, 256, 512, 1024, 2048]
         self.kernels = [7, 3, 3, 3, 3]
@@ -132,21 +132,21 @@ class ResSENetBot(ResSENet):    # Residual squeeze-and-excitation networks with 
         return x
 
 
-class ResSENet18(ResSENet):
+class ResNetSE18(ResNetSE):
     def _init_params(self):
         super()._init_params()
         self.channels = [64, 64, 128, 256, 512]
         self.res_units = [2, 2, 2, 2]
 
 
-class ResSENet50(ResSENetBot):
+class ResNetSE50(ResNetSEBot):
     def _init_params(self):
         super()._init_params()
         self.channels = [64, 256, 512, 1024, 2048]
         self.res_units = [3, 4, 6, 3]
 
 
-class ResSENet101(ResSENetBot):
+class ResNetSE101(ResNetSEBot):
     def _init_params(self):
         super()._init_params()
         self.channels = [64, 256, 512, 1024, 2048]
