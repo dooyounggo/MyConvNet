@@ -50,6 +50,7 @@ class ConvNet(object):
 
         self._dropout_weights = kwargs.get('dropout_weights', False)
         self._dropout_logits = kwargs.get('dropout_logits', False)
+        self._weight_standardization = kwargs.get('weight_standardization', False)
 
         self._blocks_to_train = kwargs.get('blocks_to_train', None)
         self._update_batch_norm = kwargs.get('update_batch_norm', True)
@@ -155,6 +156,10 @@ class ConvNet(object):
     @property
     def dropout_logits(self):
         return self._dropout_logits
+
+    @property
+    def weight_standardization(self):
+        return self._weight_standardization
 
     @property
     def blocks_to_train(self):
@@ -814,7 +819,8 @@ class ConvNet(object):
 
         return x, y
 
-    def weight_variable(self, shape, initializer=tf.initializers.he_normal(), name='weights'):
+    def weight_variable(self, shape, initializer=tf.initializers.he_normal(),
+                        weight_standardization=False, name='weights'):
         if self.blocks_to_train is None:
             trainable = True
         elif self._curr_block in self.blocks_to_train:
@@ -841,8 +847,14 @@ class ConvNet(object):
                               lambda: weights,
                               lambda: weights_ema)
 
-        if self.dtype is not tf.float32:
-            weights = tf.cast(weights, dtype=self.dtype)
+            if weight_standardization:
+                w_len = len(weights.get_shape())
+                w_idx = list(range(w_len))
+                mean, var = tf.nn.moments(weights, axes=w_idx[:-1], keepdims=True)
+                weights = (weights - mean)/tf.math.sqrt(var + 1e-5)
+
+            if self.dtype is not tf.float32:
+                weights = tf.cast(weights, dtype=self.dtype)
 
         if self.dropout_weights:
             return tf.nn.dropout(weights, rate=self.dropout_rate_weights)
@@ -876,8 +888,8 @@ class ConvNet(object):
                              lambda: biases,
                              lambda: biases_ema)
 
-        if self.dtype is not tf.float32:
-            biases = tf.cast(biases, dtype=self.dtype)
+            if self.dtype is not tf.float32:
+                biases = tf.cast(biases, dtype=self.dtype)
 
         return biases
 
@@ -944,7 +956,7 @@ class ConvNet(object):
         return tf.nn.avg_pool(x, ksize=ksize, strides=strides, data_format=data_format, padding=padding)
 
     def conv_layer(self, x, kernel, stride, out_channels, padding='SAME', biased=True, depthwise=False, dilation=(1, 1),
-                   weight_initializer=tf.initializers.he_normal(), bias_initializer=tf.initializers.zeros()):
+                   weight_initializer=tf.initializers.he_normal(), bias_initializer=tf.initializers.zeros(), ws=False):
         if not isinstance(kernel, (list, tuple)):
             kernel = [kernel, kernel]
         elif len(kernel) == 1:
@@ -977,7 +989,7 @@ class ConvNet(object):
         if depthwise:
             channel_multiplier = out_channels//in_channels
             weights = self.weight_variable([kernel[0], kernel[1], in_channels, channel_multiplier],
-                                           initializer=weight_initializer)
+                                           initializer=weight_initializer, weight_standardization=ws)
             convs = tf.nn.depthwise_conv2d(x, weights, strides=conv_strides, padding=padding,
                                            data_format=data_format, rate=dilation)
 
@@ -986,7 +998,7 @@ class ConvNet(object):
                 self._params += kernel[0]*kernel[1]*in_channels*channel_multiplier
         else:
             weights = self.weight_variable([kernel[0], kernel[1], in_channels, out_channels],
-                                           initializer=weight_initializer)
+                                           initializer=weight_initializer, weight_standardization=ws)
             convs = tf.nn.conv2d(x, weights, strides=conv_strides, padding=padding,
                                  data_format=data_format, dilations=conv_dilations)
 
@@ -1006,10 +1018,10 @@ class ConvNet(object):
             return convs
 
     def fc_layer(self, x, out_dim, biased=True,
-                 weight_initializer=tf.initializers.he_normal(), bias_initializer=tf.initializers.zeros()):
+                 weight_initializer=tf.initializers.he_normal(), bias_initializer=tf.initializers.zeros(), ws=False):
         in_dim = int(x.get_shape()[-1])
 
-        weights = self.weight_variable([in_dim, out_dim], initializer=weight_initializer)
+        weights = self.weight_variable([in_dim, out_dim], initializer=weight_initializer, weight_standardization=ws)
 
         if not tf.get_variable_scope().reuse:
             self._flops += in_dim*out_dim
@@ -1239,8 +1251,8 @@ class ConvNet(object):
         return x
 
     def transposed_conv_layer(self, x, kernel, stride, out_channels, padding='SAME', biased=True, output_shape=None,
-                              dilation=(1, 1),
-                              weight_initializer=tf.initializers.he_normal(), bias_initializer=tf.initializers.zeros()):
+                              dilation=(1, 1), weight_initializer=tf.initializers.he_normal(),
+                              bias_initializer=tf.initializers.zeros(), ws=False):
         if not isinstance(kernel, (list, tuple)):
             kernel = [kernel, kernel]
         elif len(kernel) == 1:
@@ -1278,8 +1290,9 @@ class ConvNet(object):
                     output_shape = [batch_size, h*stride[0], w*stride[1], out_channels]
             out_size = output_shape[1:3]
 
-        weights = self.weight_variable([kernel[0], kernel[1], out_channels, in_channels],
-                                       initializer=weight_initializer)
+        weights = self.weight_variable([kernel[0], kernel[1], in_channels, out_channels],
+                                       initializer=weight_initializer, weight_standardization=ws)
+        weights = tf.transpose(weights, perm=[0, 1, 3, 2])
         convs = tf.nn.conv2d_transpose(x, weights, output_shape=output_shape, strides=conv_strides,
                                        padding=padding, data_format=data_format, dilations=conv_dilations)
 
