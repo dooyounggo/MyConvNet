@@ -5,7 +5,7 @@ Setup various (hyper)parameters
 import os
 import tensorflow as tf
 import subsets.stanford_dogs as subset
-from models.resnet import ResNet50 as ConvNet
+from models.resnet_v2 import ResNet50 as ConvNet
 from evaluators import AccuracyEvaluator as Evaluator
 from models.init_from_checkpoint import resnet_v2_50_101 as init_from_pretrained_model
 
