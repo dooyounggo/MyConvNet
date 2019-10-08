@@ -102,10 +102,9 @@ class ConvNet(object):
 
                 self.linear_multiplier = global_step/tf.cast(self.total_steps, dtype=tf.float32)
 
-        self.ema = tf.train.ExponentialMovingAverage(decay=kwargs.get('moving_average_decay', 0.9999),
-                                                     num_updates=self.global_step)
+        self.ema = tf.train.ExponentialMovingAverage(decay=kwargs.get('moving_average_decay', 0.9999))
 
-        self.debug_value = self.linear_multiplier
+        self.debug_value = self.batch_norm_decay
         self.debug_images_0 = np.zeros([4, 8, 8, 3], dtype=np.float32)
         self.debug_images_1 = np.zeros([4, 8, 8, 3], dtype=np.float32)
 
