@@ -54,6 +54,9 @@ class ConvNet(object):
         self._blocks_to_train = kwargs.get('blocks_to_train', None)
         self._update_batch_norm = kwargs.get('update_batch_norm', True)
 
+        self._moving_average_decay = kwargs.get('moving_average_decay', 0.9999)
+        self._batch_norm_decay = kwargs.get('batch_norm_decay', 0.999)
+
         self.handles = []
         self.Xs = []
         self.Ys = []
@@ -79,9 +82,6 @@ class ConvNet(object):
             with tf.variable_scope('calc'):
                 self.global_step = tf.train.get_or_create_global_step()
                 global_step = tf.cast(self.global_step, dtype=tf.float32)
-                self._moving_average_decay = kwargs.get('moving_average_decay', 0.9999)
-                self._batch_norm_decay = tf.minimum(kwargs.get('batch_norm_decay', 0.999),
-                                                    global_step/(9 + global_step))
 
                 self.dropout_rate = tf.cond(tf.math.logical_or(self.is_train, self.monte_carlo),
                                             lambda: tf.constant(kwargs.get('dropout_rate', 0.0), dtype=self.dtype),
@@ -105,7 +105,7 @@ class ConvNet(object):
 
         self.ema = tf.train.ExponentialMovingAverage(decay=self.moving_average_decay)
 
-        self.debug_value = self.moving_average_decay
+        self.debug_value = self.linear_multiplier
         self.debug_images_0 = np.zeros([4, 8, 8, 3], dtype=np.float32)
         self.debug_images_1 = np.zeros([4, 8, 8, 3], dtype=np.float32)
 
