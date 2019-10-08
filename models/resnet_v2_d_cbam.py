@@ -2,7 +2,7 @@ import tensorflow as tf
 from convnet import ConvNet
 
 
-class ResCBAMNet(ConvNet):    # Residual networks with Convolutional Block Attention Modules (Based on ResNet-D-v2)
+class ResNetCBAM(ConvNet):    # Residual networks with Convolutional Block Attention Modules (Based on ResNet-D-v2)
     def _init_params(self):
         self.channels = [64, 256, 512, 1024, 2048]
         self.kernels = [3, 3, 3, 3, 3]
@@ -189,13 +189,13 @@ class ResCBAMNet(ConvNet):    # Residual networks with Convolutional Block Atten
         return x
 
 
-class ResCBAMNet50(ResCBAMNet):
+class ResNetCBAM50(ResNetCBAM):
     def _init_params(self):
         super()._init_params()
         self.res_units = [3, 4, 6, 3]
 
 
-class ResCBAMNet101(ResCBAMNet):
+class ResNetCBAM101(ResNetCBAM):
     def _init_params(self):
         super()._init_params()
         self.res_units = [3, 4, 23, 3]
