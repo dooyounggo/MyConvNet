@@ -50,7 +50,6 @@ class ConvNet(object):
 
         self._dropout_weights = kwargs.get('dropout_weights', False)
         self._dropout_logits = kwargs.get('dropout_logits', False)
-        self._weight_standardization = kwargs.get('weight_standardization', False)
 
         self._blocks_to_train = kwargs.get('blocks_to_train', None)
         self._update_batch_norm = kwargs.get('update_batch_norm', True)
@@ -156,10 +155,6 @@ class ConvNet(object):
     @property
     def dropout_logits(self):
         return self._dropout_logits
-
-    @property
-    def weight_standardization(self):
-        return self._weight_standardization
 
     @property
     def blocks_to_train(self):
