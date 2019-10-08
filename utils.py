@@ -125,7 +125,7 @@ def plot_learning_curve(step_losses, step_scores, eval_losses=None, eval_scores=
 
 
 def plot_class_results(images, y_true, y_pred=None, fault=None, num_rows=3, num_cols=3, shuffle=True,
-                       class_names=None, save_dir=None):
+                       class_names=None, save_dir=None, start_idx=0):
     if y_pred is None:
         y_pred = y_true
 
@@ -182,16 +182,17 @@ def plot_class_results(images, y_true, y_pred=None, fault=None, num_rows=3, num_
             os.makedirs(save_dir)
         print('')
         for i in range(num_images):
-            fig_name = os.path.join(save_dir, '{}.jpg'.format(i))
-            if not os.path.isfile(os.path.join(save_dir, '{}.jpg'.format(i))):
+            fig_name = os.path.join(save_dir, '{}.jpg'.format(i + start_idx))
+            if not os.path.isfile(os.path.join(save_dir, '{}.jpg'.format(i + start_idx))):
                 fig = plt.figure()
                 plt.imshow(images[i])
                 if class_names is None:
                     fig.suptitle('{:6d}. A: class {}, {:.2%}\n(class {}, {:.2%}).'
-                                 .format(i, y_label[i], y_prob[i, y_label[i]], y_true[i], y_prob[i, y_true[i]]))
+                                 .format(i + start_idx, y_label[i], y_prob[i, y_label[i]],
+                                         y_true[i], y_prob[i, y_true[i]]))
                 else:
                     fig.suptitle('{:6d}. A: {}, {:.2%}\n({}, {:.2%}).'
-                                 .format(i, class_names[y_label[i]], y_prob[i, y_label[i]],
+                                 .format(i + start_idx, class_names[y_label[i]], y_prob[i, y_label[i]],
                                          class_names[y_true[i]], y_prob[i, y_true[i]]))
                 fig.savefig(fig_name)
                 plt.close(fig)
@@ -387,7 +388,7 @@ def imshow_subplot(images, num_rows=3, num_cols=3, figure_title='Figure'):
                 break
 
 
-def plot_seg_results(images, y_true, y_pred=None, num_rows=3, num_cols=3, colors=None, save_dir=None):
+def plot_seg_results(images, y_true, y_pred=None, num_rows=3, num_cols=3, colors=None, save_dir=None, start_idx=0):
     if y_pred is None:
         y_pred = y_true
 
@@ -452,11 +453,11 @@ def plot_seg_results(images, y_true, y_pred=None, num_rows=3, num_cols=3, colors
             os.makedirs(save_dir)
         print('')
         for i in range(num_images):
-            fig_name = os.path.join(save_dir, '{}.jpg'.format(i))
-            if not os.path.isfile(os.path.join(save_dir, '{}.jpg'.format(i))):
+            fig_name = os.path.join(save_dir, '{}.jpg'.format(i + start_idx))
+            if not os.path.isfile(os.path.join(save_dir, '{}.jpg'.format(i + start_idx))):
                 fig = plt.figure()
                 plt.imshow(np.clip(images[i] + mask_pred[i], 0, 255))
-                fig.suptitle('{}:\n{:.4}'.format(name, scores[i]))
+                fig.suptitle('{:6d}. {}:\n{:.4}'.format(i + start_idx, name, scores[i]))
                 fig.savefig(fig_name)
                 plt.close(fig)
 
