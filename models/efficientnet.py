@@ -27,11 +27,11 @@ class EfficientNet(ConvNet):
         res_units = self.res_units
         multipliers = self.multipliers
 
-        len_c = len(channels) - 1
-        len_k = len(kernels)
-        len_s = len(strides)
-        len_r = len(res_units) + 1
-        len_m = len(multipliers) + 1
+        len_c = len(channels)
+        len_k = len(kernels) + 1
+        len_s = len(strides) + 1
+        len_r = len(res_units) + 2
+        len_m = len(multipliers) + 2
         self._num_blocks = min([len_c, len_k, len_s, len_r, len_m])
 
         with tf.variable_scope('block_0'):
@@ -45,9 +45,9 @@ class EfficientNet(ConvNet):
                 d['block_0' + '/conv_0' + '/swish'] = x
             d['block_0'] = x
 
-        for i in range(1, self.num_blocks):
+        for i in range(1, self.num_blocks - 1):
             self._curr_block = i
-            dr = initial_drop_rate + (final_drop_rate - initial_drop_rate)*i/(self.num_blocks - 1)
+            dr = initial_drop_rate + (final_drop_rate - initial_drop_rate)*i/(self.num_blocks - 2)
             print('block {} drop rate = {:.3f}'.format(i, dr))
             for j in range(res_units[i - 1]):
                 if j > 0:
@@ -57,20 +57,23 @@ class EfficientNet(ConvNet):
                 x = self._res_unit(x, kernels[i], s, channels[i], multipliers[i - 1], d,
                                    drop_rate=dr, name='block_{}/res_{}'.format(i, j))
             d['block_{}'.format(self._curr_block)] = x
+            
+        self._curr_block += 1
+        with tf.variable_scope('block_{}'.format(self._curr_block)):
+            with tf.variable_scope('conv_0'):
+                x = self.conv_layer(x, 1, 1, self.channels[-1], padding='SAME', biased=False, depthwise=False)
+                print('block_{}'.format(self._curr_block) + '/conv_0.shape', x.get_shape().as_list())
+                d['logits' + '/conv_0'] = x
+                x = self.batch_norm(x, shift=True, scale=True, scope='bn')
+                d['logits' + '/conv_0' + '/bn'] = x
+                x = self.swish(x, name='swish')
+                d['logits' + '/conv_0' + '/swish'] = x
+        d['block_{}'.format(self._curr_block)] = x
 
         if self.backbone_only is False:
             self._curr_block = None
             with tf.variable_scope('block_{}'.format(self._curr_block)):
                 with tf.variable_scope('logits'):
-                    with tf.variable_scope('conv_0'):
-                        x = self.conv_layer(x, 1, 1, self.channels[-1], padding='SAME', biased=False, depthwise=False)
-                        print('logits' + '/conv_0.shape', x.get_shape().as_list())
-                        d['logits' + '/conv_0'] = x
-                        x = self.batch_norm(x, shift=True, scale=True, scope='bn')
-                        d['logits' + '/conv_0' + '/bn'] = x
-                        x = self.swish(x, name='swish')
-                        d['logits' + '/conv_0' + '/swish'] = x
-
                     axis = [2, 3] if self.channel_first else [1, 2]
                     x = tf.reduce_mean(x, axis=axis)
                     d['logits' + '/avgpool'] = x
