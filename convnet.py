@@ -41,7 +41,7 @@ class ConvNet(object):
         self._num_classes = num_classes
         self._loss_weights = loss_weights  # Weight values for the softmax losses of each class
 
-        self._dtype = kwargs.get('data_type', tf.float32)
+        self._dtype = tf.float16 if kwargs.get('half_precision', False) else tf.float32
         self._channel_first = kwargs.get('channel_first', False)
         self._num_gpus = kwargs.get('num_gpus', 1)
 
@@ -847,10 +847,12 @@ class ConvNet(object):
                               lambda: weights_ema)
 
             if weight_standardization:
-                w_len = len(weights.get_shape())
+                w_len = len(shape)
                 w_idx = list(range(w_len))
-                mean, var = tf.nn.moments(weights, axes=w_idx[:-1], keepdims=True)
-                weights = (weights - mean)/tf.math.sqrt(var + 1e-5)
+                mean = tf.math.reduce_mean(weights, axis=w_idx[:-1], keepdims=True)
+                weights = weights - mean
+                std = tf.math.reduce_std(weights, axis=w_idx[:-1], keepdims=True)
+                weights = weights/(std + 1e-5)
 
             if self.dtype is not tf.float32:
                 weights = tf.cast(weights, dtype=self.dtype)
@@ -1156,7 +1158,7 @@ class ConvNet(object):
 
         return x
 
-    def group_norm(self, x, num_groups=8, scale=True, shift=True, epsilon=1e-4, scope='sn'):
+    def group_norm(self, x, num_groups=8, scale=True, shift=True, epsilon=1e-4, scope='gn'):
         if self.blocks_to_train is None:
             trainable = True
         elif self._curr_block in self.blocks_to_train:
@@ -1231,7 +1233,9 @@ class ConvNet(object):
             x = tf.reshape(x, shape=x_shape)
             mean, var = tf.nn.moments(x, axes=axis, keepdims=True)
             x = (x - mean)/tf.math.sqrt(var + epsilon)
-            x = tf.reshape(x, shape=[batch_size] + in_shape[1:])*gamma + beta
+            x = tf.reshape(x, shape=[batch_size] + in_shape[1:])
+            x = x*gamma if gamma is not None else x
+            x = x + beta if beta is not None else x
             if self.dtype is not tf.float32:
                 x = tf.cast(x, dtype=self.dtype)
 
