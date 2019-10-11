@@ -40,18 +40,20 @@ class DataSet(object):
         self._datasets = []
         self._iterators = []
         self._handles = []
+        batch_size_per_gpu = self.batch_size//self.num_shards
         with tf.name_scope('dataset/'):
             with tf.device('/cpu:0'):
                 main_dataset = tf.data.Dataset.from_tensor_slices((image_dirs, label_dirs))
                 for i in range(self.num_shards):
                     dataset = main_dataset.shard(self.num_shards, i)
                     if self.shuffle:
-                        dataset = dataset.shuffle(buffer_size=min([np.ceil(self.num_examples/self.num_shards), 2048]))
+                        dataset = dataset.shuffle(buffer_size=min([np.ceil(self.num_examples/self.num_shards),
+                                                                   np.ceil(512/batch_size_per_gpu*32)]))
                     dataset = dataset.map(lambda image_dir, label_dir: tuple(tf.py_func(self._load_function,
                                                                                         (image_dir, label_dir),
                                                                                         (tf.float32, tf.float32))),
                                           num_parallel_calls=kwargs.get('num_parallel_calls')//self.num_shards)
-                    dataset = dataset.batch(self.batch_size//self.num_shards)
+                    dataset = dataset.batch(batch_size_per_gpu)
                     dataset = dataset.apply(tf.data.experimental.copy_to_device('/gpu:{}'.format(i)))
                     with tf.device('/gpu:{}'.format(i)):
                         dataset = dataset.prefetch(buffer_size=1)
