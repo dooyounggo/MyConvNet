@@ -48,7 +48,7 @@ class Parameters(object):
     d['update_batch_norm'] = True  # Whether to update batch means and variances. None to follow blocks_to_train
 
     # FIXME: Training hyperparameters
-    d['data_type'] = tf.float32  # Try tf.float16 if your GPU supports half-precision
+    d['half_precision'] = False  # Try half-precision if your GPU supports it
     d['channel_first'] = True  # If true, NCHW format is used instead of NHWC
     d['num_gpus'] = 1
     d['batch_size'] = 16
