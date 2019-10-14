@@ -56,6 +56,7 @@ gcam = model.features(test_set, model.gcam, **Param.d)[0][..., 0]
 cmap = plt.get_cmap('gnuplot2')
 gcam = cmap(gcam)[..., 0:3]
 gcam = np.clip(test_x + gcam, 0, 1)
+# gcam = test_x*gcam[..., np.newaxis]
 
 utils.plot_class_results(gcam, test_y_true, test_y_pred, fault=None, shuffle=False, class_names=class_names,
                          save_dir=os.path.join(Param.save_dir, 'results_test/grad-cams'), start_idx=idx_start)
