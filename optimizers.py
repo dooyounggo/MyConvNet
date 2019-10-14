@@ -252,6 +252,8 @@ class Optimizer(object):
 
         self.train_set.initialize(self.model.session)  # Initialize training iterator
         handles = self.train_set.get_string_handles(self.model.session)  # Get a string handle from training iterator
+        if self.val_set is not None:
+            self.val_set.initialize(self.model.session)  # Initialize validation iterator
         with tf.variable_scope('calc/'):
             step_init_op = self.model.global_step.assign(start_step, name='init_global_step')
         self.model.session.run(step_init_op)
