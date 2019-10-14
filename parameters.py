@@ -78,6 +78,8 @@ class Parameters(object):
     d['dropout_logits'] = True
     d['initial_drop_rate'] = 0.2  # Initial drop rate for stochastic depth
     d['final_drop_rate'] = 0.2  # Final drop rate for stochastic depth
+    
+    d['feature_reduction_factor'] = 0  # Feature dimensionality reduction factor for small datasets
 
     # FIXME: Data augmentation parameters
     d['augment_factor'] = None  # int. Offline augmentation factor. None for no augmentation
