@@ -57,6 +57,8 @@ class ConvNet(object):
         self._moving_average_decay = kwargs.get('moving_average_decay', 0.9999)
         self._batch_norm_decay = kwargs.get('batch_norm_decay', 0.999)
 
+        self._feature_reduction = kwargs.get('feature_reduction_factor', 0)
+
         self.handles = []
         self.Xs = []
         self.Ys = []
@@ -171,6 +173,10 @@ class ConvNet(object):
     @property
     def batch_norm_decay(self):
         return self._batch_norm_decay
+
+    @property
+    def feature_reduction(self):
+        return self._feature_reduction
 
     @property
     def update_ops(self):
