@@ -255,9 +255,7 @@ def plot_confusion_matrix(y_true, y_pred, class_names=None, normalize=False, top
 
     too_many_classes = len(class_names) > max_classes
     if class_names is None or too_many_classes:
-        class_names = []
-        for i in range(num_classes):
-            class_names.append(str(i))
+        class_names = [i for i in range(num_classes)]
 
     fig, axes = plt.subplots(figsize=(10, 8))
     img = axes.imshow(cm, interpolation='nearest', cmap=cmap)
@@ -269,8 +267,8 @@ def plot_confusion_matrix(y_true, y_pred, class_names=None, normalize=False, top
              ylabel='True Labels',
              xlabel='Predicted Labels')
     plt.setp(axes.get_xticklabels(), rotation=45, ha='right', rotation_mode='anchor')
-    axes.set_xticks(np.arange(cm.shape[1] - 1) + 0.5, minor=True)
-    axes.set_yticks(np.arange(cm.shape[0] - 1) + 0.5, minor=True)
+    axes.set_xticks(np.arange(cm.shape[1] + 1) - 0.5, minor=True)
+    axes.set_yticks(np.arange(cm.shape[0] + 1) - 0.5, minor=True)
     axes.grid(which='minor', alpha=0.5)
 
     if too_many_classes:
