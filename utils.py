@@ -121,7 +121,7 @@ def plot_learning_curve(step_losses, step_scores, eval_losses=None, eval_scores=
     # Save details as pkl file
     pkl_filename = 'learning_curve-result{}.pkl'.format(exp_idx)
     with open(os.path.join(img_dir, pkl_filename), 'wb') as fo:
-        pkl.dump([step_losses, step_scores, eval_scores], fo)
+        pkl.dump([step_losses, step_scores, eval_losses, eval_scores], fo)
 
 
 def plot_class_results(images, y_true, y_pred=None, fault=None, num_rows=3, num_cols=3, shuffle=True,
