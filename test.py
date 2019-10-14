@@ -18,7 +18,8 @@ image_dirs, label_dirs, class_names = subset.read_subset(Param.test_dir, shuffle
                                                          sample_size=Param.test_sample_size)
 num_data = len(image_dirs)
 image_dirs = image_dirs[idx_start:min(num_data, idx_end)]
-label_dirs = label_dirs[idx_start:min(num_data, idx_end)]
+if label_dirs is not None:
+    label_dirs = label_dirs[idx_start:min(num_data, idx_end)]
 Param.d['shuffle'] = False
 test_set = DataSet(image_dirs, label_dirs, class_names, **Param.d)
 
