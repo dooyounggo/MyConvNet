@@ -78,6 +78,12 @@ class EfficientNet(ConvNet):
                     x = tf.reduce_mean(x, axis=axis)
                     d['logits' + '/avgpool'] = x
 
+                    if self.feature_reduction > 1:
+                        with tf.variable_scope('comp'):  # Feature compression to prevent overfitting
+                            num_channels = x.get_shape()[1] if self.channel_first else x.get_shape()[-1]
+                            x = self.fc_layer(x, num_channels//self.feature_reduction)
+                            x = self.swish(x, name='swish')
+
                     x = tf.nn.dropout(x, rate=self.dropout_rate_logits)
                     x = self.fc_layer(x, self.num_classes)
 
