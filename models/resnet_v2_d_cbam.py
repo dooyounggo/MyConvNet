@@ -2,7 +2,7 @@ import tensorflow as tf
 from convnet import ConvNet
 
 
-class ResNetCBAM(ConvNet):    # Residual networks with Convolutional Block Attention Modules (Based on ResNet-D-v2)
+class ResNetCBAM(ConvNet):    # Residual networks with Convolutional Block Attention Modules (Based on ResNet-V2-D)
     def _init_params(self):
         self.channels = [64, 256, 512, 1024, 2048]
         self.kernels = [3, 3, 3, 3, 3]
@@ -83,6 +83,13 @@ class ResNetCBAM(ConvNet):    # Residual networks with Convolutional Block Atten
                     axis = [2, 3] if self.channel_first else [1, 2]
                     x = tf.reduce_mean(x, axis=axis)
                     d['logits' + '/avgpool'] = x
+
+                    if self.feature_reduction > 1:
+                        with tf.variable_scope('comp'):  # Feature compression to prevent overfitting
+                            num_channels = x.get_shape()[1] if self.channel_first else x.get_shape()[-1]
+                            x = self.fc_layer(x, num_channels//self.feature_reduction)
+                            x = self.relu(x, name='relu')
+
                     x = tf.nn.dropout(x, rate=self.dropout_rate_logits)
                     x = self.fc_layer(x, self.num_classes)
                     d['logits'] = x
