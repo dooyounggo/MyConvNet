@@ -43,12 +43,12 @@ class DataSet(object):
         batch_size_per_gpu = self.batch_size//self.num_shards
         with tf.name_scope('dataset/'):
             with tf.device('/cpu:0'):
-                main_dataset = tf.data.Dataset.from_tensor_slices((image_dirs, label_dirs))
                 for i in range(self.num_shards):
-                    dataset = main_dataset.shard(self.num_shards, i)
+                    dataset = tf.data.Dataset.from_tensor_slices((image_dirs[i::self.num_shards],
+                                                                  label_dirs[i::self.num_shards]))
                     if self.shuffle:
                         dataset = dataset.shuffle(buffer_size=min([np.ceil(self.num_examples/self.num_shards),
-                                                                   np.ceil(512/batch_size_per_gpu*32)]))
+                                                                   np.ceil(256*batch_size_per_gpu/32)]))
                     dataset = dataset.map(lambda image_dir, label_dir: tuple(tf.py_func(self._load_function,
                                                                                         (image_dir, label_dir),
                                                                                         (tf.float32, tf.float32))),
