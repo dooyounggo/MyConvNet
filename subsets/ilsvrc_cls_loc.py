@@ -1021,26 +1021,35 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True):
     train_folders = os.listdir(train_dir)
 
     class_names = []
-    i = 0
+    full_filenames = []
+    labels = []
     for n, folder in enumerate(train_folders):
         class_names.append(folder)
         for fname in os.listdir(os.path.join(train_dir, folder)):
-            if i % 500 == 0:
-                print('Saving training data: {:8,}/1,281,167...'.format(i))
-
             img_dir = os.path.join(train_dir, folder, fname)
-            ext = img_dir.split('.')[-1]
+            full_filenames.append(img_dir)
+            labels.append(n)
+    num_examples = len(full_filenames)
+    idx = np.arange(num_examples)
+    np.random.shuffle(idx)  # Shuffle the files in advance since there are too many images in the dataset
+    full_filenames = list(np.array(full_filenames)[idx])
+    labels = list(np.array(labels)[idx])
+    for i, (img_dir, label) in enumerate(zip(full_filenames, labels)):
+        if i % 500 == 0:
+            print('Saving training data: {:8,}/{:,}...'.format(i, num_examples))
 
-            if copy:
-                shutil.copy2(img_dir, os.path.join(destination_dir, 'train', '{:010d}.{}'.format(i, ext)))
-            else:
-                shutil.move(img_dir, os.path.join(destination_dir, 'train', '{:010d}.{}'.format(i, ext)))
-            f = open(os.path.join(destination_dir, 'train', '{:010d}.csv'.format(i)),
-                     'w', encoding='utf-8', newline='')
-            wrt = csv.writer(f)
-            wrt.writerow([str(n)])
-            f.close()
-            i += 1
+        ext = img_dir.split('.')[-1]
+
+        if copy:
+            shutil.copy2(img_dir, os.path.join(destination_dir, 'train', '{:010d}.{}'.format(i, ext)))
+        else:
+            shutil.move(img_dir, os.path.join(destination_dir, 'train', '{:010d}.{}'.format(i, ext)))
+        f = open(os.path.join(destination_dir, 'train', '{:010d}.csv'.format(i)),
+                 'w', encoding='utf-8', newline='')
+        wrt = csv.writer(f)
+        wrt.writerow([str(label)])
+        f.close()
+        i += 1
 
     val_fnames = os.listdir(val_dir)
     val_infos = os.listdir(val_info_dir)
@@ -1081,6 +1090,6 @@ def read_subset(subset_dir, shuffle=False, sample_size=None):
         class_names.append(item.split(', ')[0])
     class_names = tuple(class_names)
 
-    image_dirs, label_dirs = sf.read_subset_cls(subset_dir, shuffle=shuffle, sample_size=sample_size)
+    image_dirs, label_dirs = sf.read_subset_cls(subset_dir, shuffle=False, sample_size=sample_size)
 
     return image_dirs, label_dirs, class_names
