@@ -189,13 +189,13 @@ def resize_fit_expand(image, out_size, interpolation=cv2.INTER_LINEAR, random=Fa
 
 def resize_fit(image, out_size, interpolation=cv2.INTER_LINEAR, random=False, pad_value=0.0):
     in_size = image.shape
-    h_ratio = float(in_size[0]) / out_size[0]
-    w_ratio = float(in_size[1]) / out_size[1]
+    h_ratio = float(in_size[0])/out_size[0]
+    w_ratio = float(in_size[1])/out_size[1]
 
     if h_ratio > w_ratio:
-        re_size = [out_size[0], int(np.round(in_size[1] / h_ratio))]
+        re_size = [out_size[0], int(np.round(in_size[1]/h_ratio))]
     else:
-        re_size = [int(np.round(in_size[0] / w_ratio)), out_size[1]]
+        re_size = [int(np.round(in_size[0]/w_ratio)), out_size[1]]
 
     image = cv2.resize(image, dsize=tuple(re_size[::-1]), interpolation=interpolation)
     image = zero_pad(image, out_size, random=random, pad_value=pad_value)
@@ -209,9 +209,9 @@ def resize_expand(image, out_size, interpolation=cv2.INTER_LINEAR, random=False)
     w_ratio = float(in_size[1])/out_size[1]
 
     if h_ratio < w_ratio:
-        re_size = [out_size[0], int(np.round(in_size[1] / h_ratio))]
+        re_size = [out_size[0], int(np.round(in_size[1]/h_ratio))]
     else:
-        re_size = [int(np.round(in_size[0] / w_ratio)), out_size[1]]
+        re_size = [int(np.round(in_size[0]/w_ratio)), out_size[1]]
 
     image = cv2.resize(image, dsize=tuple(re_size[::-1]), interpolation=interpolation)
     image = crop(image, out_size, random=random)
