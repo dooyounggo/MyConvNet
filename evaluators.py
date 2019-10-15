@@ -138,6 +138,10 @@ class AccuracyTop1Evaluator(AccuracyTopNEvaluator):
     top = 1
 
 
+class AccuracyTop2Evaluator(AccuracyTopNEvaluator):
+    top = 2
+
+
 class AccuracyTop3Evaluator(AccuracyTopNEvaluator):
     top = 3
 
@@ -221,6 +225,10 @@ class ErrorTopNEvaluator(AccuracyTopNEvaluator):
 
 class ErrorTop1Evaluator(ErrorTopNEvaluator):
     top = 1
+
+
+class ErrorTop2Evaluator(ErrorTopNEvaluator):
+    top = 2
 
 
 class ErrorTop3Evaluator(ErrorTopNEvaluator):
