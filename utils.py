@@ -1,6 +1,6 @@
 """
 Various utility functions.
-The code may be quite messy.
+The code can be quite messy.
 """
 
 import os
@@ -222,13 +222,11 @@ def plot_confusion_matrix(y_true, y_pred, class_names=None, normalize=False, top
         for i in range(num_classes):
             total = cm[i].sum()
             for j in range(num_classes):
-                if i == j:
-                    wrong = 0.0
-                else:
+                if i != j:
                     wrong = float(cm[i, j])/total
-                confused_classes.append((wrong, (i, j)))
-                confused_classes = sorted(confused_classes, key=lambda cls: cls[0], reverse=True)
-                confused_classes = confused_classes[:top_confused_classes]
+                    confused_classes.append((wrong, (i, j)))
+                    confused_classes = sorted(confused_classes, key=lambda cls: cls[0], reverse=True)
+                    confused_classes = confused_classes[:top_confused_classes]
 
         values = []
         pairs = []
@@ -237,8 +235,8 @@ def plot_confusion_matrix(y_true, y_pred, class_names=None, normalize=False, top
             pairs.append('{}\n->{}'.format(class_names[confused[1][0]], class_names[confused[1][1]]))
         y_max = 1.1*max(values)
 
-        fig, axes = plt.subplots(figsize=(14, 7))
-        fig.subplots_adjust(left=0.05, right=0.95, top=0.95, bottom=0.35)
+        fig, axes = plt.subplots(figsize=(5 + 0.5*len(confused_classes), 7))
+        fig.subplots_adjust(left=0.1, right=0.95, top=0.95, bottom=0.35)
         idx = np.arange(len(values))
         axes.bar(idx, values, align='center', alpha=0.5)
         axes.grid(alpha=0.25)
