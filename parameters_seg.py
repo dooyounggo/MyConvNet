@@ -82,7 +82,6 @@ class Parameters(object):
     d['feature_reduction_factor'] = 0  # Feature dimensionality reduction factor for small datasets
 
     # FIXME: Data augmentation parameters
-    d['augment_factor'] = None  # int. Offline augmentation factor. None for no augmentation
     d['augment_train'] = True   # Online augmentation for training data
     d['augment_pred'] = False   # Online augmentation for validation or test data
 
