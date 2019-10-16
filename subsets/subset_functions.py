@@ -93,20 +93,12 @@ def read_subset_seg(subset_dir, shuffle=False, sample_size=None):
 
 def random_resized_crop(image, out_size, interpolation=cv2.INTER_LINEAR,
                         random=True, scale=(1.0, 1.0), ratio=(1.0, 1.0)):
-    in_size = image.shape
-    H = in_size[0]
-    W = in_size[1]
-    h_ratio = float(H)/out_size[0]
-    w_ratio = float(W)/out_size[1]
-
-    if h_ratio < w_ratio:
-        re_size = [out_size[0], int(np.round(W/h_ratio))]
-    else:
-        re_size = [int(np.round(H/w_ratio)), out_size[1]]
-
-    image = cv2.resize(image, dsize=tuple(re_size[::-1]), interpolation=interpolation)
     if random:
-        max_size = max(image.shape)
+        in_size = image.shape
+        H = in_size[0]
+        W = in_size[1]
+
+        max_size = max([H, W])
         image = zero_pad(image, (max_size, max_size))
 
         lower, upper = scale
@@ -134,7 +126,7 @@ def random_resized_crop(image, out_size, interpolation=cv2.INTER_LINEAR,
         image = image[offset_h:offset_h + size_h, offset_w:offset_w + size_w]
         image = cv2.resize(image, dsize=tuple(out_size[1::-1]), interpolation=interpolation)
     else:
-        image = crop(image, out_size, random=random)
+        image = resize_expand(image, out_size=out_size, random=False)
 
     return to_float(image)
 
@@ -264,6 +256,8 @@ def zero_pad(image, out_size, random=False, pad_value=0.0):
         w_idx = w_diff//2
 
     image_out = np.zeros(out_size[:2] + [in_size[-1]], dtype=image.dtype)
+    if pad_value != 0.0:
+        image_out += pad_value
     image_out[h_idx:h_idx + in_size[0], w_idx:w_idx + in_size[1]] = image
 
     return image_out
