@@ -6,18 +6,22 @@ import numpy as np
 import tensorflow as tf
 import csv
 import cv2
+import warnings
 import subsets.subset_functions as sf
 
 
 class DataSet(object):
-    def __init__(self, image_dirs, label_dirs=None, class_names=None, random=False, **kwargs):
+    def __init__(self, image_dirs, label_dirs=None, out_size=None, class_names=None, random_resize=False, **kwargs):
         if label_dirs is None:
-            label_dirs = [np.nan for _ in image_dirs]
+            label_dirs = [np.nan for _ in image_dirs]  # Fake labels
         assert len(image_dirs) == len(label_dirs), 'Number of examples mismatch, between images and labels'
 
         self._image_dirs = image_dirs
         self._label_dirs = label_dirs
-        self._image_size = kwargs.get('image_size', (256, 256, 3))
+        if out_size is None:
+            self._image_size = kwargs.get('image_size', (256, 256, 3))
+        else:
+            self._image_size = out_size
 
         if class_names is None:
             self._num_classes = None
@@ -28,7 +32,7 @@ class DataSet(object):
         self._batch_size = kwargs.get('batch_size', 32)
         self._shuffle = kwargs.get('shuffle', True)
         self._resize_type = kwargs.get('resize_type', 'resize')
-        self._resize_random = random
+        self._random_resize = random_resize
 
         self._parameters = kwargs
 
@@ -92,8 +96,8 @@ class DataSet(object):
         return self._resize_type
 
     @property
-    def augmentation(self):
-        return self._resize_random
+    def random_resize(self):
+        return self._random_resize
 
     @property
     def image_mean(self):
@@ -181,12 +185,15 @@ class DataSet(object):
         elif self.resize_type.lower() == 'resize_fit':
             image = sf.resize_fit(image, image_size, interpolation=interpolation, random=False)
         elif self.resize_type.lower() == 'resize_expand':
-            image = sf.resize_expand(image, image_size, interpolation=interpolation, random=self.augmentation)
+            image = sf.resize_expand(image, image_size, interpolation=interpolation, random=self.random_resize)
         elif self.resize_type.lower() == 'resize_fit_expand':
-            image = sf.resize_fit_expand(image, image_size, interpolation=interpolation, random=self.augmentation)
-        elif self.resize_type.lower() == 'random_resized_crop':
-            image = sf.random_resized_crop(image, image_size, interpolation=interpolation, random=self.augmentation,
-                                           scale=self._parameters['rand_crop_scale'],
+            image = sf.resize_fit_expand(image, image_size, interpolation=interpolation, random=self.random_resize)
+        elif self.resize_type.lower() == 'random_resized_crop' or self.resize_type.lower() == 'random_resize_crop':
+            scale_ratio = self._parameters['rand_crop_scale']
+            if scale_ratio[1] > 1.0:
+                warnings.warn('The maximum scale ratio {} is greater than 1.0.'.format(scale_ratio), UserWarning)
+            image = sf.random_resized_crop(image, image_size, interpolation=interpolation, random=self.random_resize,
+                                           scale=scale_ratio,
                                            ratio=self._parameters['rand_crop_ratio'])
         else:
             raise(ValueError, 'Resize type of {} is not supported.'.format(self.resize_type))
