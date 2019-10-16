@@ -38,16 +38,16 @@ train_size = len(image_dirs)
 if Param.val_dir is None:
     val_size = int(train_size*0.1)    # FIXME
     val_set = DataSet(image_dirs[:val_size], label_dirs[:val_size], out_size=Param.d['image_size_test'],
-                      class_names=class_names, random=Param.d['augment_pred'], **Param.d)
+                      class_names=class_names, random_resize=Param.d['augment_pred'], **Param.d)
     train_set = DataSet(image_dirs[val_size:], label_dirs[val_size:], out_size=Param.d['image_size'],
-                        class_names=class_names, random=Param.d['augment_train'], **Param.d)
+                        class_names=class_names, random_resize=Param.d['augment_train'], **Param.d)
 else:
     image_dirs_val, label_dirs_val, _ = subset.read_subset(Param.val_dir, shuffle=Param.d['shuffle'],
                                                            sample_size=Param.val_sample_size)
     val_set = DataSet(image_dirs_val, label_dirs_val, out_size=Param.d['image_size_test'],
-                      class_names=class_names, random=Param.d['augment_pred'], **Param.d)
+                      class_names=class_names, random_resize=Param.d['augment_pred'], **Param.d)
     train_set = DataSet(image_dirs, label_dirs, out_size=Param.d['image_size'],
-                        class_names=class_names, random=Param.d['augment_train'], **Param.d)
+                        class_names=class_names, random_resize=Param.d['augment_train'], **Param.d)
 
 # Data check
 image_mean = Param.d['image_mean']
