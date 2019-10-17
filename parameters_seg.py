@@ -35,7 +35,7 @@ class Parameters(object):
 
     d['max_to_keep'] = 5  # Maximum number of models to save
     d['score_threshold'] = 0.0  # A model is saved if its score is better by this threshold
-    d['model_to_load'] = 0  # The (n+1)-th best model is loaded for the test. None for the latest
+    d['model_to_load'] = 0  # The (n+1)-th best model is loaded for transfer learning and test.
 
     # FIXME: Transfer learning parameters
     d['init_from_pretrained_model'] = False  # Whether to use pre-trained model in _pretrained_dir
