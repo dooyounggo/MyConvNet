@@ -243,7 +243,7 @@ def plot_confusion_matrix(y_true, y_pred, class_names=None, normalize=False, top
         axes.set(xticks=idx,
                  xticklabels=pairs,
                  ylim=[0, y_max],
-                 title='Top-{} Confused Classes'.format(top_confused_classes))
+                 title='Top-{} Most Confused Class Pairs'.format(len(confused_classes)))
         plt.setp(axes.get_xticklabels(), rotation=60, ha='right', rotation_mode='anchor', va='top', size='small')
         for i, v in enumerate(values):
             axes.text(i + 0.05, v + 0.02*y_max, '{:.2%}'.format(v), ha='center', size='small')
