@@ -31,8 +31,8 @@ class ConvNet(object):
         config.inter_op_parallelism_threads = 0
         config.gpu_options.force_gpu_compatible = True
         config.allow_soft_placement = False
-        config.gpu_options.allow_growth = True
-        # config.gpu_options.per_process_gpu_memory_fraction = 0.7
+        # config.gpu_options.allow_growth = True
+        config.gpu_options.per_process_gpu_memory_fraction = 0.7  # FIXME
         self.session = tf.Session(graph=graph, config=config)  # TF main session
         self.top_scope = tf.get_variable_scope()
 
