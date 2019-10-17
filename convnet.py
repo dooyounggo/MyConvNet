@@ -32,7 +32,7 @@ class ConvNet(object):
         config.gpu_options.force_gpu_compatible = True
         config.allow_soft_placement = False
         config.gpu_options.allow_growth = True
-        # config.gpu_options.per_process_gpu_memory_fraction = 0.7
+        config.gpu_options.per_process_gpu_memory_fraction = 0.7  # FIXME
         self.session = tf.Session(graph=graph, config=config)  # TF main session
         self.top_scope = tf.get_variable_scope()
 
@@ -1136,31 +1136,39 @@ class ConvNet(object):
             if self.dtype is not tf.float32:
                 x = tf.cast(x, dtype=tf.float32)
             data_format = 'NCHW' if self.channel_first else 'NHWC'
-            x, batch_mean, batch_var = tf.cond(self.is_train,
-                                               lambda: tf.nn.fused_batch_norm(x,
-                                                                              gamma,
-                                                                              beta,
-                                                                              epsilon=epsilon,
-                                                                              data_format=data_format,
-                                                                              is_training=True),
-                                               lambda: tf.nn.fused_batch_norm(x,
-                                                                              gamma,
-                                                                              beta,
-                                                                              mean=mean,
-                                                                              variance=var,
-                                                                              epsilon=epsilon,
-                                                                              data_format=data_format,
-                                                                              is_training=False)
-                                               )
-            if self.dtype is not tf.float32:
-                x = tf.cast(x, dtype=self.dtype)
-
             if update:
-                update = 1.0 - momentum
-                update_mu = mu.assign(momentum*mu + update*batch_mean)
-                update_sigma = sigma.assign(momentum*sigma + update*batch_var)
+                x, batch_mean, batch_var = tf.cond(self.is_train,
+                                                   lambda: tf.nn.fused_batch_norm(x,
+                                                                                  gamma,
+                                                                                  beta,
+                                                                                  epsilon=epsilon,
+                                                                                  data_format=data_format,
+                                                                                  is_training=True),
+                                                   lambda: tf.nn.fused_batch_norm(x,
+                                                                                  gamma,
+                                                                                  beta,
+                                                                                  mean=mean,
+                                                                                  variance=var,
+                                                                                  epsilon=epsilon,
+                                                                                  data_format=data_format,
+                                                                                  is_training=False)
+                                                   )
+                update_rate = 1.0 - momentum
+                update_mu = mu.assign(momentum*mu + update_rate*batch_mean)
+                update_sigma = sigma.assign(momentum*sigma + update_rate*batch_var)
                 tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_mu)
                 tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_sigma)
+            else:
+                x, _, _ = tf.nn.fused_batch_norm(x,
+                                                 gamma,
+                                                 beta,
+                                                 mean=mean,
+                                                 variance=var,
+                                                 epsilon=epsilon,
+                                                 data_format=data_format,
+                                                 is_training=False)
+            if self.dtype is not tf.float32:
+                x = tf.cast(x, dtype=self.dtype)
 
         return x
 
