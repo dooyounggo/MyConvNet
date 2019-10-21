@@ -1,13 +1,14 @@
 import tensorflow as tf
 from segnet import SegNet
-from models.resnet_v2_d_cbam import ResNetCBAM
+from models.resnet_v2_d_cbam import ResNetCBAM50
 from models.efficientnet import EfficientNetB3 as EffNet
 
 
-class GCN(SegNet, ResNetCBAM):     # Global Convolutional Networks
+class GCN(SegNet, ResNetCBAM50):     # Global Convolutional Networks
     def _init_params(self):
-        ResNetCBAM._init_params(self)
-        self.conv_channels = [32, 32, 32, 32]
+        ResNetCBAM50._init_params(self)
+        self.min_conv_channels = 16
+        self.conv_channels = [self.num_classes, self.num_classes, self.num_classes//2, self.num_classes//4]
         self.conv_kernels = [15, 15, 15, 15]
         self.conv_units = [1, 1, 1, 1]
         self.deconv_method = 'UPSAMPLING'    # Upsampling: bilinear up-sampling, conv: transposed convolution
@@ -51,7 +52,10 @@ class GCN(SegNet, ResNetCBAM):     # Global Convolutional Networks
             x = self._br_unit(x, d, name='block_{}/br_0'.format(self._curr_block))
             d['block_{}'.format(self._curr_block) + '/br_0'] = x
             with tf.variable_scope('block_{}'.format(self._curr_block)):
-                x = x + d['block_{}'.format(self._curr_block - 1) + '/deconv']
+                prev_block = d['block_{}'.format(self._curr_block - 1) + '/deconv']
+                if cc[i] != cc[i - 1]:
+                    prev_block = self.conv_layer(prev_block, 1, 1, cc[i], padding='SAME')
+                x = x + prev_block
             x = self._br_unit(x, d, name='block_{}/br_1'.format(self._curr_block))
             d['block_{}'.format(self._curr_block) + '/br_1'] = x
             x = self._deconv_unit(x, d, scale=2, method=deconv_method,
@@ -82,6 +86,7 @@ class GCN(SegNet, ResNetCBAM):     # Global Convolutional Networks
             kernel = [kernel, kernel]
         elif len(kernel) == 1:
             kernel = [kernel[0], kernel[0]]
+        out_channels = max([self.min_conv_channels, out_channels])
 
         with tf.variable_scope(name):
             with tf.variable_scope('conv_0'):
@@ -132,11 +137,12 @@ class GCN(SegNet, ResNetCBAM):     # Global Convolutional Networks
         return x
 
 
-class SCN(GCN, EffNet):  # Separable Convolutional Networks: GCN with separable convolution and efficientnet backbone
+class SCN(GCN, EffNet):  # Separable Convolution Networks: GCN with separable convolution and efficientnet backbone
     def _init_params(self):
         EffNet._init_params(self)
-        self.conv_channels = [64, 64, 64, 64]
-        self.conv_kernels = [9, 13, 17, 21]
+        self.min_conv_channels = 16
+        self.conv_channels = [self.num_classes, self.num_classes, self.num_classes//2, self.num_classes//4]
+        self.conv_kernels = [5, 9, 13, 17]
         self.conv_units = [1, 1, 1, 1]
         self.deconv_method = 'UPSAMPLING'  # Upsampling: bilinear up-sampling, conv: transposed convolution
 
@@ -157,17 +163,14 @@ class SCN(GCN, EffNet):  # Separable Convolutional Networks: GCN with separable 
 
         with tf.variable_scope(name):
             with tf.variable_scope('conv_0'):
-                x = self.conv_layer(x, kernel, 1, in_channels, padding='SAME', biased=True, depthwise=True)
+                x = self.conv_layer(x, 1, 1, out_channels, padding='SAME', biased=True, depthwise=False)
                 d[name + '/conv_0'] = x
             with tf.variable_scope('conv_1'):
-                x = self.conv_layer(x, 1, 1, out_channels, padding='SAME', biased=True, depthwise=False)
+                x = self.conv_layer(x, kernel, 1, out_channels, padding='SAME', biased=True, depthwise=True)
                 d[name + '/conv_1'] = x
             with tf.variable_scope('conv_2'):
-                x = self.conv_layer(x, kernel, 1, out_channels, padding='SAME', biased=True, depthwise=True)
-                d[name + '/conv_2'] = x
-            with tf.variable_scope('conv_3'):
                 x = self.conv_layer(x, 1, 1, out_channels, padding='SAME', biased=True, depthwise=False)
-                d[name + '/conv_3'] = x
+                d[name + '/conv_2'] = x
             print(name + '.shape', x.get_shape().as_list())
 
         return x
