@@ -28,7 +28,7 @@ class Parameters(object):
     # FIXME: Input image pre-processing (hyper)parameters
     d['image_size'] = (330, 330, 3)  # Processed image size
     d['image_size_test'] = None  # If None, same as 'image_size'
-    d['resize_type'] = 'resize'  # Resize types: 'resize', 'resize_expand', 'random_resized_crop', ...
+    d['resize_type'] = 'resize_fit'  # Resize types: 'resize', 'resize_expand', 'random_resized_crop', ...
     d['resize_type_test'] = None  # If None, same as 'resize_type'
     d['resize_random'] = True  # Randomness of padding and crop operations
     d['resize_random_test'] = False
@@ -37,7 +37,7 @@ class Parameters(object):
     d['image_mean'] = 0.5  # If None, it will be calculated and it may take some time
     d['zero_center'] = True  # Whether to zero-center the images
     d['shuffle'] = True  # Whether to shuffle the data
-    d['num_parallel_calls'] = 6  # Number of parallel operations for dataset.map function
+    d['num_parallel_calls'] = 4  # Number of parallel operations for dataset.map function
 
     # FIXME: Transfer learning parameters
     d['init_from_pretrained_model'] = False  # Whether to use pre-trained model in _pretrained_dir
@@ -53,7 +53,7 @@ class Parameters(object):
     # FIXME: Training hyperparameters
     d['half_precision'] = False  # Try half-precision if your GPU supports it
     d['channel_first'] = True  # If true, NCHW format is used instead of NHWC
-    d['num_gpus'] = 2
+    d['num_gpus'] = 1
     d['batch_size'] = 16
     d['num_epochs'] = 30
     d['validation_frequency'] = None  # Validate every x iterations. None for every epoch
@@ -81,7 +81,7 @@ class Parameters(object):
     d['label_smoothing'] = 0.1  # Label smoothing factor
     d['dropout_rate'] = 0.3  # Dropout rate
     d['dropout_weights'] = False
-    d['dropout_logits'] = False
+    d['dropout_logits'] = True
     d['initial_drop_rate'] = 0.0  # Initial drop rate for stochastic depth
     d['final_drop_rate'] = 0.2  # Final drop rate for stochastic depth
 
@@ -106,7 +106,7 @@ class Parameters(object):
     d['rand_y_reflect'] = False  # Bool
 
     d['rand_crop'] = True  # Bool
-    d['rand_crop_scale'] = (0.3 ** 2, 1.2 ** 2)  # Scale*input_size patch crop from an image
+    d['rand_crop_scale'] = (0.3**2, 1.2**2)  # Scale*input_size patch crop from an image
     d['rand_crop_ratio'] = (0.7, 1.43)
 
     d['rand_distortion'] = True  # Bool
