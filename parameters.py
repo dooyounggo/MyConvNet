@@ -25,84 +25,88 @@ class Parameters(object):
     _pretrained_dir = os.path.join(_root_dir, 'pretrained_models', 'resnet_v2_50', 'resnet_v2_50.ckpt')
 
     d = dict()
-    d['image_size'] = (269, 269, 3)
+    # FIXME: Input image pre-processing (hyper)parameters
+    d['image_size'] = (330, 330, 3)  # Processed image size
     d['image_size_test'] = None  # If None, same as 'image_size'
     d['resize_type'] = 'resize'  # Resize types: 'resize', 'resize_expand', 'random_resized_crop', ...
     d['resize_type_test'] = None  # If None, same as 'resize_type'
-    d['input_size'] = (224, 224, 3)
-    d['image_mean'] = 0.5  # If None, it will be calculated using training data
-    d['zero_center'] = True  # Whether to zero-center the images. If None, 'image_mean' will have no effect
-    d['shuffle'] = True  # Whether to shuffle the data
-    d['num_parallel_calls'] = 4  # Number of parallel operations for dataset.map function
+    d['resize_random'] = True  # Randomness of padding and crop operations
+    d['resize_random_test'] = False
 
-    d['max_to_keep'] = 5  # Maximum number of models to save
-    d['score_threshold'] = 0.0  # A model is saved if its score is better by this threshold
-    d['model_to_load'] = 0  # The (n+1)-th best model is loaded for transfer learning and test.
+    d['input_size'] = (300, 300, 3)  # Network input size after augmentation
+    d['image_mean'] = 0.5  # If None, it will be calculated and it may take some time
+    d['zero_center'] = True  # Whether to zero-center the images
+    d['shuffle'] = True  # Whether to shuffle the data
+    d['num_parallel_calls'] = 6  # Number of parallel operations for dataset.map function
 
     # FIXME: Transfer learning parameters
     d['init_from_pretrained_model'] = False  # Whether to use pre-trained model in _pretrained_dir
     d['blocks_to_load'] = None  # Blocks to load variables on. None for all blocks
-    d['load_logits'] = True  # Whether to load variables related to logits
-    d['load_moving_average'] = False  # Whether to load exponential moving averages of variables onto variables
+    d['load_logits'] = False  # Whether to load variables related to logits
+    d['load_moving_average'] = True  # Whether to load exponential moving averages of variables onto variables
     d['start_epoch'] = 0  # Start epoch to continue training from
+    d['model_to_load'] = 0  # The (n+1)-th best model is loaded for transfer learning and test.
 
     d['blocks_to_train'] = None  # Blocks to train. None for all blocks and [None] for logits only
-    d['update_batch_norm'] = True  # Whether to update batch means and variances. None to follow blocks_to_train
+    d['update_batch_norm'] = False  # Whether to train batch normalization variables. None to follow blocks_to_train
 
     # FIXME: Training hyperparameters
     d['half_precision'] = False  # Try half-precision if your GPU supports it
     d['channel_first'] = True  # If true, NCHW format is used instead of NHWC
-    d['num_gpus'] = 1
+    d['num_gpus'] = 2
     d['batch_size'] = 16
-    d['num_epochs'] = 300
+    d['num_epochs'] = 30
     d['validation_frequency'] = None  # Validate every x iterations. None for every epoch
     d['summary_frequency'] = None  # Tensorboard summary every x iterations. None for every epoch
 
-    d['base_learning_rate'] = 0.1  # Learning rate = base_learning_rate*batch_size/256
+    d['base_learning_rate'] = 0.02  # Learning rate = base_learning_rate*batch_size/256
     d['momentum'] = 0.9
-    d['moving_average_decay'] = 0.9997
-    d['batch_norm_decay'] = 0.9994
-    d['gradient_threshold'] = None
-    d['loss_weighting'] = 'balanced'  # None, 'balanced', [class0_weight, class1_weight, ...]
+    d['moving_average_decay'] = 0.994
+    d['batch_norm_decay'] = 0.99
+    d['gradient_threshold'] = 5.0
+    d['loss_weighting'] = None  # None, 'balanced', [class0_weight, class1_weight, ...]
     d['loss_scaling_factor'] = 1
 
     d['learning_rate_decay_method'] = 'cosine'  # 'step', 'exponential', 'cosine' (default)
-    d['learning_rate_decay_params'] = (0.94, 18)
-    d['learning_warmup_epoch'] = 10.0  # Linear warmup epoch
+    d['learning_rate_decay_params'] = (0.94, 2)
+    d['learning_warmup_epoch'] = 5.0  # Linear warmup epoch
+
+    d['max_to_keep'] = 5  # Maximum number of models to save
+    d['score_threshold'] = 0.0  # A model is saved if its score is better by this threshold
 
     # FIXME: Regularization hyperparameters
     d['l1_reg'] = 0.0  # L1 regularization factor
     d['l2_reg'] = 0.0  # L2 regularization factor
-    d['base_weight_decay'] = 0.00004  # Decoupled weight decay factor = base_weight_decay*batch_size/256
+    d['base_weight_decay'] = 0.00001  # Decoupled weight decay factor = base_weight_decay*batch_size/256
     d['label_smoothing'] = 0.1  # Label smoothing factor
-    d['dropout_rate'] = 0.2  # Dropout rate
+    d['dropout_rate'] = 0.3  # Dropout rate
     d['dropout_weights'] = False
-    d['dropout_logits'] = True
-    d['initial_drop_rate'] = 0.2  # Initial drop rate for stochastic depth
+    d['dropout_logits'] = False
+    d['initial_drop_rate'] = 0.0  # Initial drop rate for stochastic depth
     d['final_drop_rate'] = 0.2  # Final drop rate for stochastic depth
-    
+
     d['feature_reduction_factor'] = 0  # Feature dimensionality reduction factor for small datasets
 
-    # FIXME: Data augmentation parameters
-    d['augment_train'] = True   # Online augmentation for training data
-    d['augment_pred'] = False   # Online augmentation for validation or test data
+    # FIXME: Data augmentation (hyper)parameters
+    d['augment_train'] = True  # Online augmentation for training data
+    d['augment_pred'] = False  # Online augmentation for validation or test data
 
-    d['zero_pad_ratio'] = 0.0   # Zero padding ratio = (zero_padded_image_size - nn_input_size)/nn_input_size
-    
-    d['rand_blur_stddev'] = 2.5  # Maximum sigma for Gaussian blur
+    d['zero_pad_ratio'] = 0.0  # Zero padding ratio = (zero_padded_image_size - nn_input_size)/nn_input_size
+
+    d['rand_blur_stddev'] = 0.0  # Maximum sigma for Gaussian blur
 
     d['rand_affine'] = True  # Bool
     d['rand_scale'] = (1.0, 1.0)  # Minimum and maximum scaling factors (x/y)
     d['rand_ratio'] = (1.0, 1.0)  # Minimum and maximum pixel aspect ratios (x/y)
     d['rand_x_trans'] = 0.0  # Range in proportion (0.2 means +-10%)
     d['rand_y_trans'] = 0.0  # Range in proportion
-    d['rand_rotation'] = 90  # Range in degrees
-    d['rand_shear'] = 30  # Range in degrees
+    d['rand_rotation'] = 30  # Range in degrees
+    d['rand_shear'] = 10  # Range in degrees
     d['rand_x_reflect'] = True  # Bool
     d['rand_y_reflect'] = False  # Bool
 
     d['rand_crop'] = True  # Bool
-    d['rand_crop_scale'] = (0.3**2, 1.2**2)  # Scale*input_size patch crop from an image
+    d['rand_crop_scale'] = (0.3 ** 2, 1.2 ** 2)  # Scale*input_size patch crop from an image
     d['rand_crop_ratio'] = (0.7, 1.43)
 
     d['rand_distortion'] = True  # Bool
