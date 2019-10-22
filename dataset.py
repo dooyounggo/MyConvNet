@@ -195,11 +195,12 @@ class DataSet(object):
         elif self.resize_method.lower() == 'resize_fit_expand':
             image = sf.resize_fit_expand(image, image_size, interpolation=interpolation, random=self.resize_randomness)
         elif self.resize_method.lower() == 'random_resized_crop' or self.resize_method.lower() == 'random_resize_crop':
-            scale_ratio = self._parameters['rand_crop_scale']
-            if scale_ratio[1] > 1.0:
-                warnings.warn('The maximum scale ratio {} is greater than 1.0.'.format(scale_ratio), UserWarning)
-            image = sf.random_resized_crop(image, image_size, interpolation=interpolation, random=self.resize_randomness
-                                           , scale=scale_ratio, ratio=self._parameters['rand_crop_ratio'])
+            scale = self._parameters.get('rand_resized_crop_scale', (0.08, 1.0))
+            ratio = self._parameters.get('rand_resized_crop_ratio', (3/4, 4/3))
+            if scale[1] > 1.0:
+                warnings.warn('The maximum scale ratio {} is greater than 1.0.'.format(scale), UserWarning)
+            image = sf.random_resized_crop(image, image_size, interpolation=interpolation,
+                                           random=self.resize_randomness, scale=scale, ratio=ratio)
         else:
             raise(ValueError, 'Resize type of {} is not supported.'.format(self.resize_method))
         return image
