@@ -20,7 +20,9 @@ image_dirs = image_dirs[idx_start:min(num_data, idx_end)]
 if label_dirs is not None:
     label_dirs = label_dirs[idx_start:min(num_data, idx_end)]
 Param.d['shuffle'] = False
-test_set = DataSet(image_dirs, label_dirs, out_size=Param.d['image_size_test'], class_names=class_names, **Param.d)
+test_set = DataSet(image_dirs, label_dirs, class_names=class_names, out_size=Param.d['image_size_test'],
+                   resize_method=Param.d['resize_type_test'], resize_randomness=Param.d['resize_random_test'],
+                   **Param.d)
 
 image_mean = np.load(os.path.join(Param.save_dir, 'img_mean.npy')).astype(np.float32)    # load mean image
 Param.d['image_mean'] = image_mean
