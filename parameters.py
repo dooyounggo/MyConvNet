@@ -11,7 +11,7 @@ from models.init_from_checkpoint import resnet_v2_50_101 as init_from_pretrained
 
 
 class Parameters(object):
-    # FIXME: Image parameters
+    # FIXME: Directories
     _root_dir = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))     # Parent directory  # FIXME
     _train_dir = os.path.join(_root_dir, 'tfdatasets/stanford-dogs/train')
     _train_sample_size = None   # Data size. None for all files in train_dir
@@ -25,7 +25,7 @@ class Parameters(object):
     _pretrained_dir = os.path.join(_root_dir, 'pretrained_models', 'resnet_v2_50', 'resnet_v2_50.ckpt')
 
     d = dict()
-    # FIXME: Input image pre-processing (hyper)parameters
+    # FIXME: Image pre-processing (hyper)parameters
     d['image_size'] = (330, 330, 3)  # Processed image size
     d['image_size_test'] = None  # If None, same as 'image_size'
     d['resize_type'] = 'resize_fit'  # Resize types: 'resize', 'resize_expand', 'random_resized_crop', ...
