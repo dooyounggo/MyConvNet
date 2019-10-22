@@ -63,9 +63,9 @@ class Parameters(object):
     d['momentum'] = 0.9
     d['moving_average_decay'] = 0.994
     d['batch_norm_decay'] = 0.99
-    d['gradient_threshold'] = 5.0
+    d['gradient_threshold'] = 5.0  # Gradient thresholding using global norm. None for no thresholding
     d['loss_weighting'] = None  # None, 'balanced', [class0_weight, class1_weight, ...]
-    d['loss_scaling_factor'] = 1
+    d['loss_scaling_factor'] = 1  # Loss scaling factor for half precision training
 
     d['learning_rate_decay_method'] = 'cosine'  # 'step', 'exponential', 'cosine' (default)
     d['learning_rate_decay_params'] = (0.94, 2)
