@@ -53,8 +53,10 @@ class GCN(SegNet, ResNetCBAM50):     # Global Convolutional Networks
             d['block_{}'.format(self._curr_block) + '/br_0'] = x
             with tf.variable_scope('block_{}'.format(self._curr_block)):
                 prev_block = d['block_{}'.format(self._curr_block - 1) + '/deconv']
-                if cc[i] != cc[i - 1]:
-                    prev_block = self.conv_layer(prev_block, 1, 1, cc[i], padding='SAME')
+                num_channels = x.get_shape()[1] if self.channel_first else x.get_shape()[-1]
+                num_prev_channels = prev_block.get_shape()[1] if self.channel_first else prev_block.get_shape()[-1]
+                if num_channels != num_prev_channels:
+                    prev_block = self.conv_layer(prev_block, 1, 1, num_channels, padding='SAME')
                 x = x + prev_block
             x = self._br_unit(x, d, name='block_{}/br_1'.format(self._curr_block))
             d['block_{}'.format(self._curr_block) + '/br_1'] = x
