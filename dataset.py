@@ -11,7 +11,9 @@ import subsets.subset_functions as sf
 
 
 class DataSet(object):
-    def __init__(self, image_dirs, label_dirs=None, out_size=None, class_names=None, random_resize=False, **kwargs):
+    def __init__(self, image_dirs, label_dirs=None, class_names=None,
+                 out_size=None, resize_method=None, resize_randomness=False,
+                 **kwargs):
         if label_dirs is None:
             label_dirs = [np.nan for _ in image_dirs]  # Fake labels
         assert len(image_dirs) == len(label_dirs), 'Number of examples mismatch, between images and labels'
@@ -23,6 +25,12 @@ class DataSet(object):
         else:
             self._image_size = out_size
 
+        if resize_method is None:
+            self._resize_method = kwargs.get('resize_type', 'resize')
+        else:
+            self._resize_method = resize_method
+        self._resize_randomness = resize_randomness
+
         if class_names is None:
             self._num_classes = None
         else:
@@ -31,8 +39,6 @@ class DataSet(object):
         self._num_shards = kwargs.get('num_gpus', 1)
         self._batch_size = kwargs.get('batch_size', 32)
         self._shuffle = kwargs.get('shuffle', True)
-        self._resize_type = kwargs.get('resize_type', 'resize')
-        self._random_resize = random_resize
 
         self._parameters = kwargs
 
@@ -92,12 +98,12 @@ class DataSet(object):
         return self._shuffle
 
     @property
-    def resize_type(self):
-        return self._resize_type
+    def resize_method(self):
+        return self._resize_method
 
     @property
-    def random_resize(self):
-        return self._random_resize
+    def resize_randomness(self):
+        return self._resize_randomness
 
     @property
     def image_mean(self):
@@ -180,23 +186,22 @@ class DataSet(object):
         if image.shape[-1] == 1:
             image = np.tile(image, (1, 1, 3))
 
-        if self.resize_type.lower() == 'resize':
+        if self.resize_method.lower() == 'resize':
             image = sf.to_float(cv2.resize(image, dsize=tuple(image_size[1::-1]), interpolation=interpolation))
-        elif self.resize_type.lower() == 'resize_fit':
+        elif self.resize_method.lower() == 'resize_fit':
             image = sf.resize_fit(image, image_size, interpolation=interpolation, random=False)
-        elif self.resize_type.lower() == 'resize_expand':
-            image = sf.resize_expand(image, image_size, interpolation=interpolation, random=self.random_resize)
-        elif self.resize_type.lower() == 'resize_fit_expand':
-            image = sf.resize_fit_expand(image, image_size, interpolation=interpolation, random=self.random_resize)
-        elif self.resize_type.lower() == 'random_resized_crop' or self.resize_type.lower() == 'random_resize_crop':
+        elif self.resize_method.lower() == 'resize_expand':
+            image = sf.resize_expand(image, image_size, interpolation=interpolation, random=self.resize_randomness)
+        elif self.resize_method.lower() == 'resize_fit_expand':
+            image = sf.resize_fit_expand(image, image_size, interpolation=interpolation, random=self.resize_randomness)
+        elif self.resize_method.lower() == 'random_resized_crop' or self.resize_method.lower() == 'random_resize_crop':
             scale_ratio = self._parameters['rand_crop_scale']
             if scale_ratio[1] > 1.0:
                 warnings.warn('The maximum scale ratio {} is greater than 1.0.'.format(scale_ratio), UserWarning)
-            image = sf.random_resized_crop(image, image_size, interpolation=interpolation, random=self.random_resize,
-                                           scale=scale_ratio,
-                                           ratio=self._parameters['rand_crop_ratio'])
+            image = sf.random_resized_crop(image, image_size, interpolation=interpolation, random=self.resize_randomness
+                                           , scale=scale_ratio, ratio=self._parameters['rand_crop_ratio'])
         else:
-            raise(ValueError, 'Resize type of {} is not supported.'.format(self.resize_type))
+            raise(ValueError, 'Resize type of {} is not supported.'.format(self.resize_method))
         return image
 
     def data_statistics(self, verbose=True):
