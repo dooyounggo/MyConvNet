@@ -26,11 +26,13 @@ class Parameters(object):
 
     d = dict()
     d['image_size'] = (269, 269, 3)
+    d['image_size_test'] = None  # If None, same as 'image_size'
+    d['resize_type'] = 'resize'  # Resize types: 'resize', 'resize_expand', 'random_resized_crop', ...
+    d['resize_type_test'] = None  # If None, same as 'resize_type'
     d['input_size'] = (224, 224, 3)
     d['image_mean'] = 0.5  # If None, it will be calculated using training data
     d['zero_center'] = True  # Whether to zero-center the images. If None, 'image_mean' will have no effect
     d['shuffle'] = True  # Whether to shuffle the data
-    d['resize_type'] = 'resize_fit'  # Resize types: 'resize', 'resize_fit', 'resize_expand', 'resize_fit_expand'
     d['num_parallel_calls'] = 4  # Number of parallel operations for dataset.map function
 
     d['max_to_keep'] = 5  # Maximum number of models to save
