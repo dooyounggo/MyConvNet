@@ -189,7 +189,7 @@ class DataSet(object):
         if self.resize_method.lower() == 'resize':
             image = sf.to_float(cv2.resize(image, dsize=tuple(image_size[1::-1]), interpolation=interpolation))
         elif self.resize_method.lower() == 'resize_fit':
-            image = sf.resize_fit(image, image_size, interpolation=interpolation, random=False)
+            image = sf.resize_fit(image, image_size, interpolation=interpolation, random=self.resize_randomness)
         elif self.resize_method.lower() == 'resize_expand':
             image = sf.resize_expand(image, image_size, interpolation=interpolation, random=self.resize_randomness)
         elif self.resize_method.lower() == 'resize_fit_expand':
