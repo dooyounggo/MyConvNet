@@ -22,7 +22,9 @@ sample_size = 4
 image_dirs, label_dirs, class_names = subset.read_subset(Param.test_dir, shuffle=True, sample_size=sample_size)
 Param.d['num_gpus'] = 1  # Utilizes only one GPU for convenience
 Param.d['shuffle'] = False
-test_set = DataSet(image_dirs, label_dirs, out_size=Param.d['image_size_test'], class_names=class_names, **Param.d)
+test_set = DataSet(image_dirs, label_dirs, class_names=class_names, out_size=Param.d['image_size_test'],
+                   resize_method=Param.d['resize_type_test'], resize_randomness=Param.d['resize_random_test'],
+                   **Param.d)
 
 image_mean = np.load(os.path.join(Param.save_dir, 'img_mean.npy')).astype(np.float32)    # load mean image
 Param.d['image_mean'] = image_mean
