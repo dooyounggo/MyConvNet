@@ -37,7 +37,7 @@ class Parameters(object):
     d['image_mean'] = 0.5  # If None, it will be calculated and it may take some time
     d['zero_center'] = True  # Whether to zero-center the images
     d['shuffle'] = True  # Whether to shuffle the data
-    d['num_parallel_calls'] = 6  # Number of parallel operations for dataset.map function
+    d['num_parallel_calls'] = 4  # Number of parallel operations for dataset.map function
 
     # FIXME: Transfer learning parameters
     d['init_from_pretrained_model'] = False  # Whether to use pre-trained model in _pretrained_dir
