@@ -250,8 +250,14 @@ def zero_pad(image, out_size, random=False, pad_value=0.0):
     assert h_diff >= 0 and w_diff >= 0, 'The input size must be smaller than or equal to the output size'
 
     if random:
-        h_idx = np.random.randint(0, h_diff)
-        w_idx = np.random.randint(0, w_diff)
+        if h_diff > 0:
+            h_idx = np.random.randint(0, h_diff)
+        else:
+            h_idx = 0
+        if w_diff > 0:
+            w_idx = np.random.randint(0, w_diff)
+        else:
+            w_idx = 0
     else:
         h_idx = h_diff//2
         w_idx = w_diff//2
