@@ -89,7 +89,7 @@ class Parameters(object):
 
     # FIXME: Data augmentation (hyper)parameters
     d['augment_train'] = True  # Online augmentation for training data
-    d['augment_pred'] = False  # Online augmentation for validation or test data
+    d['augment_test'] = False  # Online augmentation for validation or test data
 
     d['zero_pad_ratio'] = 0.0  # Zero padding ratio = (zero_padded_image_size - nn_input_size)/nn_input_size
 
