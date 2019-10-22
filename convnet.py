@@ -339,7 +339,7 @@ class ConvNet(object):
 
     def predict(self, dataset, verbose=False, return_images=True, **kwargs):
         batch_size = kwargs.get('batch_size', 32)
-        augment_pred = kwargs.get('augment_pred', False)
+        augment_test = kwargs.get('augment_test', False)
 
         pred_size = dataset.num_examples
         num_steps = np.ceil(pred_size/batch_size).astype(int)
@@ -353,7 +353,7 @@ class ConvNet(object):
 
         feed_dict = {self.is_train: False,
                      self.monte_carlo: monte_carlo,
-                     self.augmentation: augment_pred,
+                     self.augmentation: augment_test,
                      self.total_steps: num_steps}
         for h_t, h in zip(self.handles, handles):
             feed_dict.update({h_t: h})
@@ -390,7 +390,7 @@ class ConvNet(object):
 
     def features(self, dataset, tensors, **kwargs):  # Return any deep features
         batch_size = kwargs.get('batch_size', 32)
-        augment_pred = kwargs.get('augment_pred', False)
+        augment_test = kwargs.get('augment_test', False)
 
         pred_size = dataset.num_examples
         num_steps = np.ceil(pred_size / batch_size).astype(int)
@@ -401,7 +401,7 @@ class ConvNet(object):
 
         feed_dict = {self.is_train: False,
                      self.monte_carlo: monte_carlo,
-                     self.augmentation: augment_pred}
+                     self.augmentation: augment_test}
         for h_t, h in zip(self.handles, handles):
             feed_dict.update({h_t: h})
 
@@ -673,7 +673,7 @@ class ConvNet(object):
         with tf.variable_scope('rand_saturation'):
             lower, upper = kwargs.get('rand_saturation', (1.0, 1.0))
 
-            base = float(upper / lower)
+            base = float(upper/lower)
             randval = tf.random.uniform([], dtype=tf.float32)
             randval = lower*tf.math.pow(base, randval)
 
