@@ -220,8 +220,8 @@ class DataSet(object):
             if len(label.shape) == 0:
                 examples[int(label)] += 1
             else:
-                for i in range(1, self.num_classes + 1):
-                    c = np.equal(label, i).sum()
+                for i in range(0, self.num_classes):
+                    c = np.equal(label, i + 1).sum()
                     examples[i] += c
 
         self._image_mean = image_mean
