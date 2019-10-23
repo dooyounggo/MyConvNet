@@ -25,4 +25,4 @@
 
 ### TODO
 - Speedup: Training is roughly 2-3 times slower than tf_cnn_benchmark presumably due to CPU <-> GPU data transfer time.
-- Enable detection task
+- Include detection task
