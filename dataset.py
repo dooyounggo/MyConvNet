@@ -233,7 +233,7 @@ class DataSet(object):
             print('Number of examples per class:')
             total_examples = self.examples_per_class.sum()
             for i in range(self.num_classes):
-                print('{}: {:4d,} ({:.2%})\t'.format(self.class_names[i], examples[i], examples[i]/total_examples),
+                print('{}: {:-5,} ({:.2%})\t'.format(self.class_names[i], examples[i], examples[i]/total_examples),
                       end='')
                 if (i + 1) % 5 == 0:
                     print('')
