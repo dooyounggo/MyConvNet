@@ -205,10 +205,15 @@ class DataSet(object):
             raise(ValueError, 'Resize type of {} is not supported.'.format(self.resize_method))
         return image
 
-    def data_statistics(self, verbose=True):
+    def data_statistics(self, verbose=True, max_data=10000):
         image_mean = 0.0
         examples = np.zeros(self.num_classes, dtype=np.int)
-        for idir, ldir in zip(self.image_dirs, self.label_dirs):
+        image_dirs = self.image_dirs[:max_data]
+        label_dirs = self.label_dirs[:max_data]
+        for n, (idir, ldir) in enumerate(zip(image_dirs, label_dirs)):
+            if verbose and n % 1000 == 0:
+                print('Calculating data statistics: {:5d}/{}...'.format(n, len(image_dirs)))
+
             image, label = self._load_function(idir, ldir)
 
             image_mean += np.mean(image, axis=(0, 1))/self.num_examples
@@ -216,7 +221,7 @@ class DataSet(object):
             if len(label.shape) == 0:
                 examples[int(label)] += 1
             else:
-                for i in range(examples.shape[0]):
+                for i in range(self.num_classes):
                     c = np.equal(label, i).sum()
                     examples[i] += c
 
@@ -227,8 +232,10 @@ class DataSet(object):
         if verbose:
             print('Image mean:', image_mean)
             print('Number of examples per class:')
+            total_examples = self.examples_per_class.sum()
             for i in range(self.num_classes):
-                print('{}: {:4d}\t'.format(self.class_names[i], examples[i]), end='')
+                print('{:,}: {:4d} ({:.2%})\t'.format(self.class_names[i], examples[i], examples[i]/total_examples),
+                      end='')
                 if (i + 1) % 5 == 0:
                     print('')
             print('')
