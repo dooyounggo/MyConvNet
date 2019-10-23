@@ -568,10 +568,11 @@ class ConvNet(object):
         W = tf.cast(shape_tensor[1], dtype=tf.int32)
 
         lower, upper = self.crop_scale
-        a = upper**2 - lower**2
-        b = lower**2
-        randval = tf.random.uniform([], dtype=tf.float32)
-        rand_scale = tf.math.sqrt(a*randval + b)
+        # a = upper**2 - lower**2
+        # b = lower**2
+        # randval = tf.random.uniform([], dtype=tf.float32)
+        # rand_scale = tf.math.sqrt(a*randval + b)
+        rand_scale = tf.random.uniform([], lower, upper, dtype=tf.float32)
 
         lower, upper = self.crop_ratio
         base = float(upper/lower)
@@ -604,10 +605,11 @@ class ConvNet(object):
         W = tf.cast(shape_tensor[1], dtype=tf.int32)
 
         lower, upper = self.crop_scale
-        a = upper**2 - lower**2
-        b = lower**2
-        randval = tf.random.uniform([], dtype=tf.float32)
-        rand_scale = tf.math.sqrt(a*randval + b)
+        # a = upper**2 - lower**2
+        # b = lower**2
+        # randval = tf.random.uniform([], dtype=tf.float32)
+        # rand_scale = tf.math.sqrt(a*randval + b)
+        rand_scale = tf.random.uniform([], lower, upper, dtype=tf.float32)
 
         lower, upper = self.crop_ratio
         base = float(upper / lower)
