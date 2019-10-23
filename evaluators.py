@@ -333,6 +333,40 @@ class MeanF1Evaluator(Evaluator):
         return score
 
 
+class MeanF1BEvaluator(Evaluator):
+    @property
+    def name(self):
+        return 'Mean F1 Score'
+
+    @property
+    def worst_score(self):
+        return 0.0
+
+    @property
+    def mode(self):
+        return 'max'
+
+    def score(self, y_true, y_pred):
+        y_true_max = y_true.max(axis=-1, keepdims=True)
+        y_pred_max = y_pred.max(axis=-1, keepdims=True)
+        valid = np.isclose(y_true.sum(axis=-1), 1)
+        y_true_max += 1 - np.expand_dims(valid, axis=-1)
+        y_t = y_true//y_true_max
+        y_p = y_pred//y_pred_max
+
+        score = []
+        for n in range(0, y_true.shape[-1]):    # Include backgrounds
+            precision, recall = precision_and_recall(y_t[..., n], y_p[..., n], valid=valid)
+            if precision == 0 or recall == 0:
+                val = 0
+            else:
+                val = 2*precision*recall/(precision + recall)
+            score.append(val)
+        score = np.mean(score)
+
+        return score
+
+
 class IoUEvaluator(Evaluator):
     @property
     def name(self):
@@ -366,11 +400,6 @@ class IoUEvaluator(Evaluator):
 
         return score
 
-    def is_better(self, curr, best, **kwargs):
-        score_threshold = kwargs.pop('score_threshold', 1e-3)
-        relative_eps = 1.0 + score_threshold
-        return curr > best * relative_eps
-
 
 class MeanIoUEvaluator(Evaluator):
     @property
@@ -395,6 +424,40 @@ class MeanIoUEvaluator(Evaluator):
 
         score = []
         for n in range(1, y_true.shape[-1]):    # Ignore backgrounds
+            tp, fp, _, fn = conditions(y_t[..., n], y_p[..., n], valid=valid)
+            if tp == 0:
+                val = 0
+            else:
+                val = tp/(tp + fp + fn)
+            score.append(val)
+        score = np.mean(score)
+
+        return score
+
+
+class MeanIoUBEvaluator(Evaluator):
+    @property
+    def name(self):
+        return 'Mean Intersection over Union'
+
+    @property
+    def worst_score(self):
+        return 0.0
+
+    @property
+    def mode(self):
+        return 'max'
+
+    def score(self, y_true, y_pred):
+        y_true_max = y_true.max(axis=-1, keepdims=True)
+        y_pred_max = y_pred.max(axis=-1, keepdims=True)
+        valid = np.isclose(y_true.sum(axis=-1), 1)
+        y_true_max += 1 - np.expand_dims(valid, axis=-1)
+        y_t = y_true // y_true_max
+        y_p = y_pred // y_pred_max
+
+        score = []
+        for n in range(0, y_true.shape[-1]):    # Include backgrounds
             tp, fp, _, fn = conditions(y_t[..., n], y_p[..., n], valid=valid)
             if tp == 0:
                 val = 0
