@@ -48,7 +48,7 @@ class Parameters(object):
     d['model_to_load'] = 0  # The (n+1)-th best model is loaded for transfer learning and test.
 
     d['blocks_to_train'] = None  # Blocks to train. None for all blocks and [None] for logits only
-    d['update_batch_norm'] = False  # Whether to train batch normalization variables. None to follow blocks_to_train
+    d['update_batch_norm'] = False  # Whether to update batch norm gamma and beta. None to follow blocks_to_train
 
     # FIXME: Training hyperparameters
     d['half_precision'] = False  # Try half-precision if your GPU supports it
