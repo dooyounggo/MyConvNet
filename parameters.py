@@ -107,7 +107,7 @@ class Parameters(object):
 
     d['rand_crop'] = True  # Bool
     d['rand_crop_scale'] = (0.3**2, 1.2**2)  # Scale*input_size patch crop from an image
-    d['rand_crop_ratio'] = (0.7, 1.43)
+    d['rand_crop_ratio'] = (3/4, 4/3)
 
     d['rand_distortion'] = True  # Bool
     d['rand_hue'] = 0.2  # Hue range in proportion
