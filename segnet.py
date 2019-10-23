@@ -34,9 +34,7 @@ class SegNet(ConvNet):
                         # FIXME: Fake label generation
                         self._broadcast_shape = [tf.shape(self.X)[1], tf.shape(self.X)[2]]
                         self.Y = tf.map_fn(self._broadcast_nans, self.Y)  # Broadcasting for NaNs
-                        self.Y = tf.where(tf.is_nan(self.Y),
-                                          tf.constant(0.0, dtype=tf.float32) - tf.ones_like(self.Y, dtype=tf.float32),
-                                          self.Y)
+                        self.Y = tf.where(tf.is_nan(self.Y), tf.zeros_like(self.Y), self.Y)
 
                         self.Y = tf.expand_dims(self.Y, axis=-1)  # Attach the channel dimension for augmentation
 
@@ -52,7 +50,7 @@ class SegNet(ConvNet):
                                                      lambda: self.cutmix(self.X, self.Y),
                                                      lambda: (self.X, self.Y),
                                                      name='cutmix')
-                        self.Y = tf.cast(tf.math.round(self.Y[..., 0]), dtype=tf.int32)
+                        self.Y = tf.cast(tf.math.round(self.Y[..., 0] - 1.0), dtype=tf.int32)  # -1 for pixels to ignore
                         self.Y = tf.one_hot(self.Y, depth=self.num_classes, dtype=tf.float32)  # one-hot encoding
                         self.Xs.append(self.X)
                         self.Ys.append(self.Y)
