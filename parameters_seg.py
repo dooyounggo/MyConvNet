@@ -28,7 +28,7 @@ class Parameters(object):
     # FIXME: Image pre-processing (hyper)parameters
     d['image_size'] = (576, 576, 3)  # Processed image size
     d['image_size_test'] = None  # If None, same as 'image_size'
-    d['resize_type'] = 'resize'  # Resize types: 'resize', 'resize_expand', 'random_resized_crop', ...
+    d['resize_type'] = 'resize_fit'  # Resize types: 'resize', 'resize_expand', 'random_resized_crop', ...
     d['resize_type_test'] = None  # If None, same as 'resize_type'
     d['resize_random'] = False  # Randomness of padding and crop operations
     d['resize_random_test'] = False
