@@ -452,7 +452,9 @@ class ConvNet(object):
         if rand_crop:
             x, mask = self.rand_crop(x, mask, **kwargs)
         else:
-            x, mask = (self.center_crop(x), self.center_crop(mask))
+            x = self.center_crop(x)
+            if mask is not None:
+                mask = self.center_crop(mask)
 
         if rand_distortion:
             x = self.rand_hue(x, **kwargs)
