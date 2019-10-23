@@ -15,12 +15,8 @@ class SegNet(ConvNet):
     def _init_model(self, **kwargs):
         self.X_in = []
         self.Y_in = []
-        if self.image_size is None:
-            output_shapes = ([None, None, None, self.input_size[-1]],
-                             None)
-        else:
-            output_shapes = ([None, self.image_size[0], self.image_size[1], self.input_size[-1]],
-                             None)
+        output_shapes = ([None, None, None, self.input_size[-1]],
+                         None)
         with tf.variable_scope(tf.get_variable_scope()):
             for i in range(self._num_gpus):
                 self._curr_block = 0
