@@ -93,15 +93,15 @@ def read_subset_seg(subset_dir, shuffle=False, sample_size=None):
 
 def random_resized_crop(image, out_size, interpolation=cv2.INTER_LINEAR,
                         random=True, scale=(1.0, 1.0), ratio=(1.0, 1.0)):
+
+    out_size_ratio = np.sqrt(out_size[0]/out_size[1])
+    in_size = image.shape
+    H = in_size[0]
+    W = in_size[1]
+
+    max_size = max([H, W])
+    image = zero_pad(image, (max_size, max_size))
     if random:
-        out_size_ratio = np.sqrt(out_size[0]/out_size[1])
-        in_size = image.shape
-        H = in_size[0]
-        W = in_size[1]
-
-        max_size = max([H, W])
-        image = zero_pad(image, (max_size, max_size))
-
         lower, upper = scale
         # a = upper**2 - lower**2
         # b = lower**2
@@ -126,9 +126,12 @@ def random_resized_crop(image, out_size, interpolation=cv2.INTER_LINEAR,
         offset_w = int(np.random.uniform(0, max_size - size_w))
 
         image = image[offset_h:offset_h + size_h, offset_w:offset_w + size_w]
-        image = cv2.resize(image, dsize=tuple(out_size[1::-1]), interpolation=interpolation)
     else:
-        image = resize_expand(image, out_size=out_size, random=False)
+        size_h = np.around(np.sqrt(H*W)*out_size_ratio).astype(int)
+        size_w = np.around(np.sqrt(H*W)/out_size_ratio).astype(int)
+        image = resize_with_crop_or_pad(image, out_size=[size_h, size_w], random=False)
+
+    image = cv2.resize(image, dsize=tuple(out_size[1::-1]), interpolation=interpolation)
 
     return to_float(image)
 
