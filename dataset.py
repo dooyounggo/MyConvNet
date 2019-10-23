@@ -171,7 +171,6 @@ class DataSet(object):
                 label = np.array(label, dtype=np.float32)
             else:   # Segmentation
                 label = cv2.imread(label_dir, cv2.IMREAD_GRAYSCALE)
-                label = label.astype(int) - 1  # Set values corresponding to edge pixels to -1
                 label = self._resize_function(label, self.image_size, interpolation=cv2.INTER_NEAREST)
                 label = np.round(label[..., 0]*255)
 
@@ -221,7 +220,7 @@ class DataSet(object):
             if len(label.shape) == 0:
                 examples[int(label)] += 1
             else:
-                for i in range(self.num_classes):
+                for i in range(1, self.num_classes + 1):
                     c = np.equal(label, i).sum()
                     examples[i] += c
 
@@ -234,7 +233,7 @@ class DataSet(object):
             print('Number of examples per class:')
             total_examples = self.examples_per_class.sum()
             for i in range(self.num_classes):
-                print('{}: {:-4,} ({:.2%})\t'.format(self.class_names[i], examples[i], examples[i]/total_examples),
+                print('{}: {:4d,} ({:.2%})\t'.format(self.class_names[i], examples[i], examples[i]/total_examples),
                       end='')
                 if (i + 1) % 5 == 0:
                     print('')
