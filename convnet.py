@@ -37,7 +37,6 @@ class ConvNet(object):
         self.top_scope = tf.get_variable_scope()
 
         self._input_size = input_shape  # Size of the network input (i.e., the first convolution layer).
-        self._image_size = kwargs.get('image_size', None)
         self._num_classes = num_classes
         self._loss_weights = loss_weights  # Weight values for the softmax losses of each class
 
@@ -123,10 +122,6 @@ class ConvNet(object):
         return self._input_size
 
     @property
-    def image_size(self):
-        return self._image_size
-
-    @property
     def num_classes(self):
         return self._num_classes
 
@@ -185,12 +180,8 @@ class ConvNet(object):
     def _init_model(self, **kwargs):
         self.X_in = []
         self.Y_in = []
-        if self.image_size is None:
-            output_shapes = ([None, None, None, self.input_size[-1]],
-                             [None])
-        else:
-            output_shapes = ([None, self.image_size[0], self.image_size[1], self.input_size[-1]],
-                             [None])
+        output_shapes = ([None, None, None, self.input_size[-1]],
+                         [None])
         with tf.variable_scope(tf.get_variable_scope()):
             for i in range(self._num_gpus):
                 self._curr_block = 0
