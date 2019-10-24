@@ -134,7 +134,7 @@ class EfficientNet(ConvNet):
                 x = self.conv_layer(x, 1, 1, out_channels, padding='SAME', biased=False, depthwise=False)
                 print(name + '/conv_2.shape', x.get_shape().as_list())
                 d[name + '/conv_2'] = x
-                x = self.batch_norm(x, shift=True, scale=True, scope='bn')
+                x = self.batch_norm(x, shift=True, scale=True, zero_scale_init=skip is not None, scope='bn')
                 d[name + '/conv_2' + '/bn'] = x
 
             if skip is not None:
