@@ -102,7 +102,11 @@ def random_resized_crop(image, out_size, interpolation=cv2.INTER_LINEAR,
     size_h = np.sqrt(h*w/out_size_ratio)
     size_w = np.sqrt(h*w*out_size_ratio)
     image = zero_pad(image, [np.ceil(size_h).astype(int), np.ceil(size_w).astype(int)])
-    if random:
+
+    scale_augment = scale[0] != 1.0 or scale[1] != 1.0
+    ratio_augment = ratio[0] != 1.0 or ratio[1] != 1.0
+    augment = scale_augment or ratio_augment
+    if random and augment:
         lower, upper = scale
         # a = upper**2 - lower**2
         # b = lower**2
