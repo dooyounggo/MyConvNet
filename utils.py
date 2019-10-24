@@ -381,20 +381,28 @@ def imshow_subplot(images, num_rows=3, num_cols=3, figure_title='Figure'):
 def plot_seg_results(images, y_true, y_pred=None, num_rows=3, num_cols=3, colors=None, save_dir=None, start_idx=0):
     if y_pred is None:
         y_pred = y_true
+    if y_true.shape[-1] == 1:
+        y_t = y_true[..., 0]
+        valid = np.greater_equal(y_t, 0)
+        num_classes = np.amax(y_t)
+    else:
+        y_t = y_true.argmax(axis=-1)
+        valid = np.isclose(y_true.sum(axis=-1), 1)
+        num_classes = y_true.shape[-1]
+    if y_pred.shape[-1] == 1:
+        y_p = y_pred[..., 0]
+    else:
+        y_p = y_pred.argmax(axis=-1)
 
     num_classes = y_true.shape[-1]
     num_images = images.shape[0]
     images = (images*255).astype(np.int)
 
     if colors is None:
-        mask_true = (seg_labels_to_images(y_true)*255).astype(np.int)
+        mask_true = (seg_labels_to_images(y_t, num_classes, valid=valid)*255).astype(np.int)
     else:
-        mask_true = np.zeros(images.shape, dtype=np.int)
-        y_t = y_true.argmax(axis=-1)
-        v_t = y_true.sum(axis=-1) == 0
-        for i in range(1, num_classes):
-            mask_true[np.where(y_t == i)] = colors[i]
-        mask_true[np.where(v_t)] = colors[0]
+        y = y_t*valid + 1
+        mask_true = colors[y]
 
     fig, axes = plt.subplots(num_rows, num_cols, figsize=(9, 9))
     fig.subplots_adjust(left=0.075, right=0.95, bottom=0.05, top=0.9, wspace=0.3, hspace=0.3)
@@ -417,12 +425,10 @@ def plot_seg_results(images, y_true, y_pred=None, num_rows=3, num_cols=3, colors
         scores.append(evaluator.score(y_t, y_p))
 
     if colors is None:
-        mask_pred = (seg_labels_to_images(y_pred)*255).astype(np.int)
+        mask_pred = (seg_labels_to_images(y_p, num_classes, valid=valid)*255).astype(np.int)
     else:
-        mask_pred = np.zeros(images.shape, dtype=np.int)
-        y_p = y_pred.argmax(axis=-1)
-        for i in range(1, num_classes):
-            mask_pred[np.where(y_p == i)] = colors[i]
+        y = y_p*valid + 1
+        mask_pred = colors[y]
 
     fig, axes = plt.subplots(num_rows, num_cols, figsize=(9, 9))
     fig.subplots_adjust(left=0.075, right=0.95, bottom=0.05, top=0.9, wspace=0.3, hspace=0.3)
@@ -455,15 +461,14 @@ def plot_seg_results(images, y_true, y_pred=None, num_rows=3, num_cols=3, colors
                     print('Saving result images... {:5}/{}'.format(i, num_images))
 
 
-def seg_labels_to_images(y):
-    num_classes = y.shape[-1]
-    edge_color = 0.8
+def seg_labels_to_images(y, num_classes, valid=None):
+    max_color = 0.8
     code_r = [1, 0, 0, 1, 1, 0, .8, 1, .6, .6]
     code_g = [0, 1, 0, 1, 0, 1, .8, .6, 1, .6]
     code_b = [0, 0, 1, 0, 1, 1, .8, .6, .6, 1]
     code_length = len(code_r)
     color_base = (num_classes - 1)//code_length + 1
-    color_coeff = edge_color/color_base
+    color_coeff = max_color/color_base
 
     class_inds = np.arange(num_classes, dtype=np.float32)
     reds = (class_inds + code_length - 1)//code_length*color_coeff
@@ -475,10 +480,14 @@ def seg_labels_to_images(y):
         greens[i] = greens[i]*code_g[idx]
         blues[i] = blues[i]*code_b[idx]
 
-    ignore = 1.0 - np.isclose(np.sum(y, axis=-1, keepdims=True), 1.0)
-    r = np.sum(y*reds, axis=-1, keepdims=True)
-    g = np.sum(y*greens, axis=-1, keepdims=True)
-    b = np.sum(y*blues, axis=-1, keepdims=True)
-    y = np.concatenate([r, g, b], axis=-1) + ignore.astype(np.float32)*edge_color
+    if valid is None:
+        valid = np.ones_like(y)
+    y = y*valid
+    r = np.sum(reds[y], axis=-1, keepdims=True)
+    g = np.sum(greens[y], axis=-1, keepdims=True)
+    b = np.sum(blues[y], axis=-1, keepdims=True)
+
+    ignore = np.logical_not(valid)
+    y = np.concatenate([r, g, b], axis=-1) + ignore.astype(np.float32)*max_color
 
     return y
