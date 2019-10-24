@@ -46,8 +46,8 @@ class Evaluator(object):
         """
         Performance metric for a given prediction.
         This should be implemented.
-        :param y_true: np.ndarray, shape: (N, num_classes).
-        :param y_pred: np.ndarray, shape: (N, num_classes).
+        :param y_true: np.ndarray.
+        :param y_pred: np.ndarray.
         :return: float.
         """
         pass
@@ -80,9 +80,16 @@ class AccuracyEvaluator(Evaluator):
         return 'max'
 
     def score(self, y_true, y_pred):
-        y_t = y_true.argmax(axis=-1)
-        y_p = y_pred.argmax(axis=-1)
-        valid = np.isclose(y_true.sum(axis=-1), 1)
+        if y_true.shape[-1] == 1:
+            y_t = y_true[..., 0]
+            valid = np.greater_equal(y_t, 0)
+        else:
+            y_t = y_true.argmax(axis=-1)
+            valid = np.isclose(y_true.sum(axis=-1), 1)
+        if y_pred.shape[-1] == 1:
+            y_p = y_pred[..., 0]
+        else:
+            y_p = y_pred.argmax(axis=-1)
         right = np.equal(y_t, y_p)*valid
 
         accuracies = np.empty(y_t.shape[0], dtype=float)
@@ -114,6 +121,7 @@ class AccuracyTopNEvaluator(Evaluator):
         return 'max'
 
     def score(self, y_true, y_pred):
+        assert y_true.shape[-1] > 1 and y_pred.shape[-1] > 1, 'Labels must be one-hot encoded.'
         y_t = np.expand_dims(y_true.argmax(axis=-1), axis=-1)
         y_t = np.tile(y_t, self.top)
         y_p = np.argsort(y_pred, axis=-1)
@@ -156,6 +164,7 @@ class AccuracyTop10Evaluator(AccuracyTopNEvaluator):
 
 class AccuracyCutMixEvaluator(AccuracyEvaluator):
     def score(self, y_true, y_pred):
+        assert y_true.shape[-1] > 1 and y_pred.shape[-1] > 1, 'Labels must be one-hot encoded.'
         if np.sum(np.amax(y_true, axis=-1)) == np.prod(y_true.shape[:-1]).astype(float):  # No CutMix
             score = super().score(y_true, y_pred)
         else:
@@ -279,9 +288,17 @@ class F1Evaluator(Evaluator):
         return 'max'
 
     def score(self, y_true, y_pred):
-        y_t = y_true.argmax(axis=-1)
-        y_p = y_pred.argmax(axis=-1)
-        valid = np.isclose(y_true.sum(axis=-1), 1)
+        if y_true.shape[-1] == 1:
+            y_t = y_true[..., 0]
+            valid = np.greater_equal(y_t, 0)
+        else:
+            y_t = y_true.argmax(axis=-1)
+            valid = np.isclose(y_true.sum(axis=-1), 1)
+        if y_pred.shape[-1] == 1:
+            y_p = y_pred[..., 0]
+        else:
+            y_p = y_pred.argmax(axis=-1)
+
         if len(y_t.shape) > 1:
             score = np.empty(y_t.shape[0], dtype=float)
             for i, (t, p, v) in enumerate(zip(y_t, y_p, valid)):
@@ -313,16 +330,24 @@ class MeanF1Evaluator(Evaluator):
         return 'max'
 
     def score(self, y_true, y_pred):
-        y_true_max = y_true.max(axis=-1, keepdims=True)
-        y_pred_max = y_pred.max(axis=-1, keepdims=True)
-        valid = np.isclose(y_true.sum(axis=-1), 1)
-        y_true_max += 1 - np.expand_dims(valid, axis=-1)
-        y_t = y_true//y_true_max
-        y_p = y_pred//y_pred_max
+        if y_true.shape[-1] == 1:
+            y_t = y_true[..., 0]
+            valid = np.greater_equal(y_t, 0)
+            num_classes = np.amax(y_t)
+        else:
+            y_t = y_true.argmax(axis=-1)
+            valid = np.isclose(y_true.sum(axis=-1), 1)
+            num_classes = y_true.shape[-1]
+        if y_pred.shape[-1] == 1:
+            y_p = y_pred[..., 0]
+        else:
+            y_p = y_pred.argmax(axis=-1)
 
         score = []
-        for n in range(1, y_true.shape[-1]):    # Ignore backgrounds
-            precision, recall = precision_and_recall(y_t[..., n], y_p[..., n], valid=valid)
+        for n in range(1, num_classes):    # Ignore backgrounds
+            t = np.equal(y_t, n)
+            p = np.equal(y_p, n)
+            precision, recall = precision_and_recall(t, p, valid=valid)
             if precision == 0 or recall == 0:
                 val = 0
             else:
@@ -347,16 +372,24 @@ class MeanF1BEvaluator(Evaluator):
         return 'max'
 
     def score(self, y_true, y_pred):
-        y_true_max = y_true.max(axis=-1, keepdims=True)
-        y_pred_max = y_pred.max(axis=-1, keepdims=True)
-        valid = np.isclose(y_true.sum(axis=-1), 1)
-        y_true_max += 1 - np.expand_dims(valid, axis=-1)
-        y_t = y_true//y_true_max
-        y_p = y_pred//y_pred_max
+        if y_true.shape[-1] == 1:
+            y_t = y_true[..., 0]
+            valid = np.greater_equal(y_t, 0)
+            num_classes = np.amax(y_t)
+        else:
+            y_t = y_true.argmax(axis=-1)
+            valid = np.isclose(y_true.sum(axis=-1), 1)
+            num_classes = y_true.shape[-1]
+        if y_pred.shape[-1] == 1:
+            y_p = y_pred[..., 0]
+        else:
+            y_p = y_pred.argmax(axis=-1)
 
         score = []
-        for n in range(0, y_true.shape[-1]):    # Include backgrounds
-            precision, recall = precision_and_recall(y_t[..., n], y_p[..., n], valid=valid)
+        for n in range(0, num_classes):    # Include backgrounds
+            t = np.equal(y_t, n)
+            p = np.equal(y_p, n)
+            precision, recall = precision_and_recall(t, p, valid=valid)
             if precision == 0 or recall == 0:
                 val = 0
             else:
@@ -381,9 +414,17 @@ class IoUEvaluator(Evaluator):
         return 'max'
 
     def score(self, y_true, y_pred):
-        y_t = y_true.argmax(axis=-1)
-        y_p = y_pred.argmax(axis=-1)
-        valid = np.isclose(y_true.sum(axis=-1), 1)
+        if y_true.shape[-1] == 1:
+            y_t = y_true[..., 0]
+            valid = np.greater_equal(y_t, 0)
+        else:
+            y_t = y_true.argmax(axis=-1)
+            valid = np.isclose(y_true.sum(axis=-1), 1)
+        if y_pred.shape[-1] == 1:
+            y_p = y_pred[..., 0]
+        else:
+            y_p = y_pred.argmax(axis=-1)
+
         if len(y_t.shape) > 1:
             score = np.empty(y_t.shape[0], dtype=float)
             for i, (t, p, v) in enumerate(zip(y_t, y_p, valid)):
@@ -415,16 +456,24 @@ class MeanIoUEvaluator(Evaluator):
         return 'max'
 
     def score(self, y_true, y_pred):
-        y_true_max = y_true.max(axis=-1, keepdims=True)
-        y_pred_max = y_pred.max(axis=-1, keepdims=True)
-        valid = np.isclose(y_true.sum(axis=-1), 1)
-        y_true_max += 1 - np.expand_dims(valid, axis=-1)
-        y_t = y_true // y_true_max
-        y_p = y_pred // y_pred_max
+        if y_true.shape[-1] == 1:
+            y_t = y_true[..., 0]
+            valid = np.greater_equal(y_t, 0)
+            num_classes = np.amax(y_t)
+        else:
+            y_t = y_true.argmax(axis=-1)
+            valid = np.isclose(y_true.sum(axis=-1), 1)
+            num_classes = y_true.shape[-1]
+        if y_pred.shape[-1] == 1:
+            y_p = y_pred[..., 0]
+        else:
+            y_p = y_pred.argmax(axis=-1)
 
         score = []
-        for n in range(1, y_true.shape[-1]):    # Ignore backgrounds
-            tp, fp, _, fn = conditions(y_t[..., n], y_p[..., n], valid=valid)
+        for n in range(1, num_classes):    # Ignore backgrounds
+            t = np.equal(y_t, n)
+            p = np.equal(y_p, n)
+            tp, fp, _, fn = conditions(t, p, valid=valid)
             if tp == 0:
                 val = 0
             else:
@@ -449,16 +498,24 @@ class MeanIoUBEvaluator(Evaluator):
         return 'max'
 
     def score(self, y_true, y_pred):
-        y_true_max = y_true.max(axis=-1, keepdims=True)
-        y_pred_max = y_pred.max(axis=-1, keepdims=True)
-        valid = np.isclose(y_true.sum(axis=-1), 1)
-        y_true_max += 1 - np.expand_dims(valid, axis=-1)
-        y_t = y_true // y_true_max
-        y_p = y_pred // y_pred_max
+        if y_true.shape[-1] == 1:
+            y_t = y_true[..., 0]
+            valid = np.greater_equal(y_t, 0)
+            num_classes = np.amax(y_t)
+        else:
+            y_t = y_true.argmax(axis=-1)
+            valid = np.isclose(y_true.sum(axis=-1), 1)
+            num_classes = y_true.shape[-1]
+        if y_pred.shape[-1] == 1:
+            y_p = y_pred[..., 0]
+        else:
+            y_p = y_pred.argmax(axis=-1)
 
         score = []
-        for n in range(0, y_true.shape[-1]):    # Include backgrounds
-            tp, fp, _, fn = conditions(y_t[..., n], y_p[..., n], valid=valid)
+        for n in range(0, num_classes):    # Include backgrounds
+            t = np.equal(y_t, n)
+            p = np.equal(y_p, n)
+            tp, fp, _, fn = conditions(t, p, valid=valid)
             if tp == 0:
                 val = 0
             else:
