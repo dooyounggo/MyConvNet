@@ -13,8 +13,6 @@ from convnet import ConvNet
 
 class SegNet(ConvNet):
     def _init_model(self, **kwargs):
-        self.X_in = []
-        self.Y_in = []
         output_shapes = ([None, None, None, self.input_size[-1]],
                          None)
         with tf.variable_scope(tf.get_variable_scope()):
@@ -87,6 +85,7 @@ class SegNet(ConvNet):
             with tf.variable_scope('calc'):
                 self.X_all = tf.concat(self.Xs, axis=0, name='x') + self.image_mean
                 self.Y_all = tf.concat(self.Ys, axis=0, name='y_true')
+                self.valid_mask = tf.concat(self.valid_masks, axis=0, name='valid_mask')
                 self.pred = tf.concat(self.preds, axis=0, name='y_pred')
                 self.loss = tf.reduce_mean(self.losses, name='mean_loss')
 
