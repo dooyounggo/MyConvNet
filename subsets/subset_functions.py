@@ -256,7 +256,7 @@ def zero_pad(image, out_size, random=False, pad_value=0.0):
     assert h_diff >= 0 or w_diff >= 0, 'At least one side must be shorter than or equal to the output size'
 
     out_size_max = [max(out_size[0], in_size[0]), max(out_size[1], in_size[1])]
-    image_out = np.zeros(out_size_max[:2] + [in_size[-1]], dtype=image.dtype)
+    image_out = np.zeros(out_size_max + [in_size[-1]], dtype=image.dtype)
     if pad_value != 0.0:
         image_out += pad_value
 
