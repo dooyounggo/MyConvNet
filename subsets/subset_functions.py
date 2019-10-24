@@ -284,6 +284,8 @@ def zero_pad(image, out_size, random=False, pad_value=0.0):
         else:
             w_idx = w_diff//2
         image_out[:, w_idx:w_idx + in_size[1]] = image
+    else:
+        image_out = image
 
     return image_out
 
