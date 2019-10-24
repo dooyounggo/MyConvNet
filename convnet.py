@@ -42,6 +42,7 @@ class ConvNet(object):
 
         self._dtype = tf.float16 if kwargs.get('half_precision', False) else tf.float32
         self._channel_first = kwargs.get('channel_first', False)
+        self._argmax_output = kwargs.get('argmax_output', False)
         self._num_gpus = kwargs.get('num_gpus', 1)
 
         self._padded_size = np.round(np.array(self.input_size[0:2])*(1.0 + kwargs.get('zero_pad_ratio', 0.0)))
@@ -59,9 +60,12 @@ class ConvNet(object):
         self._feature_reduction = kwargs.get('feature_reduction_factor', 0)
 
         self.handles = []
+        self.X_in = []
+        self.Y_in = []
         self.Xs = []
         self.Ys = []
         self.preds = []
+        self.valid_masks = []
         self.losses = []
         self.gcams = []
         self.bytes_in_use = []
@@ -113,6 +117,16 @@ class ConvNet(object):
         self._init_params()
         self._init_model(**kwargs)
 
+        if self.argmax_output:
+            with tf.device('/cpu:0'):
+                with tf.variable_scope('calc/'):
+                    valid_mask = tf.cast(self.valid_mask, dtype=tf.int32)
+                    invalid_mask = tf.cast(tf.logical_not(self.valid_mask), dtype=tf.int32)
+                    self.Y_all = tf.math.argmax(self.Y_all, axis=-1, output_type=tf.int32)*valid_mask - invalid_mask
+                    self.Y_all = self.Y_all[..., tf.newaxis]
+                    self.pred = tf.math.argmax(self.pred, axis=-1, output_type=tf.int32)*valid_mask - invalid_mask
+                    self.pred = self.pred[..., tf.newaxis]
+
         print('\nNumber of GPUs : {}'.format(self._num_gpus))
         print('Total number of units: {}'.format(self._num_blocks))
         print('\n# FLOPs : {:-15,}\n# Params: {:-15,}\n'.format(int(self._flops), int(self._params)))
@@ -136,6 +150,10 @@ class ConvNet(object):
     @property
     def channel_first(self):
         return self._channel_first
+
+    @property
+    def argmax_output(self):
+        return self._argmax_output
 
     @property
     def num_gpus(self):
@@ -178,8 +196,6 @@ class ConvNet(object):
         return self._update_ops
 
     def _init_model(self, **kwargs):
-        self.X_in = []
-        self.Y_in = []
         output_shapes = ([None, None, None, self.input_size[-1]],
                          [None])
         with tf.variable_scope(tf.get_variable_scope()):
@@ -248,6 +264,7 @@ class ConvNet(object):
                 self.X_all = tf.concat(self.Xs, axis=0, name='x') + self.image_mean
                 self.Y_all = tf.concat(self.Ys, axis=0, name='y_true')
                 self.pred = tf.concat(self.preds, axis=0, name='y_pred')
+                self.valid_mask = tf.concat(self.valid_masks, axis=0, name='valid_mask')
                 self.loss = tf.reduce_mean(self.losses, name='mean_loss')
                 self.gcam = tf.concat(self.gcams, axis=0, name='grad_cam')
 
@@ -319,10 +336,12 @@ class ConvNet(object):
                 sumval = tf.reduce_sum(self.Y, axis=axis)
                 valid_g = tf.greater(sumval, 1.0 - valid_eps)
                 valid_l = tf.less(sumval, 1.0 + valid_eps)
-                valid = tf.cast(tf.logical_and(valid_g, valid_l), dtype=tf.float32)
+                valid_mask = tf.logical_and(valid_g, valid_l)
+                self.valid_masks.append(valid_mask)
+                valid_mask = tf.cast(valid_mask, dtype=tf.float32)
 
             softmax_losses = tf.nn.softmax_cross_entropy_with_logits_v2(labels=labels, logits=self.logits, axis=axis)
-            softmax_loss = tf.reduce_mean(batch_weights*valid*softmax_losses)
+            softmax_loss = tf.reduce_mean(batch_weights*valid_mask*softmax_losses)
 
             loss = softmax_loss + l1_reg_loss + l2_reg_loss
 
@@ -490,8 +509,8 @@ class ConvNet(object):
         with tf.variable_scope('affine_augment'):
             shape_tensor = tf.shape(x)
             batch_size = shape_tensor[0]
-            H = tf.cast(shape_tensor[1], dtype=tf.float32)
-            W = tf.cast(shape_tensor[2], dtype=tf.float32)
+            h = tf.cast(shape_tensor[1], dtype=tf.float32)
+            w = tf.cast(shape_tensor[2], dtype=tf.float32)
 
             lower, upper = kwargs.get('rand_scale', (1.0, 1.0))
             base = float(upper/lower)
@@ -508,12 +527,12 @@ class ConvNet(object):
 
             rand_rotation = (tf.random.uniform([batch_size, 1]) - 0.5)*kwargs.get('rand_rotation', 0)*(np.pi/180)
             rand_shear = (tf.random.uniform([batch_size, 1]) - 0.5)*kwargs.get('rand_shear', 0)*(np.pi/180)
-            rand_x_trans = (tf.random.uniform([batch_size, 1]) - 0.5)*kwargs.get('rand_x_trans', 0)*W \
-                           + 0.5*W*(1.0 - rand_x_scale*tf.math.cos(rand_rotation)) \
-                           + 0.5*H*rand_y_scale*tf.math.sin(rand_rotation + rand_shear)
-            rand_y_trans = (tf.random.uniform([batch_size, 1]) - 0.5)*kwargs.get('rand_y_trans', 0)*H \
-                           - 0.5*W*rand_x_scale*tf.math.sin(rand_rotation) \
-                           + 0.5*H*(1.0 - rand_y_scale*tf.math.cos(rand_rotation + rand_shear))
+            rand_x_trans = (tf.random.uniform([batch_size, 1]) - 0.5)*kwargs.get('rand_x_trans', 0)*w \
+                           + 0.5*w*(1.0 - rand_x_scale*tf.math.cos(rand_rotation)) \
+                           + 0.5*h*rand_y_scale*tf.math.sin(rand_rotation + rand_shear)
+            rand_y_trans = (tf.random.uniform([batch_size, 1]) - 0.5)*kwargs.get('rand_y_trans', 0)*h \
+                           - 0.5*w*rand_x_scale*tf.math.sin(rand_rotation) \
+                           + 0.5*h*(1.0 - rand_y_scale*tf.math.cos(rand_rotation + rand_shear))
 
             a0a = rand_x_scale*tf.math.cos(rand_rotation + rand_shear)
             a1a = -rand_y_scale*tf.math.sin(rand_rotation)
@@ -527,10 +546,10 @@ class ConvNet(object):
 
             a0r = 1.0 - 2.0*rand_x_reflect
             # a1r = tf.zeros([batch_size, 1], dtype=tf.float32)
-            a2r = rand_x_reflect*W
+            a2r = rand_x_reflect*w
             # b0r = tf.zeros([batch_size, 1], dtype=tf.float32)
             b1r = 1.0 - 2.0*rand_y_reflect
-            b2r = rand_y_reflect*H
+            b2r = rand_y_reflect*h
 
             a0 = a0a*a0r
             a1 = a1a*a0r
@@ -564,8 +583,8 @@ class ConvNet(object):
         image = x
 
         shape_tensor = tf.shape(image)
-        H = tf.cast(shape_tensor[0], dtype=tf.int32)
-        W = tf.cast(shape_tensor[1], dtype=tf.int32)
+        h = tf.cast(shape_tensor[0], dtype=tf.int32)
+        w = tf.cast(shape_tensor[1], dtype=tf.int32)
 
         lower, upper = self.crop_scale
         # a = upper**2 - lower**2
@@ -583,12 +602,12 @@ class ConvNet(object):
         rand_y_scale = tf.math.sqrt(rand_scale*rand_ratio)
 
         size_h = tf.cast(tf.math.round(self.input_size[0]*rand_y_scale), dtype=tf.int32)
-        size_h = tf.math.minimum(H, size_h)
+        size_h = tf.math.minimum(h, size_h)
         size_w = tf.cast(tf.math.round(self.input_size[1]*rand_x_scale), dtype=tf.int32)
-        size_w = tf.math.minimum(W, size_w)
+        size_w = tf.math.minimum(w, size_w)
 
-        offset_h = tf.random.uniform([], 0, H - size_h + 1, dtype=tf.int32)
-        offset_w = tf.random.uniform([], 0, W - size_w + 1, dtype=tf.int32)
+        offset_h = tf.random.uniform([], 0, h - size_h + 1, dtype=tf.int32)
+        offset_w = tf.random.uniform([], 0, w - size_w + 1, dtype=tf.int32)
 
         image = tf.slice(image, [offset_h, offset_w, 0], [size_h, size_w, -1])
         image = tf.image.resize_bilinear(tf.expand_dims(image, axis=0), self.input_size[0:2], half_pixel_centers=True)
@@ -601,8 +620,8 @@ class ConvNet(object):
         mask = x[1]
 
         shape_tensor = tf.shape(image)
-        H = tf.cast(shape_tensor[0], dtype=tf.int32)
-        W = tf.cast(shape_tensor[1], dtype=tf.int32)
+        h = tf.cast(shape_tensor[0], dtype=tf.int32)
+        w = tf.cast(shape_tensor[1], dtype=tf.int32)
 
         lower, upper = self.crop_scale
         # a = upper**2 - lower**2
@@ -620,12 +639,12 @@ class ConvNet(object):
         rand_y_scale = tf.math.sqrt(rand_scale*rand_ratio)
 
         size_h = tf.cast(tf.math.round(self.input_size[0]*rand_y_scale), dtype=tf.int32)
-        size_h = tf.math.minimum(H, size_h)
+        size_h = tf.math.minimum(h, size_h)
         size_w = tf.cast(tf.math.round(self.input_size[1]*rand_x_scale), dtype=tf.int32)
-        size_w = tf.math.minimum(W, size_w)
+        size_w = tf.math.minimum(w, size_w)
 
-        offset_h = tf.random.uniform([], 0, H - size_h + 1, dtype=tf.int32)
-        offset_w = tf.random.uniform([], 0, W - size_w + 1, dtype=tf.int32)
+        offset_h = tf.random.uniform([], 0, h - size_h + 1, dtype=tf.int32)
+        offset_w = tf.random.uniform([], 0, w - size_w + 1, dtype=tf.int32)
 
         image = tf.slice(image, [offset_h, offset_w, 0], [size_h, size_w, -1])
         image = tf.image.resize_bilinear(tf.expand_dims(image, axis=0), self.input_size[0:2], half_pixel_centers=True)
@@ -640,11 +659,11 @@ class ConvNet(object):
     def center_crop(self, x):
         with tf.variable_scope('center_crop'):
             shape_tensor = tf.shape(x)
-            H = tf.cast(shape_tensor[1], dtype=tf.float32)
-            W = tf.cast(shape_tensor[2], dtype=tf.float32)
+            h = tf.cast(shape_tensor[1], dtype=tf.float32)
+            w = tf.cast(shape_tensor[2], dtype=tf.float32)
 
-            offset_height = tf.cast((H - self.input_size[0])//2, dtype=tf.int32)
-            offset_width = tf.cast((W - self.input_size[1])//2, dtype=tf.int32)
+            offset_height = tf.cast((h - self.input_size[0])//2, dtype=tf.int32)
+            offset_width = tf.cast((w - self.input_size[1])//2, dtype=tf.int32)
             target_height = tf.constant(self.input_size[0], dtype=tf.int32)
             target_width = tf.constant(self.input_size[1], dtype=tf.int32)
 
