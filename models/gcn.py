@@ -7,7 +7,7 @@ from models.efficientnet import EfficientNetB3 as EffNet
 class GCN(SegNet, ResNetCBAM50):     # Global Convolutional Networks
     def _init_params(self):
         ResNetCBAM50._init_params(self)
-        self.min_conv_channels = 16
+        self.min_conv_channels = 32
         self.conv_channels = [self.num_classes, self.num_classes, self.num_classes//2, self.num_classes//4]
         self.conv_kernels = [15, 15, 15, 15]
         self.conv_units = [1, 1, 1, 1]
@@ -142,7 +142,7 @@ class GCN(SegNet, ResNetCBAM50):     # Global Convolutional Networks
 class SCN(GCN, EffNet):  # Separable Convolution Networks: GCN with separable convolution and efficientnet backbone
     def _init_params(self):
         EffNet._init_params(self)
-        self.min_conv_channels = 16
+        self.min_conv_channels = 32
         self.conv_channels = [self.num_classes, self.num_classes, self.num_classes//2, self.num_classes//4]
         self.conv_kernels = [5, 9, 13, 17]
         self.conv_units = [1, 1, 1, 1]
@@ -152,8 +152,8 @@ class SCN(GCN, EffNet):  # Separable Convolution Networks: GCN with separable co
         d = EffNet._build_model(self, **kwargs)
         return d
 
-    def _res_unit(self, x, kernel, stride, out_channels, multiplier, d, drop_rate=0.0, name='res_unit'):
-        x = EffNet._res_unit(self, x, kernel, stride, out_channels, multiplier, d, drop_rate=drop_rate, name=name)
+    def _mb_conv_unit(self, x, kernel, stride, out_channels, multiplier, d, drop_rate=0.0, name='res_unit'):
+        x = EffNet._mb_conv_unit(self, x, kernel, stride, out_channels, multiplier, d, drop_rate=drop_rate, name=name)
         return x
 
     def _conv_unit(self, x, kernel, out_channels, d, name='conv_unit'):
