@@ -94,13 +94,14 @@ def read_subset_seg(subset_dir, shuffle=False, sample_size=None):
 def random_resized_crop(image, out_size, interpolation=cv2.INTER_LINEAR,
                         random=True, scale=(1.0, 1.0), ratio=(1.0, 1.0)):
 
-    out_size_ratio = out_size[0]/out_size[1]
+    out_size_ratio = out_size[1]/out_size[0]
     in_size = image.shape
-    H = in_size[0]
-    W = in_size[1]
+    h = in_size[0]
+    w = in_size[1]
 
-    max_size = max([H, W])
-    image = zero_pad(image, (max_size, max_size))
+    size_h = np.sqrt(h*w/out_size_ratio)
+    size_w = np.sqrt(h*w*out_size_ratio)
+    image = zero_pad(image, [np.ceil(size_h).astype(int), np.ceil(size_w).astype(int)])
     if random:
         lower, upper = scale
         # a = upper**2 - lower**2
@@ -117,20 +118,13 @@ def random_resized_crop(image, out_size, interpolation=cv2.INTER_LINEAR,
         rand_x_scale = np.sqrt(rand_scale/rand_ratio)
         rand_y_scale = np.sqrt(rand_scale*rand_ratio)
 
-        size_h = np.around(np.sqrt(H*W*out_size_ratio)*rand_y_scale).astype(int)
-        size_h = min([max_size, size_h])
-        size_w = np.around(np.sqrt(H*W/out_size_ratio)*rand_x_scale).astype(int)
-        size_w = min([max_size, size_w])
-
-        offset_h = int(np.random.uniform(0, max_size - size_h))
-        offset_w = int(np.random.uniform(0, max_size - size_w))
-
-        image = image[offset_h:offset_h + size_h, offset_w:offset_w + size_w]
+        size_h = np.around(size_h*rand_y_scale).astype(int)
+        size_w = np.around(size_w*rand_x_scale).astype(int)
     else:
-        size_h = np.around(np.sqrt(H*W*out_size_ratio)).astype(int)
-        size_w = np.around(np.sqrt(H*W/out_size_ratio)).astype(int)
-        image = resize_with_crop_or_pad(image, out_size=[size_h, size_w], random=False)
+        size_h = np.around(size_h).astype(int)
+        size_w = np.around(size_w).astype(int)
 
+    image = crop(image, [size_h, size_w], random=random)
     image = cv2.resize(image, dsize=tuple(out_size[1::-1]), interpolation=interpolation)
 
     return to_float(image)
@@ -230,13 +224,21 @@ def crop(image, out_size, random=False):
     w_diff = in_size[1] - out_size[1]
     assert h_diff >= 0 or w_diff >= 0, 'At least one side must be longer than or equal to the output size'
 
-    if h_diff > 0:
+    if h_diff > 0 and w_diff > 0:
+        if random:
+            h_idx = np.random.randint(0, h_diff)
+            w_idx = np.random.randint(0, w_diff)
+        else:
+            h_idx = h_diff//2
+            w_idx = w_diff//2
+        image = image[h_idx:h_idx + out_size[0], w_idx:w_idx + out_size[1]]
+    elif h_diff > 0:
         if random:
             h_idx = np.random.randint(0, h_diff)
         else:
             h_idx = h_diff//2
         image = image[h_idx:h_idx + out_size[0], :]
-    if w_diff > 0:
+    elif w_diff > 0:
         if random:
             w_idx = np.random.randint(0, w_diff)
         else:
@@ -251,25 +253,34 @@ def zero_pad(image, out_size, random=False, pad_value=0.0):
     out_size = list(out_size)
     h_diff = out_size[0] - in_size[0]
     w_diff = out_size[1] - in_size[1]
-    assert h_diff >= 0 and w_diff >= 0, 'The input size must be smaller than or equal to the output size'
+    assert h_diff >= 0 or w_diff >= 0, 'At least one side must be shorter than or equal to the output size'
 
-    if random:
-        if h_diff > 0:
-            h_idx = np.random.randint(0, h_diff)
-        else:
-            h_idx = 0
-        if w_diff > 0:
-            w_idx = np.random.randint(0, w_diff)
-        else:
-            w_idx = 0
-    else:
-        h_idx = h_diff//2
-        w_idx = w_diff//2
-
-    image_out = np.zeros(out_size[:2] + [in_size[-1]], dtype=image.dtype)
+    out_size_max[0] = max(out_size[0], in_size[0])
+    out_size_max[1] = max(out_size[1], in_size[1])
+    image_out = np.zeros(out_size_max[:2] + [in_size[-1]], dtype=image.dtype)
     if pad_value != 0.0:
         image_out += pad_value
-    image_out[h_idx:h_idx + in_size[0], w_idx:w_idx + in_size[1]] = image
+
+    if h_diff > 0 and w_diff > 0:
+        if random:
+            h_idx = np.random.randint(0, h_diff)
+            w_idx = np.random.randint(0, w_diff)
+        else:
+            h_idx = h_diff//2
+            w_idx = w_diff//2
+        image_out[h_idx:h_idx + out_size[0], w_idx:w_idx + out_size[1]] = image
+    elif h_diff > 0:
+        if random:
+            h_idx = np.random.randint(0, h_diff)
+        else:
+            h_idx = h_diff//2
+        image_out[h_idx:h_idx + out_size[0], :] = image
+    elif w_diff > 0:
+        if random:
+            w_idx = np.random.randint(0, w_diff)
+        else:
+            w_idx = w_diff//2
+        image_out[:, w_idx:w_idx + out_size[1]] = image
 
     return image_out
 
