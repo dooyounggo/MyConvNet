@@ -267,19 +267,19 @@ def zero_pad(image, out_size, random=False, pad_value=0.0):
         else:
             h_idx = h_diff//2
             w_idx = w_diff//2
-        image_out[h_idx:h_idx + out_size[0], w_idx:w_idx + out_size[1]] = image
+        image_out[h_idx:h_idx + in_size[0], w_idx:w_idx + in_size[1]] = image
     elif h_diff > 0:
         if random:
             h_idx = np.random.randint(0, h_diff)
         else:
             h_idx = h_diff//2
-        image_out[h_idx:h_idx + out_size[0], :] = image
+        image_out[h_idx:h_idx + in_size[0], :] = image
     elif w_diff > 0:
         if random:
             w_idx = np.random.randint(0, w_diff)
         else:
             w_idx = w_diff//2
-        image_out[:, w_idx:w_idx + out_size[1]] = image
+        image_out[:, w_idx:w_idx + in_size[1]] = image
 
     return image_out
 
