@@ -143,7 +143,7 @@ class SCN(GCN, EffNet):  # Separable Convolution Networks: GCN with separable co
     def _init_params(self):
         EffNet._init_params(self)
         self.max_conv_channels = 128
-        self.conv_channels = [self.num_classes, self.num_classes, self.num_classes//2, self.num_classes//4]
+        self.conv_channels = [self.num_classes, self.num_classes, self.num_classes, self.num_classes]
         self.conv_kernels = [5, 9, 13, 17]
         self.conv_units = [1, 1, 1, 1]
         self.deconv_method = 'UPSAMPLING'  # Upsampling: bilinear up-sampling, conv: transposed convolution
