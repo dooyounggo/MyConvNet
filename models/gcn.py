@@ -7,8 +7,8 @@ from models.efficientnet import EfficientNetB3 as EffNet
 class GCN(SegNet, ResNetCBAM50):     # Global Convolutional Networks
     def _init_params(self):
         ResNetCBAM50._init_params(self)
-        self.min_conv_channels = 32
-        self.conv_channels = [self.num_classes, self.num_classes, self.num_classes//2, self.num_classes//4]
+        self.max_conv_channels = 64
+        self.conv_channels = [self.num_classes, self.num_classes, self.num_classes, self.num_classes]
         self.conv_kernels = [15, 15, 15, 15]
         self.conv_units = [1, 1, 1, 1]
         self.deconv_method = 'UPSAMPLING'    # Upsampling: bilinear up-sampling, conv: transposed convolution
@@ -88,7 +88,7 @@ class GCN(SegNet, ResNetCBAM50):     # Global Convolutional Networks
             kernel = [kernel, kernel]
         elif len(kernel) == 1:
             kernel = [kernel[0], kernel[0]]
-        out_channels = max([self.min_conv_channels, out_channels])
+        out_channels = min([self.max_conv_channels, out_channels])
 
         with tf.variable_scope(name):
             with tf.variable_scope('conv_0'):
@@ -142,7 +142,7 @@ class GCN(SegNet, ResNetCBAM50):     # Global Convolutional Networks
 class SCN(GCN, EffNet):  # Separable Convolution Networks: GCN with separable convolution and efficientnet backbone
     def _init_params(self):
         EffNet._init_params(self)
-        self.min_conv_channels = 32
+        self.max_conv_channels = 128
         self.conv_channels = [self.num_classes, self.num_classes, self.num_classes//2, self.num_classes//4]
         self.conv_kernels = [5, 9, 13, 17]
         self.conv_units = [1, 1, 1, 1]
