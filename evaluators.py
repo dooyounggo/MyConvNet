@@ -81,13 +81,13 @@ class AccuracyEvaluator(Evaluator):
 
     def score(self, y_true, y_pred):
         if y_true.shape[-1] == 1:
-            y_t = y_true[..., 0]
+            y_t = y_true[..., 0].astype(int)
             valid = np.greater_equal(y_t, 0)
         else:
             y_t = y_true.argmax(axis=-1)
             valid = np.isclose(y_true.sum(axis=-1), 1)
         if y_pred.shape[-1] == 1:
-            y_p = y_pred[..., 0]
+            y_p = y_pred[..., 0].astype(int)
         else:
             y_p = y_pred.argmax(axis=-1)
         right = np.equal(y_t, y_p)*valid
@@ -289,13 +289,13 @@ class F1Evaluator(Evaluator):
 
     def score(self, y_true, y_pred):
         if y_true.shape[-1] == 1:
-            y_t = y_true[..., 0]
+            y_t = y_true[..., 0].astype(int)
             valid = np.greater_equal(y_t, 0)
         else:
             y_t = y_true.argmax(axis=-1)
             valid = np.isclose(y_true.sum(axis=-1), 1)
         if y_pred.shape[-1] == 1:
-            y_p = y_pred[..., 0]
+            y_p = y_pred[..., 0].astype(int)
         else:
             y_p = y_pred.argmax(axis=-1)
 
@@ -331,15 +331,15 @@ class MeanF1Evaluator(Evaluator):
 
     def score(self, y_true, y_pred):
         if y_true.shape[-1] == 1:
-            y_t = y_true[..., 0]
+            y_t = y_true[..., 0].astype(int)
             valid = np.greater_equal(y_t, 0)
-            num_classes = np.amax(y_t)
+            num_classes = np.amax(y_t) + 1
         else:
             y_t = y_true.argmax(axis=-1)
             valid = np.isclose(y_true.sum(axis=-1), 1)
             num_classes = y_true.shape[-1]
         if y_pred.shape[-1] == 1:
-            y_p = y_pred[..., 0]
+            y_p = y_pred[..., 0].astype(int)
         else:
             y_p = y_pred.argmax(axis=-1)
 
@@ -373,15 +373,15 @@ class MeanF1BEvaluator(Evaluator):
 
     def score(self, y_true, y_pred):
         if y_true.shape[-1] == 1:
-            y_t = y_true[..., 0]
+            y_t = y_true[..., 0].astype(int)
             valid = np.greater_equal(y_t, 0)
-            num_classes = np.amax(y_t)
+            num_classes = np.amax(y_t) + 1
         else:
             y_t = y_true.argmax(axis=-1)
             valid = np.isclose(y_true.sum(axis=-1), 1)
             num_classes = y_true.shape[-1]
         if y_pred.shape[-1] == 1:
-            y_p = y_pred[..., 0]
+            y_p = y_pred[..., 0].astype(int)
         else:
             y_p = y_pred.argmax(axis=-1)
 
@@ -415,13 +415,13 @@ class IoUEvaluator(Evaluator):
 
     def score(self, y_true, y_pred):
         if y_true.shape[-1] == 1:
-            y_t = y_true[..., 0]
+            y_t = y_true[..., 0].astype(int)
             valid = np.greater_equal(y_t, 0)
         else:
             y_t = y_true.argmax(axis=-1)
             valid = np.isclose(y_true.sum(axis=-1), 1)
         if y_pred.shape[-1] == 1:
-            y_p = y_pred[..., 0]
+            y_p = y_pred[..., 0].astype(int)
         else:
             y_p = y_pred.argmax(axis=-1)
 
@@ -457,15 +457,15 @@ class MeanIoUEvaluator(Evaluator):
 
     def score(self, y_true, y_pred):
         if y_true.shape[-1] == 1:
-            y_t = y_true[..., 0]
+            y_t = y_true[..., 0].astype(int)
             valid = np.greater_equal(y_t, 0)
-            num_classes = np.amax(y_t)
+            num_classes = np.amax(y_t) + 1
         else:
             y_t = y_true.argmax(axis=-1)
             valid = np.isclose(y_true.sum(axis=-1), 1)
             num_classes = y_true.shape[-1]
         if y_pred.shape[-1] == 1:
-            y_p = y_pred[..., 0]
+            y_p = y_pred[..., 0].astype(int)
         else:
             y_p = y_pred.argmax(axis=-1)
 
@@ -499,15 +499,15 @@ class MeanIoUBEvaluator(Evaluator):
 
     def score(self, y_true, y_pred):
         if y_true.shape[-1] == 1:
-            y_t = y_true[..., 0]
+            y_t = y_true[..., 0].astype(int)
             valid = np.greater_equal(y_t, 0)
-            num_classes = np.amax(y_t)
+            num_classes = np.amax(y_t) + 1
         else:
             y_t = y_true.argmax(axis=-1)
             valid = np.isclose(y_true.sum(axis=-1), 1)
             num_classes = y_true.shape[-1]
         if y_pred.shape[-1] == 1:
-            y_p = y_pred[..., 0]
+            y_p = y_pred[..., 0].astype(int)
         else:
             y_p = y_pred.argmax(axis=-1)
 
