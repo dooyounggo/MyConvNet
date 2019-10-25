@@ -382,19 +382,18 @@ def plot_seg_results(images, y_true, y_pred=None, num_rows=3, num_cols=3, colors
     if y_pred is None:
         y_pred = y_true
     if y_true.shape[-1] == 1:
-        y_t = y_true[..., 0]
+        y_t = y_true[..., 0].astype(int)
         valid = np.greater_equal(y_t, 0)
-        num_classes = np.amax(y_t)
+        num_classes = np.amax(y_t) + 1
     else:
         y_t = y_true.argmax(axis=-1)
         valid = np.isclose(y_true.sum(axis=-1), 1)
         num_classes = y_true.shape[-1]
     if y_pred.shape[-1] == 1:
-        y_p = y_pred[..., 0]
+        y_p = y_pred[..., 0].astype(int)
     else:
         y_p = y_pred.argmax(axis=-1)
 
-    num_classes = y_true.shape[-1]
     num_images = images.shape[0]
     images = (images*255).astype(np.int)
 
@@ -419,10 +418,10 @@ def plot_seg_results(images, y_true, y_pred=None, num_rows=3, num_cols=3, colors
     evaluator = Evaluator()
     name = evaluator.name
     scores = []
-    for y_t, y_p in zip(y_true, y_pred):
-        y_t = np.expand_dims(y_t, axis=0)
-        y_p = np.expand_dims(y_p, axis=0)
-        scores.append(evaluator.score(y_t, y_p))
+    for t, p in zip(y_true, y_pred):
+        t = np.expand_dims(t, axis=0)
+        p = np.expand_dims(p, axis=0)
+        scores.append(evaluator.score(t, p))
 
     if colors is None:
         mask_pred = (seg_labels_to_images(y_p, num_classes, valid=valid)*255).astype(np.int)
@@ -483,11 +482,11 @@ def seg_labels_to_images(y, num_classes, valid=None):
     if valid is None:
         valid = np.ones_like(y)
     y = y*valid
-    r = np.sum(reds[y], axis=-1, keepdims=True)
-    g = np.sum(greens[y], axis=-1, keepdims=True)
-    b = np.sum(blues[y], axis=-1, keepdims=True)
+    r = reds[y]
+    g = greens[y]
+    b = blues[y]
 
-    ignore = np.logical_not(valid)
-    y = np.concatenate([r, g, b], axis=-1) + ignore.astype(np.float32)*max_color
+    ignore = np.logical_not(valid)[..., np.newaxis]
+    y = np.stack([r, g, b], axis=-1) + ignore.astype(np.float32)*max_color
 
     return y
