@@ -133,10 +133,15 @@ if __name__ == '__main__':
 
 def read_subset(subset_dir, shuffle=False, sample_size=None):
     class_names = (
-        'backgrounds', 'road', 'sidewalk', 'building', 'wall', 'fence', 'pole',
-        'traffic light', 'traffic sign', 'vegetation', 'terrain', 'sky', 'person',
-        'rider', 'car', 'truck', 'bus', 'train', 'motorcycle', 'bicycle'
+        'road', 'sidewalk', 'building', 'wall', 'fence', 'pole', 'traffic light',
+        'traffic sign', 'vegetation', 'terrain', 'sky', 'person', 'rider',
+        'car', 'truck', 'bus', 'train', 'motorcycle', 'bicycle'
     )
+    # class_names = (
+    #     'backgrounds', 'road', 'sidewalk', 'building', 'wall', 'fence', 'pole',
+    #     'traffic light', 'traffic sign', 'vegetation', 'terrain', 'sky', 'person',
+    #     'rider', 'car', 'truck', 'bus', 'train', 'motorcycle', 'bicycle'
+    # )
 
     image_dirs, label_dirs = sf.read_subset_seg(subset_dir, shuffle=shuffle, sample_size=sample_size)
 
