@@ -78,7 +78,7 @@ class SegNet(ConvNet):
                         self.losses.append(self._build_loss(**kwargs))
 
                         if self.channel_first:
-                            self.d['pred'] = tf.transpose(self.d['pred'], perm=[0, 2, 3, 1])
+                            self.pred = tf.transpose(self.pred, perm=[0, 2, 3, 1])
                         self.preds.append(self.pred)
 
                         self.bytes_in_use.append(tf.contrib.memory_stats.BytesInUse())
