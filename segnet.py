@@ -69,16 +69,17 @@ class SegNet(ConvNet):
                             with tf.name_scope('gpu{}/cast/'.format(i)):
                                 self.d['logits'] = tf.cast(self.d['logits'], dtype=tf.float32)
                                 self.d['pred'] = tf.cast(self.d['pred'], dtype=tf.float32)
-                        if self.channel_first:
-                            self.d['pred'] = tf.transpose(self.d['pred'], perm=[0, 2, 3, 1])
                         tf.get_variable_scope().reuse_variables()
 
                         self.d.update(d_backbone)
                         self.dicts.append(self.d)
-
                         self.logits = self.d['logits']
-                        self.preds.append(self.d['pred'])
+                        self.pred = self.d['pred']
                         self.losses.append(self._build_loss(**kwargs))
+
+                        if self.channel_first:
+                            self.d['pred'] = tf.transpose(self.d['pred'], perm=[0, 2, 3, 1])
+                        self.preds.append(self.pred)
 
                         self.bytes_in_use.append(tf.contrib.memory_stats.BytesInUse())
 
