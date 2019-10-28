@@ -345,7 +345,6 @@ class ConvNet(object):
 
             softmax_losses = tf.nn.softmax_cross_entropy_with_logits_v2(labels=labels, logits=self.logits, axis=axis)
             if focal_loss_factor > 0.0:
-                axis = 1 if self.channel_first else -1
                 pred = tf.reduce_sum(self.Y*self.pred, axis=axis)
                 focal_loss = tf.pow(1.0 - pred, focal_loss_factor)
                 softmax_losses = focal_loss*softmax_losses
