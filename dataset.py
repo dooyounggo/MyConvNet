@@ -206,7 +206,7 @@ class DataSet(object):
 
     def data_statistics(self, verbose=True, max_data=10000):
         image_mean = 0.0
-        examples = np.zeros(self.num_classes, dtype=np.int)
+        examples = np.zeros(self.num_classes, dtype=np.int64)
         image_dirs = self.image_dirs[:max_data]
         label_dirs = self.label_dirs[:max_data]
         for n, (idir, ldir) in enumerate(zip(image_dirs, label_dirs)):
