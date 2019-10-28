@@ -60,10 +60,11 @@ class SegNet(ConvNet):
                         if self.dtype is not tf.float32:
                             with tf.name_scope('gpu{}/cast/'.format(i)):
                                 self.X = tf.cast(self.X, dtype=self.dtype)
-                        self.backbone_only = True
-                        d_backbone = self._build_model(**kwargs)
-                        self.backbone_only = False
-                        self.d = self._build_model_seg(d_backbone, **kwargs)
+                        with tf.name_scope('nn'):
+                            self.backbone_only = True
+                            d_backbone = self._build_model(**kwargs)
+                            self.backbone_only = False
+                            self.d = self._build_model_seg(d_backbone, **kwargs)
                         if self.dtype is not tf.float32:
                             with tf.name_scope('gpu{}/cast/'.format(i)):
                                 self.d['logits'] = tf.cast(self.d['logits'], dtype=tf.float32)
@@ -82,7 +83,7 @@ class SegNet(ConvNet):
                         self.bytes_in_use.append(tf.contrib.memory_stats.BytesInUse())
 
         with tf.device('/cpu:0'):
-            with tf.variable_scope('calc'):
+            with tf.variable_scope('calc/'):
                 self.X_all = tf.concat(self.Xs, axis=0, name='x') + self.image_mean
                 self.Y_all = tf.concat(self.Ys, axis=0, name='y_true')
                 self.valid_mask = tf.concat(self.valid_masks, axis=0, name='valid_mask')
