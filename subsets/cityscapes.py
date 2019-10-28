@@ -19,6 +19,10 @@ CITY_COLORMAP = [[128, 64, 128], [244, 35, 232], [70, 70, 70], [102, 102, 156],
 
 ID_TO_LABEL_MAP = np.array([0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 3, 4, 5, 0, 0, 0, 6, 0,
                             7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 0, 0, 17, 18, 19, 0])
+# ID_TO_LABEL_MAP = np.array([1, 1, 1, 1, 1, 1, 1, 2, 3, 1, 1, 4, 5, 6, 1, 1, 1, 7, 1,
+#                             8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 1, 1, 18, 19, 20, 0])
+# ID_TO_LABEL_MAP = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+#                             20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 0])
 
 
 def save_as_tfdata(subset_dir, destination_dir, copy=True):
@@ -129,9 +133,9 @@ if __name__ == '__main__':
 
 def read_subset(subset_dir, shuffle=False, sample_size=None):
     class_names = (
-        'road', 'sidewalk', 'building', 'wall', 'fence', 'pole', 'traffic light',
-        'traffic sign', 'vegetation', 'terrain', 'sky', 'person', 'rider',
-        'car', 'truck', 'bus', 'train', 'motorcycle', 'bicycle'
+        'backgrounds', 'road', 'sidewalk', 'building', 'wall', 'fence', 'pole',
+        'traffic light', 'traffic sign', 'vegetation', 'terrain', 'sky', 'person',
+        'rider', 'car', 'truck', 'bus', 'train', 'motorcycle', 'bicycle'
     )
 
     image_dirs, label_dirs = sf.read_subset_seg(subset_dir, shuffle=shuffle, sample_size=sample_size)
