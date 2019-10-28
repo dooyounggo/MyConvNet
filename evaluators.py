@@ -479,6 +479,7 @@ class MeanIoUEvaluator(Evaluator):
             else:
                 val = tp/(tp + fp + fn)
             score.append(val)
+            # print('class {}: {}'.format(n, val))
         score = np.mean(score)
 
         return score
@@ -521,6 +522,7 @@ class MeanIoUBEvaluator(Evaluator):
             else:
                 val = tp/(tp + fp + fn)
             score.append(val)
+            # print('class {}: {}'.format(n, val))
         score = np.mean(score)
 
         return score
