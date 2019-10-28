@@ -215,7 +215,7 @@ class Optimizer(object):
                 tf.summary.image('Debug Images 1',
                                  tf.cast(self.model.debug_images_1*255, dtype=tf.uint8),
                                  max_outputs=4)
-                tf.summary.histogram('Image Histogram', self.model.X[0])
+                tf.summary.histogram('Image Histogram', self.model.X_all)
                 merged = tf.summary.merge_all()
                 writer = tf.summary.FileWriter(os.path.join(save_dir, 'logs'), self.model.session.graph)
 
