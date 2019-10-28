@@ -369,12 +369,12 @@ class ConvNet(object):
             feed_dict.update({h_t: h})
 
         if return_images:
-            _X = np.zeros([pred_size] + list(self.input_size), dtype=float)
+            _X = np.zeros([pred_size] + list(self.input_size), dtype=np.float32)
         else:
-            _X = np.zeros([pred_size] + [4, 4, 3], dtype=float)  # Dummy images
-        _Y_true = np.zeros([pred_size] + self.pred.get_shape().as_list()[1:], dtype=float)
-        _Y_pred = np.zeros([pred_size] + self.pred.get_shape().as_list()[1:], dtype=float)
-        _loss_pred = np.zeros(pred_size, dtype=float)
+            _X = np.zeros([pred_size] + [4, 4, 3], dtype=np.float32)  # Dummy images
+        _Y_true = np.zeros([pred_size] + self.pred.get_shape().as_list()[1:], dtype=np.float32)
+        _Y_pred = np.zeros([pred_size] + self.pred.get_shape().as_list()[1:], dtype=np.float32)
+        _loss_pred = np.zeros(pred_size, dtype=np.float32)
         start_time = time.time()
         for i in range(num_steps):
             try:
@@ -1269,7 +1269,7 @@ class ConvNet(object):
 
         return x
 
-    def upsampling_2d_layer(self, x, scale=2, out_shape=None, align_corners=False, name='upsampling'):
+    def upsampling_2d_layer(self, x, scale=2, out_shape=None, align_corners=True, name='upsampling'):
         if self.channel_first:
             x = tf.transpose(x, perm=[0, 2, 3, 1], name='tp')
         in_shape = x.get_shape()
@@ -1409,7 +1409,7 @@ class ConvNet(object):
                 gcam = tf.cast(gcam, dtype=tf.float32)
             if self.channel_first:
                 gcam = tf.transpose(gcam, perm=[0, 2, 3, 1])
-            gcam = tf.image.resize_bilinear(gcam, self.input_size[0:2], align_corners=False)
+            gcam = tf.image.resize_bilinear(gcam, self.input_size[0:2], align_corners=True)
             gcam = gcam/(tf.reduce_max(gcam, axis=[1, 2, 3], keepdims=True) + eps)
 
             return gcam
