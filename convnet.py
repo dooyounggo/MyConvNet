@@ -254,7 +254,8 @@ class ConvNet(object):
                                                         y=None))
 
                         self.logits = self.d['logits']
-                        self.preds.append(self.d['pred'])
+                        self.pred = self.d['pred']
+                        self.preds.append(self.pred)
                         self.losses.append(self._build_loss(**kwargs))
 
                         self.bytes_in_use.append(tf.contrib.memory_stats.BytesInUse())
@@ -292,6 +293,8 @@ class ConvNet(object):
         l1_factor = kwargs.get('l1_reg', 1e-8)
         l2_factor = kwargs.get('l2_reg', 1e-4)
         ls_factor = kwargs.get('label_smoothing', 0.0)
+        focal_loss_factor = kwargs.get('focal_loss_factor', 0.0)
+
         variables = tf.get_collection('weight_variables')
         valid_eps = 1e-5
 
@@ -341,6 +344,11 @@ class ConvNet(object):
                 valid_mask = tf.cast(valid_mask, dtype=tf.float32)
 
             softmax_losses = tf.nn.softmax_cross_entropy_with_logits_v2(labels=labels, logits=self.logits, axis=axis)
+            if focal_loss_factor > 0.0:
+                axis = 1 if self.channel_first else -1
+                pred = tf.reduce_sum(self.Y*self.pred, axis=axis)
+                focal_loss = tf.pow(1.0 - pred, focal_loss_factor)
+                softmax_losses = focal_loss*softmax_losses
             softmax_loss = tf.reduce_mean(batch_weights*valid_mask*softmax_losses)
 
             loss = softmax_loss + l1_reg_loss + l2_reg_loss
