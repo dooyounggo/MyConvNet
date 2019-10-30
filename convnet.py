@@ -358,7 +358,7 @@ class ConvNet(object):
                 alpha = sigmoid_focal_loss_factor
                 with tf.variable_scope('sigmoid_focal_loss'):
                     pred = tf.reduce_sum(self.Y*self.pred, axis=axis)
-                    sigmoid_focal_loss = 1 - tf.nn.sigmoid(alpha*(1 - 2*pred))
+                    sigmoid_focal_loss = 1.0 - tf.math.sigmoid(alpha*(pred - 0.5))
                     softmax_losses *= sigmoid_focal_loss
             softmax_loss = tf.reduce_mean(batch_weights*valid_mask*softmax_losses)
 
