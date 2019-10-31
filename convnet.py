@@ -341,9 +341,7 @@ class ConvNet(object):
                 valid_mask = tf.cast(valid_mask, dtype=tf.float32)
 
             if ls_factor > 0.0:
-                with tf.variable_scope('label_smoothing'):
-                    ls_factor = tf.constant(ls_factor, dtype=tf.float32, name='label_smoothing_factor')
-                    labels = self.Y*(1.0 - ls_factor) + ls_factor/self.num_classes
+                labels = self.label_smoothing(ls_factor)
             else:
                 labels = self.Y
 
@@ -365,6 +363,13 @@ class ConvNet(object):
             loss = softmax_loss + l1_reg_loss + l2_reg_loss
 
         return loss
+
+    def label_smoothing(self, ls_factor, name='label_smoothing'):
+        with tf.variable_scope(name):
+            ls_factor = tf.constant(ls_factor, dtype=tf.float32, name='label_smoothing_factor')
+            labels = self.Y*(1.0 - ls_factor) + ls_factor/self.num_classes
+
+        return labels
 
     def predict(self, dataset, verbose=False, return_images=True, **kwargs):
         batch_size = kwargs.get('batch_size', 32)
