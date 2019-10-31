@@ -246,7 +246,7 @@ class DataSet(object):
         # Re-balancing based on effective gradient magnitudes
         w = np.sqrt(w)
         alpha = self.num_classes/(1/w).sum()
-        w = alpha*w
+        w = w/alpha
 
         return w
 
