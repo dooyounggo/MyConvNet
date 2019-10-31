@@ -243,7 +243,7 @@ class DataSet(object):
         w = self.examples_per_class.sum()/self.num_classes/self.examples_per_class
         w[np.where(self.examples_per_class == 0)] = 1.0
 
-        # Re-balancing based on effective gradient magnitudes
+        # FIXME: Re-balancing based on effective gradient magnitudes
         w = np.sqrt(w)
         alpha = self.num_classes/(1/w).sum()
         w = w/alpha
