@@ -31,7 +31,7 @@ class SegNet(ConvNet):
 
                         # FIXME: Fake label generation
                         self._broadcast_shape = [tf.shape(self.X)[1], tf.shape(self.X)[2]]
-                        self.Y = tf.map_fn(self._broadcast_nans, self.Y)  # Broadcasting for NaNs
+                        self.Y = tf.map_fn(self.broadcast_nans, self.Y)  # Broadcasting for NaNs
                         self.Y = tf.where(tf.is_nan(self.Y), tf.zeros_like(self.Y), self.Y)
 
                         self.Y = tf.expand_dims(self.Y, axis=-1)  # Attach the channel dimension for augmentation
@@ -103,85 +103,14 @@ class SegNet(ConvNet):
         """
         pass
 
-    def _build_loss(self, **kwargs):
-        l1_factor = kwargs.get('l1_reg', 1e-8)
-        l2_factor = kwargs.get('l2_reg', 1e-4)
-        ls_factor = kwargs.get('label_smoothing', 0.0)
-        focal_loss_factor = kwargs.get('focal_loss_factor', 0.0)
-        sigmoid_focal_loss_factor = kwargs.get('sigmoid_focal_loss_factor', 0.0)
+    def label_smoothing(self, ls_factor, name='label_smoothing'):
+        with tf.variable_scope(name):
+            ls_factor = tf.constant(ls_factor, dtype=tf.float32, name='label_smoothing_factor')
+            avg_labels = tf.nn.avg_pool2d(self.Y, (5, 5), (1, 1), padding='SAME')
+            labels = (1.0 - ls_factor)*self.Y + ls_factor*avg_labels
+        return labels
 
-        variables = tf.get_collection('weight_variables')
-        valid_eps = 1e-5
-
-        w = self.loss_weights
-        if w is None:
-            w = np.ones(self.num_classes, dtype=np.float32)
-        else:
-            w = np.array(w, dtype=np.float32)
-        print('\nLoss weights: ', w)
-
-        with tf.variable_scope('loss'):
-            w = tf.constant(w, dtype=tf.float32, name='class_weights')
-            w = tf.expand_dims(w, axis=0)
-            if self.channel_first:
-                axis = 1
-                while len(w.get_shape()) < len(self.Y.get_shape()):
-                    w = tf.expand_dims(w, axis=-1)
-            else:
-                axis = -1
-                while len(w.get_shape()) < len(self.Y.get_shape()):
-                    w = tf.expand_dims(w, axis=1)
-            batch_weights = tf.reduce_sum(self.Y*w, axis=axis)
-
-            with tf.variable_scope('l1_loss'):
-                if l1_factor > 0.0:
-                    l1_factor = tf.constant(l1_factor, dtype=tf.float32, name='L1_factor')
-                    l1_reg_loss = l1_factor*tf.add_n([tf.reduce_sum(tf.abs(var)) for var in variables])
-                else:
-                    l1_reg_loss = tf.constant(0.0, dtype=tf.float32, name='0')
-            with tf.variable_scope('l2_loss'):
-                if l2_factor > 0.0:
-                    l2_factor = tf.constant(l2_factor, dtype=tf.float32, name='L2_factor')
-                    l2_reg_loss = l2_factor*tf.math.accumulate_n([tf.nn.l2_loss(var) for var in variables])
-                else:
-                    l2_reg_loss = tf.constant(0.0, dtype=tf.float32, name='0')
-
-            with tf.variable_scope('valid_mask'):
-                sumval = tf.reduce_sum(self.Y, axis=axis)
-                valid_g = tf.greater(sumval, 1.0 - valid_eps)
-                valid_l = tf.less(sumval, 1.0 + valid_eps)
-                valid_mask = tf.logical_and(valid_g, valid_l)
-                self.valid_masks.append(valid_mask)
-                valid_mask = tf.cast(valid_mask, dtype=tf.float32)
-
-            if ls_factor > 0.0:
-                with tf.variable_scope('label_smoothing'):  # Boundary smoothing
-                    ls_factor = tf.constant(ls_factor, dtype=tf.float32, name='label_smoothing_factor')
-                    avg_labels = tf.nn.avg_pool2d(self.Y, (5, 5), (1, 1), padding='SAME')
-                    labels = (1.0 - ls_factor)*self.Y + ls_factor*avg_labels
-            else:
-                labels = self.Y
-
-            softmax_losses = tf.nn.softmax_cross_entropy_with_logits_v2(labels=labels, logits=self.logits, axis=axis)
-            if focal_loss_factor > 0.0:
-                gamma = focal_loss_factor
-                with tf.variable_scope('focal_loss'):
-                    pred = tf.reduce_sum(self.Y*self.pred, axis=axis)
-                    focal_loss = tf.pow(1.0 - pred, gamma)
-                    softmax_losses *= focal_loss
-            if sigmoid_focal_loss_factor > 0.0:
-                alpha = sigmoid_focal_loss_factor
-                with tf.variable_scope('sigmoid_focal_loss'):
-                    pred = tf.reduce_sum(self.Y*self.pred, axis=axis)
-                    sigmoid_focal_loss = 1 - tf.nn.sigmoid(alpha*(1 - 2*pred))
-                    softmax_losses *= sigmoid_focal_loss
-            softmax_loss = tf.reduce_mean(batch_weights*valid_mask*softmax_losses)
-
-            loss = softmax_loss + l1_reg_loss + l2_reg_loss
-
-        return loss
-
-    def _broadcast_nans(self, y):
+    def broadcast_nans(self, y):
         return tf.broadcast_to(y, self._broadcast_shape)
 
     def cutmix(self, x, y):
