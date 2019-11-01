@@ -93,6 +93,7 @@ class GCN(SegNet, ResNetCBAM50):     # Global Convolutional Networks
         out_channels = min([self.max_conv_channels, out_channels])
 
         with tf.variable_scope(name):
+            x = self.relu(x)
             with tf.variable_scope('conv_0'):
                 x0 = self.conv_layer(x, [kernel[0], 1], 1, out_channels)
                 d[name + '/conv_0'] = x0
