@@ -12,6 +12,8 @@ class ResNetCBAM(ConvNet):    # Residual networks with Convolutional Block Atten
         self.cam_ratio = 8
         self.sam_kernel = 7
 
+        self.block_activations = True
+
     def _build_model(self, **kwargs):
         d = dict()
 
@@ -69,16 +71,23 @@ class ResNetCBAM(ConvNet):    # Residual networks with Convolutional Block Atten
                 else:
                     s = strides[i]
                 x = self._res_unit(x, kernels[i], s, channels[i], d, drop_rate=dr, name='block_{}/res_{}'.format(i, j))
+            if self.block_activations:
+                with tf.variable_scope('block_{}/act'.format(self._curr_block)):
+                    x = self.batch_norm(x, shift=True, scale=True, scope='bn')
+                    d['block_{}/'.format(self._curr_block) + '/bn'] = x
+                    x = self.relu(x, name='relu')
+                    d['block_{}/'.format(self._curr_block) + '/relu'] = x
             d['block_{}'.format(self._curr_block)] = x
 
         if self.backbone_only is False:
             self._curr_block = None
             with tf.variable_scope('block_{}'.format(self._curr_block)):
                 with tf.variable_scope('logits'):
-                    x = self.batch_norm(x, shift=True, scale=True, scope='bn')
-                    d['logits' + '/bn'] = x
-                    x = self.relu(x, name='relu')
-                    d['logits' + '/relu'] = x
+                    if not self.block_activations:
+                        x = self.batch_norm(x, shift=True, scale=True, scope='bn')
+                        d['logits' + '/bn'] = x
+                        x = self.relu(x, name='relu')
+                        d['logits' + '/relu'] = x
 
                     axis = [2, 3] if self.channel_first else [1, 2]
                     x = tf.reduce_mean(x, axis=axis)
