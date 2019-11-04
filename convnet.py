@@ -356,7 +356,8 @@ class ConvNet(object):
                 alpha = sigmoid_focal_loss_factor
                 with tf.variable_scope('sigmoid_focal_loss'):
                     pred = tf.reduce_sum(self.Y*self.pred, axis=axis)
-                    sigmoid_focal_loss = 1.0 - tf.math.sigmoid(alpha*(pred - 0.5))
+                    sigmoid_focal_loss = tf.stop_gradient(1.0 - tf.math.sigmoid(alpha*(pred - 0.5)))
+                    sigmoid_focal_loss /= 1.0 - tf.math.sigmoid(-0.5*alpha)
                     softmax_losses *= sigmoid_focal_loss
             softmax_loss = tf.reduce_mean(batch_weights*valid_mask*softmax_losses)
 
@@ -1210,7 +1211,7 @@ class ConvNet(object):
 
         return x
 
-    def group_norm(self, x, num_groups=8, scale=True, shift=True, epsilon=1e-4, scope='gn'):
+    def group_norm(self, x, num_groups=8, scale=True, shift=True, zero_scale_init=False, epsilon=1e-4, scope='gn'):
         if self.blocks_to_train is None:
             trainable = True
         elif self._curr_block in self.blocks_to_train:
@@ -1258,8 +1259,9 @@ class ConvNet(object):
                     beta_ema = None
 
                 if scale:
+                    scale_initializer = tf.zeros_initializer() if zero_scale_init else tf.ones_initializer()
                     gamma = tf.get_variable('gamma', in_channels, dtype=tf.float32,
-                                            initializer=tf.ones_initializer(), trainable=trainable)
+                                            initializer=scale_initializer, trainable=trainable)
                     if not tf.get_variable_scope().reuse:
                         tf.add_to_collection('block{}_variables'.format(self._curr_block), gamma)
                         tf.add_to_collection('block{}_batch_norm_variables'.format(self._curr_block), gamma)
@@ -1296,10 +1298,14 @@ class ConvNet(object):
     def upsampling_2d_layer(self, x, scale=2, out_shape=None, align_corners=True, name='upsampling'):
         if self.channel_first:
             x = tf.transpose(x, perm=[0, 2, 3, 1], name='tp')
+        if self.dtype is not tf.float32:
+            x = tf.cast(x, dtype=tf.float32)
         in_shape = x.get_shape()
         if out_shape is None:
             out_shape = [in_shape[1]*scale, in_shape[2]*scale]
         x = tf.image.resize_bilinear(x, out_shape, align_corners=align_corners, name=name)
+        if self.dtype is not tf.float32:
+            x = tf.cast(x, dtype=self.dtype)
         if self.channel_first:
             x = tf.transpose(x, perm=[0, 3, 1, 2], name='tp')
 
