@@ -1,12 +1,13 @@
 import tensorflow as tf
 from segnet import SegNet
-from models.resnet_v2_d_cbam import ResNetCBAM50
+from models.resnet_v2_d_cbam import ResNetCBAM50 as ResNet
 from models.efficientnet import EfficientNetB3 as EffNet
 
 
-class GCN(SegNet, ResNetCBAM50):     # Global Convolutional Networks
+class GCN(SegNet, ResNet):     # Global Convolutional Networks
     def _init_params(self):
-        ResNetCBAM50._init_params(self)
+        ResNet._init_params(self)
+        self.block_activations = False
         self.max_conv_channels = 64
         self.conv_channels = [self.num_classes, self.num_classes, self.num_classes, self.num_classes]
         self.conv_kernels = [25, 25, 25, 25]
@@ -93,7 +94,6 @@ class GCN(SegNet, ResNetCBAM50):     # Global Convolutional Networks
         out_channels = min([self.max_conv_channels, out_channels])
 
         with tf.variable_scope(name):
-            x = self.relu(x)
             with tf.variable_scope('conv_0'):
                 x0 = self.conv_layer(x, [kernel[0], 1], 1, out_channels)
                 d[name + '/conv_0'] = x0
