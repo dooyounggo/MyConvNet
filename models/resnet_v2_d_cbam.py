@@ -12,7 +12,7 @@ class ResNetCBAM(ConvNet):    # Residual networks with Convolutional Block Atten
         self.cam_ratio = 8
         self.sam_kernel = 7
 
-        self.block_activations = True
+        self.block_activations = False
 
     def _build_model(self, **kwargs):
         d = dict()
