@@ -867,7 +867,7 @@ class ConvNet(object):
                         weight_standardization=False, name='weights'):
         if self.blocks_to_train is None:
             trainable = True
-        elif self._curr_block in self.blocks_to_train:
+        elif self._curr_block is None or self._curr_block in self.blocks_to_train:
             trainable = True
         else:
             trainable = False
@@ -910,7 +910,7 @@ class ConvNet(object):
     def bias_variable(self, shape, initializer=tf.initializers.zeros(), name='biases'):
         if self.blocks_to_train is None:
             trainable = True
-        elif self._curr_block in self.blocks_to_train:
+        elif self._curr_block is None or self._curr_block in self.blocks_to_train:
             trainable = True
         else:
             trainable = False
@@ -1090,13 +1090,13 @@ class ConvNet(object):
         else:
             if self.blocks_to_train is None:
                 update = True
-            elif self._curr_block in self.blocks_to_train:
+            elif self._curr_block is None or self._curr_block in self.blocks_to_train:
                 update = True
             else:
                 update = False
         if self.blocks_to_train is None:
             trainable = True
-        elif self._curr_block in self.blocks_to_train:
+        elif self._curr_block is None or self._curr_block in self.blocks_to_train:
             trainable = True
         else:
             trainable = False
