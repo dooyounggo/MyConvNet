@@ -9,7 +9,7 @@ class GCN(SegNet, ResNet):     # Global Convolutional Networks
         ResNet._init_params(self)
         self.block_activations = False
         self.max_conv_channels = 64
-        self.conv_channels = [self.num_classes, self.num_classes, self.num_classes, self.num_classes]
+        self.conv_channels = [4*self.num_classes, 3*self.num_classes, 2*self.num_classes, self.num_classes]
         self.conv_kernels = [25, 25, 25, 25]
         self.conv_units = [1, 1, 1, 1]
         self.deconv_method = 'UPSAMPLING'    # Upsampling: bilinear up-sampling, conv: transposed convolution
@@ -76,9 +76,7 @@ class GCN(SegNet, ResNet):     # Global Convolutional Networks
         self._curr_block = None
         with tf.variable_scope('block_{}'.format(self._curr_block)):
             with tf.variable_scope('logits'):
-                in_channels = x.get_shape()[1] if self.channel_first else x.get_shape()[-1]
-                if in_channels != self.num_classes:
-                    x = self.conv_layer(x, 1, 1, self.num_classes)
+                x = self.conv_layer(x, 1, 1, self.num_classes)
                 d['logits'] = x
 
                 axis = 1 if self.channel_first else -1
