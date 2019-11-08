@@ -58,8 +58,8 @@ class ResNetCBAM(ConvNet):    # Residual networks with Convolutional Block Atten
                 d['block_0' + '/conv_2' + '/bn'] = x
                 x = self.relu(x, name='relu')
                 d['block_0' + '/conv_2' + '/relu'] = x
-            x = self.max_pool(x, 3, 2, padding='SAME')
             d['block_0'] = x
+            x = self.max_pool(x, 3, 2, padding='SAME')
 
         for i in range(1, self.num_blocks):
             self._curr_block = i
@@ -99,7 +99,7 @@ class ResNetCBAM(ConvNet):    # Residual networks with Convolutional Block Atten
                             x = self.fc_layer(x, num_channels//self.feature_reduction)
                             x = self.relu(x, name='relu')
 
-                    x = tf.nn.dropout(x, rate=self.dropout_rate_logits)
+                    x = tf.nn.dropout(x, rate=self.dropout_rate_features)
                     x = self.fc_layer(x, self.num_classes)
                     d['logits'] = x
                     d['pred'] = tf.nn.softmax(x)
