@@ -6,10 +6,10 @@ from convnet import ConvNet
 class EfficientNet(ConvNet):
     def _init_params(self):
         self.channels = [32, 16, 24, 40, 80, 112, 192, 320, 1280]
-        self.kernels = [3, 3, 3, 5, 3, 5, 5, 3]
-        self.strides = [2, 1, 2, 2, 2, 1, 2, 1]
-        self.conv_units = [1, 2, 2, 3, 3, 4, 1]
-        self.multipliers = [1, 6, 6, 6, 6, 6, 6]
+        self.kernels = [3, 3, 3, 5, 3, 5, 5, 3, None]
+        self.strides = [2, 1, 2, 2, 2, 1, 2, 1, None]
+        self.conv_units = [None, 1, 2, 2, 3, 3, 4, 1, None]
+        self.multipliers = [None, 1, 6, 6, 6, 6, 6, 6, None]
 
         self.se_reduction = 4
 
@@ -28,10 +28,10 @@ class EfficientNet(ConvNet):
         multipliers = self.multipliers
 
         len_c = len(channels)
-        len_k = len(kernels) + 1
-        len_s = len(strides) + 1
-        len_r = len(res_units) + 2
-        len_m = len(multipliers) + 2
+        len_k = len(kernels)
+        len_s = len(strides)
+        len_r = len(res_units)
+        len_m = len(multipliers)
         self._num_blocks = min([len_c, len_k, len_s, len_r, len_m])
 
         with tf.variable_scope('block_0'):
@@ -39,8 +39,8 @@ class EfficientNet(ConvNet):
                 x = self.conv_layer(X_input, kernels[0], strides[0], channels[0], padding='SAME', biased=False)
                 print('block_0' + '/conv_0.shape', x.get_shape().as_list())
                 d['block_0' + '/conv_0'] = x
-                x = self.batch_norm(x, shift=True, scale=True, scope='bn')
-                d['block_0' + '/conv_0' + '/bn'] = x
+                x = self.batch_norm(x, shift=True, scale=True, scope='norm')
+                d['block_0' + '/conv_0' + '/norm'] = x
                 x = self.swish(x, name='swish')
                 d['block_0' + '/conv_0' + '/swish'] = x
             d['block_0'] = x
@@ -54,7 +54,7 @@ class EfficientNet(ConvNet):
                     s = 1
                 else:
                     s = strides[i]
-                x = self._mb_conv_unit(x, kernels[i], s, channels[i], multipliers[i - 1], d,
+                x = self._mb_conv_unit(x, kernels[i], s, channels[i], multipliers[i], d,
                                        drop_rate=dr, name='block_{}/mbconv_{}'.format(i, j))
             d['block_{}'.format(self._curr_block)] = x
             
@@ -64,8 +64,8 @@ class EfficientNet(ConvNet):
                 x = self.conv_layer(x, 1, 1, self.channels[-1], padding='SAME', biased=False, depthwise=False)
                 print('block_{}'.format(self._curr_block) + '/conv_0.shape', x.get_shape().as_list())
                 d['logits' + '/conv_0'] = x
-                x = self.batch_norm(x, shift=True, scale=True, scope='bn')
-                d['logits' + '/conv_0' + '/bn'] = x
+                x = self.batch_norm(x, shift=True, scale=True, scope='norm')
+                d['logits' + '/conv_0' + '/norm'] = x
                 x = self.swish(x, name='swish')
                 d['logits' + '/conv_0' + '/swish'] = x
         d['block_{}'.format(self._curr_block)] = x
@@ -111,8 +111,8 @@ class EfficientNet(ConvNet):
                     x = self.conv_layer(x, 1, 1, in_channels*multiplier, padding='SAME', biased=False, depthwise=False)
                     print(name + '/conv_0.shape', x.get_shape().as_list())
                     d[name + '/conv_0'] = x
-                    x = self.batch_norm(x, shift=True, scale=True, scope='bn')
-                    d[name + '/conv_0' + '/bn'] = x
+                    x = self.batch_norm(x, shift=True, scale=True, scope='norm')
+                    d[name + '/conv_0' + '/norm'] = x
                     x = self.swish(x, name='swish')
                     d[name + '/conv_0' + '/swish'] = x
 
@@ -121,8 +121,8 @@ class EfficientNet(ConvNet):
                                     padding='SAME', biased=False, depthwise=True)
                 print(name + '/conv_1.shape', x.get_shape().as_list())
                 d[name + '/conv_1'] = x
-                x = self.batch_norm(x, shift=True, scale=True, scope='bn')
-                d[name + '/conv_1' + '/bn'] = x
+                x = self.batch_norm(x, shift=True, scale=True, scope='norm')
+                d[name + '/conv_1' + '/norm'] = x
                 x = self.swish(x, name='swish')
                 d[name + '/conv_1' + '/swish'] = x
 
@@ -134,8 +134,8 @@ class EfficientNet(ConvNet):
                 x = self.conv_layer(x, 1, 1, out_channels, padding='SAME', biased=False, depthwise=False)
                 print(name + '/conv_2.shape', x.get_shape().as_list())
                 d[name + '/conv_2'] = x
-                x = self.batch_norm(x, shift=True, scale=True, zero_scale_init=skip is not None, scope='bn')
-                d[name + '/conv_2' + '/bn'] = x
+                x = self.batch_norm(x, shift=True, scale=True, zero_scale_init=skip is not None, scope='norm')
+                d[name + '/conv_2' + '/norm'] = x
 
             if skip is not None:
                 x = self.stochastic_depth(x, skip, drop_rate=drop_rate)
