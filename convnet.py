@@ -49,7 +49,7 @@ class ConvNet(object):
         self.pad_value = kwargs.get('pad_value', 0.5)
 
         self._dropout_weights = kwargs.get('dropout_weights', False)
-        self._dropout_logits = kwargs.get('dropout_logits', False)
+        self._dropout_features = kwargs.get('dropout_features', False)
 
         self._blocks_to_train = kwargs.get('blocks_to_train', None)
         self._update_batch_norm = kwargs.get('update_batch_norm', True)
@@ -97,10 +97,10 @@ class ConvNet(object):
                     self.dropout_rate_weights = self.dropout_rate
                 else:
                     self.dropout_rate_weights = tf.constant(0.0, dtype=self.dtype, name='0')
-                if self.dropout_logits:
-                    self.dropout_rate_logits = self.dropout_rate
+                if self.dropout_features:
+                    self.dropout_rate_features = self.dropout_rate
                 else:
-                    self.dropout_rate_logits = tf.constant(0.0, dtype=self.dtype, name='0')
+                    self.dropout_rate_features = tf.constant(0.0, dtype=self.dtype, name='0')
                 if kwargs.get('zero_center', True):
                     self.image_mean = tf.constant(kwargs.get('image_mean', 0.5), dtype=tf.float32, name='image_mean')
                 else:
@@ -168,8 +168,8 @@ class ConvNet(object):
         return self._dropout_weights
 
     @property
-    def dropout_logits(self):
-        return self._dropout_logits
+    def dropout_features(self):
+        return self._dropout_features
 
     @property
     def blocks_to_train(self):
@@ -1220,27 +1220,27 @@ class ConvNet(object):
         else:
             trainable = False
 
-        batch_size = tf.shape(x)[0]
-        in_shape = x.get_shape().as_list()
-        if len(in_shape) > 2:
-            if self.channel_first:
-                _, in_channels, h, w = in_shape
-                x_shape = [batch_size, num_groups, in_channels//num_groups, h, w]
-                axis = [2, 3, 4]
-                var_shape = [1, in_channels, 1, 1]
-            else:
-                _, h, w, in_channels = in_shape
-                x_shape = [batch_size, h, w, in_channels//num_groups, num_groups]
-                axis = [1, 2, 3]
-                var_shape = [1, 1, 1, in_channels]
-        else:
-            in_channels = in_shape[1]
-            h, w = 1, 1
-            x_shape = [batch_size, num_groups, in_channels//num_groups]
-            axis = [2]
-            var_shape = [1, in_channels]
-
         with tf.variable_scope(scope):
+            batch_size = tf.shape(x)[0]
+            in_shape = x.get_shape().as_list()
+            if len(in_shape) > 2:
+                if self.channel_first:
+                    _, in_channels, h, w = in_shape
+                    x_shape = [batch_size, num_groups, in_channels // num_groups, h, w]
+                    axis = [2, 3, 4]
+                    var_shape = [1, in_channels, 1, 1]
+                else:
+                    _, h, w, in_channels = in_shape
+                    x_shape = [batch_size, h, w, in_channels // num_groups, num_groups]
+                    axis = [1, 2, 3]
+                    var_shape = [1, 1, 1, in_channels]
+            else:
+                in_channels = in_shape[1]
+                h, w = 1, 1
+                x_shape = [batch_size, num_groups, in_channels // num_groups]
+                axis = [2]
+                var_shape = [1, in_channels]
+
             with tf.device('/cpu:0'):
                 if shift:
                     beta = tf.get_variable('beta', in_channels, dtype=tf.float32,
@@ -1297,18 +1297,19 @@ class ConvNet(object):
         return x
 
     def upsampling_2d_layer(self, x, scale=2, out_shape=None, align_corners=True, name='upsampling'):
-        if self.channel_first:
-            x = tf.transpose(x, perm=[0, 2, 3, 1], name='tp')
-        if self.dtype is not tf.float32:
-            x = tf.cast(x, dtype=tf.float32)
-        in_shape = x.get_shape()
-        if out_shape is None:
-            out_shape = [in_shape[1]*scale, in_shape[2]*scale]
-        x = tf.image.resize_bilinear(x, out_shape, align_corners=align_corners, name=name)
-        if self.dtype is not tf.float32:
-            x = tf.cast(x, dtype=self.dtype)
-        if self.channel_first:
-            x = tf.transpose(x, perm=[0, 3, 1, 2], name='tp')
+        with tf.variable_scope('name'):
+            if self.channel_first:
+                x = tf.transpose(x, perm=[0, 2, 3, 1])
+            if self.dtype is not tf.float32:
+                x = tf.cast(x, dtype=tf.float32)
+            in_shape = x.get_shape()
+            if out_shape is None:
+                out_shape = [in_shape[1]*scale, in_shape[2]*scale]
+            x = tf.image.resize_bilinear(x, out_shape, align_corners=align_corners, name=name)
+            if self.dtype is not tf.float32:
+                x = tf.cast(x, dtype=self.dtype)
+            if self.channel_first:
+                x = tf.transpose(x, perm=[0, 3, 1, 2])
 
         return x
 
