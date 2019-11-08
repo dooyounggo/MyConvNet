@@ -892,12 +892,13 @@ class ConvNet(object):
                               lambda: weights_ema)
 
             if weight_standardization:
-                w_len = len(shape)
-                w_idx = list(range(w_len))
-                mean = tf.math.reduce_mean(weights, axis=w_idx[:-1], keepdims=True)
-                weights = weights - mean
-                std = tf.math.reduce_std(weights, axis=w_idx[:-1], keepdims=True)
-                weights = weights/(std + 1e-5)
+                with tf.variable_scope('ws'):
+                    w_len = len(shape)
+                    w_idx = list(range(w_len))
+                    mean = tf.math.reduce_mean(weights, axis=w_idx[:-1], keepdims=True)
+                    weights = weights - mean
+                    std = tf.math.reduce_std(weights, axis=w_idx[:-1], keepdims=True)
+                    weights = weights/(std + 1e-5)
 
             if self.dtype is not tf.float32:
                 weights = tf.cast(weights, dtype=self.dtype)
