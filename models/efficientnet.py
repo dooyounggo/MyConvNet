@@ -84,7 +84,7 @@ class EfficientNet(ConvNet):
                             x = self.fc_layer(x, num_channels//self.feature_reduction)
                             x = self.swish(x, name='swish')
 
-                    x = tf.nn.dropout(x, rate=self.dropout_rate_logits)
+                    x = tf.nn.dropout(x, rate=self.dropout_rate_features)
                     x = self.fc_layer(x, self.num_classes)
 
                     d['logits'] = x
