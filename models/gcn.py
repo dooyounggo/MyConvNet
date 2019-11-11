@@ -77,10 +77,10 @@ class GCN(SegNet, ResNet):     # Global Convolutional Networks
         with tf.variable_scope('block_{}'.format(self._curr_block)):
             with tf.variable_scope('logits'):
                 x = self.conv_layer(x, 1, 1, self.num_classes)
+                if self.channel_first:
+                    x = tf.transpose(x, perm=[0, 2, 3, 1])
                 d['logits'] = x
-
-                axis = 1 if self.channel_first else -1
-                d['pred'] = tf.nn.softmax(x, axis=axis)
+                d['pred'] = tf.nn.softmax(x)
 
         return d
 
