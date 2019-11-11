@@ -7,7 +7,7 @@ class ResNetCBAM(ConvNet):    # Residual networks with Convolutional Block Atten
         self.channels = [64, 256, 512, 1024, 2048]
         self.kernels = [3, 3, 3, 3, 3]
         self.strides = [2, 1, 2, 2, 2]
-        self.res_units = [3, 4, 6, 3]
+        self.res_units = [None, 3, 4, 6, 3]
 
         self.cam_ratio = 8
         self.sam_kernel = 7
@@ -30,7 +30,7 @@ class ResNetCBAM(ConvNet):    # Residual networks with Convolutional Block Atten
         len_c = len(channels)
         len_k = len(kernels)
         len_s = len(strides)
-        len_r = len(res_units) + 1
+        len_r = len(res_units)
         self._num_blocks = min([len_c, len_k, len_s, len_r])
 
         with tf.variable_scope('block_0'):
@@ -66,7 +66,7 @@ class ResNetCBAM(ConvNet):    # Residual networks with Convolutional Block Atten
             self._curr_block = i
             dr = initial_drop_rate + (final_drop_rate - initial_drop_rate)*i/(self.num_blocks - 1)
             print('block {} drop rate = {:.3f}'.format(i, dr))
-            for j in range(res_units[i-1]):
+            for j in range(res_units[i]):
                 if j > 0:
                     s = 1
                 else:
