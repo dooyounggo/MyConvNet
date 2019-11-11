@@ -13,6 +13,8 @@ class ResNetCBAMDilated(ConvNet):    # ResNet with dilated convolutions
         self.cam_ratio = 8
         self.sam_kernel = 7
 
+        self.multi_grid = [1, 2]
+
         self.block_activations = False
 
     def _build_model(self, **kwargs):
@@ -74,7 +76,9 @@ class ResNetCBAMDilated(ConvNet):    # ResNet with dilated convolutions
                     s = 1
                 else:
                     s = strides[i]
-                x = self._res_unit(x, kernels[i], s, channels[i], dilation[i],
+                mg_idx = j % len(self.multi_grid)
+                dil = (dilation[i]*self.multi_grid[mg_idx])//2
+                x = self._res_unit(x, kernels[i], s, channels[i], dil,
                                    d, drop_rate=dr, name='block_{}/res_{}'.format(i, j))
             if self.block_activations:
                 with tf.variable_scope('block_{}/act'.format(self._curr_block)):
