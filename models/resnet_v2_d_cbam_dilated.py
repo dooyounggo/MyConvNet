@@ -13,7 +13,7 @@ class ResNetCBAMDilated(ConvNet):    # ResNet with dilated convolutions
         self.cam_ratio = 8
         self.sam_kernel = 7
 
-        self.multi_grid = [1, 2]
+        self.multi_grid = [1, 2, 1]
 
         self.block_activations = False
 
@@ -77,7 +77,7 @@ class ResNetCBAMDilated(ConvNet):    # ResNet with dilated convolutions
                 else:
                     s = strides[i]
                 mg_idx = j % len(self.multi_grid)
-                dil = (dilation[i]*self.multi_grid[mg_idx])//2
+                dil = max(1, (dilation[i]*self.multi_grid[mg_idx])//2)
                 x = self._res_unit(x, kernels[i], s, channels[i], dil,
                                    d, drop_rate=dr, name='block_{}/res_{}'.format(i, j))
             if self.block_activations:
