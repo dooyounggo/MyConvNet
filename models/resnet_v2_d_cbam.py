@@ -58,8 +58,9 @@ class ResNetCBAM(ConvNet):    # Residual networks with Convolutional Block Atten
                 d['block_0' + '/conv_2' + '/bn'] = x
                 x = self.relu(x, name='relu')
                 d['block_0' + '/conv_2' + '/relu'] = x
-            d['block_0'] = x
+            d['block_-1'] = x
             x = self.max_pool(x, 3, 2, padding='SAME')
+            d['block_0'] = x
 
         for i in range(1, self.num_blocks):
             self._curr_block = i
