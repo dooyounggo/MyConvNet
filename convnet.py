@@ -1297,7 +1297,7 @@ class ConvNet(object):
         return x
 
     def upsampling_2d_layer(self, x, scale=2, out_shape=None, align_corners=True, name='upsampling'):
-        with tf.variable_scope('name'):
+        with tf.variable_scope(name):
             if self.channel_first:
                 x = tf.transpose(x, perm=[0, 2, 3, 1])
             if self.dtype is not tf.float32:
