@@ -37,7 +37,6 @@ class ResNetCBAMDilated(ConvNet):    # ResNet with dilated convolutions
         len_r = len(res_units)
         len_d = len(dilation)
         self._num_blocks = min([len_c, len_k, len_s, len_r, len_d])
-        print(len_c, len_k, len_s, len_r, len_d)
 
         with tf.variable_scope('block_0'):
             with tf.variable_scope('conv_0'):
