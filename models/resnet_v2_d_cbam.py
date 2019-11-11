@@ -209,10 +209,10 @@ class ResNetCBAM(ConvNet):    # Residual networks with Convolutional Block Atten
 class ResNetCBAM50(ResNetCBAM):
     def _init_params(self):
         super()._init_params()
-        self.res_units = [3, 4, 6, 3]
+        self.res_units = [None, 3, 4, 6, 3]
 
 
 class ResNetCBAM101(ResNetCBAM):
     def _init_params(self):
         super()._init_params()
-        self.res_units = [3, 4, 23, 3]
+        self.res_units = [None, 3, 4, 23, 3]
