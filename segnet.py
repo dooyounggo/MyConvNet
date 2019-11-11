@@ -55,7 +55,6 @@ class SegNet(ConvNet):
 
                         if self.channel_first:
                             self.X = tf.transpose(self.X, perm=[0, 3, 1, 2])
-                            self.Y = tf.transpose(self.Y, perm=[0, 3, 1, 2])
 
                         if self.dtype is not tf.float32:
                             with tf.name_scope('gpu{}/cast/'.format(i)):
@@ -76,9 +75,6 @@ class SegNet(ConvNet):
                         self.logits = self.d['logits']
                         self.pred = self.d['pred']
                         self.losses.append(self._build_loss(**kwargs))
-
-                        if self.channel_first:
-                            self.pred = tf.transpose(self.pred, perm=[0, 2, 3, 1])
                         self.preds.append(self.pred)
 
                         self.bytes_in_use.append(tf.contrib.memory_stats.BytesInUse())
