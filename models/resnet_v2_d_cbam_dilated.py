@@ -76,8 +76,11 @@ class ResNetCBAMDilated(ConvNet):    # ResNet with dilated convolutions
                     s = 1
                 else:
                     s = strides[i]
-                mg_idx = j % len(self.multi_grid)
-                dil = max(1, (dilation[i]*self.multi_grid[mg_idx])//2)
+                if dilation[i] == 1:
+                    dil = 1
+                else:
+                    mg_idx = j % len(self.multi_grid)
+                    dil = dilation[i]*self.multi_grid[mg_idx]
                 x = self._res_unit(x, kernels[i], s, channels[i], dil,
                                    d, drop_rate=dr, name='block_{}/res_{}'.format(i, j))
             if self.block_activations:
