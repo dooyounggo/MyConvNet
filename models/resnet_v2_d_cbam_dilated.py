@@ -37,6 +37,7 @@ class ResNetCBAMDilated(ConvNet):    # ResNet with dilated convolutions
         len_r = len(res_units)
         len_d = len(dilation)
         self._num_blocks = min([len_c, len_k, len_s, len_r, len_d])
+        print(len_c, len_k, len_s, len_r, len_d)
 
         with tf.variable_scope('block_0'):
             with tf.variable_scope('conv_0'):
@@ -221,13 +222,13 @@ class ResNetCBAM50OS16(ResNetCBAMDilated):
     def _init_params(self):
         super()._init_params()
         self.strides = [2, 1, 2, 2, 1]
-        self.res_units = [3, 4, 6, 3]
-        self.dilations = [1, 1, 1, 2]
+        self.res_units = [None, 3, 4, 6, 3]
+        self.dilations = [None, 1, 1, 1, 2]
 
 
 class ResNetCBAM50OS8(ResNetCBAMDilated):
     def _init_params(self):
         super()._init_params()
         self.strides = [2, 1, 2, 1, 1]
-        self.res_units = [3, 4, 6, 3]
-        self.dilations = [1, 1, 2, 4]
+        self.res_units = [None, 3, 4, 6, 3]
+        self.dilations = [None, 1, 1, 2, 4]
