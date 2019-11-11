@@ -309,15 +309,9 @@ class ConvNet(object):
         with tf.variable_scope('loss'):
             w = tf.constant(w, dtype=tf.float32, name='class_weights')
             w = tf.expand_dims(w, axis=0)
-            if self.channel_first:
-                axis = 1
-                while len(w.get_shape()) < len(self.Y.get_shape()):
-                    w = tf.expand_dims(w, axis=-1)
-            else:
-                axis = -1
-                while len(w.get_shape()) < len(self.Y.get_shape()):
-                    w = tf.expand_dims(w, axis=1)
-            batch_weights = tf.reduce_sum(self.Y*w, axis=axis)
+            while len(w.get_shape()) < len(self.Y.get_shape()):
+                w = tf.expand_dims(w, axis=1)
+            batch_weights = tf.reduce_sum(self.Y*w, axis=-1)
 
             with tf.variable_scope('l1_loss'):
                 if l1_factor > 0.0:
@@ -333,7 +327,7 @@ class ConvNet(object):
                     l2_reg_loss = tf.constant(0.0, dtype=tf.float32, name='0')
 
             with tf.variable_scope('valid_mask'):
-                sumval = tf.reduce_sum(self.Y, axis=axis)
+                sumval = tf.reduce_sum(self.Y, axis=-1)
                 valid_g = tf.greater(sumval, 1.0 - valid_eps)
                 valid_l = tf.less(sumval, 1.0 + valid_eps)
                 valid_mask = tf.logical_and(valid_g, valid_l)
@@ -345,17 +339,17 @@ class ConvNet(object):
             else:
                 labels = self.Y
 
-            softmax_losses = tf.nn.softmax_cross_entropy_with_logits_v2(labels=labels, logits=self.logits, axis=axis)
+            softmax_losses = tf.nn.softmax_cross_entropy_with_logits_v2(labels=labels, logits=self.logits, axis=-1)
             if focal_loss_factor > 0.0:
                 gamma = focal_loss_factor
                 with tf.variable_scope('focal_loss'):
-                    pred = tf.reduce_sum(self.Y*self.pred, axis=axis)
+                    pred = tf.reduce_sum(self.Y*self.pred, axis=-1)
                     focal_loss = tf.pow(1.0 - pred, gamma)
                     softmax_losses *= focal_loss
             if sigmoid_focal_loss_factor > 0.0:
                 alpha = sigmoid_focal_loss_factor
                 with tf.variable_scope('sigmoid_focal_loss'):
-                    pred = tf.reduce_sum(self.Y*self.pred, axis=axis)
+                    pred = tf.reduce_sum(self.Y*self.pred, axis=-1)
                     sigmoid_focal_loss = tf.stop_gradient(1.0 - tf.math.sigmoid(alpha*(pred - 0.5)))
                     sigmoid_focal_loss /= 1.0 - tf.math.sigmoid(-0.5*alpha)
                     softmax_losses *= sigmoid_focal_loss
