@@ -378,7 +378,7 @@ def imshow_subplot(images, num_rows=3, num_cols=3, figure_title='Figure'):
                 break
 
 
-def plot_seg_results(images, y_true, y_pred=None, num_rows=3, num_cols=3, colors=CITY_COLORMAP, save_dir=None, start_idx=0):
+def plot_seg_results(images, y_true, y_pred=None, num_rows=3, num_cols=3, colors=None, save_dir=None, start_idx=0):
     if y_pred is None:
         y_pred = y_true
     if y_true.shape[-1] == 1:
