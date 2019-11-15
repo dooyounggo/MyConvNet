@@ -49,7 +49,7 @@ class EfficientNet(ConvNet):
             self._curr_block = i
             dr = initial_drop_rate + (final_drop_rate - initial_drop_rate)*i/(self.num_blocks - 2)
             print('block {} drop rate = {:.3f}'.format(i, dr))
-            for j in range(res_units[i - 1]):
+            for j in range(res_units[i]):
                 if j > 0:
                     s = 1
                 else:
