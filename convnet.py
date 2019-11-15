@@ -32,7 +32,7 @@ class ConvNet(object):
         config.gpu_options.force_gpu_compatible = True
         config.allow_soft_placement = False
         config.gpu_options.allow_growth = True
-        config.gpu_options.per_process_gpu_memory_fraction = 0.7  # FIXME
+        # config.gpu_options.per_process_gpu_memory_fraction = 0.7  # FIXME
         self.session = tf.Session(graph=graph, config=config)  # TF main session
         self.top_scope = tf.get_variable_scope()
 
@@ -885,17 +885,17 @@ class ConvNet(object):
                               lambda: weights,
                               lambda: weights_ema)
 
-            if weight_standardization:
-                with tf.variable_scope('ws'):
-                    w_len = len(shape)
-                    w_idx = list(range(w_len))
-                    mean = tf.math.reduce_mean(weights, axis=w_idx[:-1], keepdims=True)
-                    weights = weights - mean
-                    std = tf.math.reduce_std(weights, axis=w_idx[:-1], keepdims=True)
-                    weights = weights/(std + 1e-5)
+        if weight_standardization:
+            with tf.variable_scope('ws'):
+                w_len = len(shape)
+                w_idx = list(range(w_len))
+                mean = tf.math.reduce_mean(weights, axis=w_idx[:-1], keepdims=True)
+                weights = weights - mean
+                std = tf.math.reduce_std(weights, axis=w_idx[:-1], keepdims=True)
+                weights = weights/(std + 1e-5)
 
-            if self.dtype is not tf.float32:
-                weights = tf.cast(weights, dtype=self.dtype)
+        if self.dtype is not tf.float32:
+            weights = tf.cast(weights, dtype=self.dtype)
 
         if self.dropout_weights:
             return tf.nn.dropout(weights, rate=self.dropout_rate_weights)
@@ -929,8 +929,8 @@ class ConvNet(object):
                              lambda: biases,
                              lambda: biases_ema)
 
-            if self.dtype is not tf.float32:
-                biases = tf.cast(biases, dtype=self.dtype)
+        if self.dtype is not tf.float32:
+            biases = tf.cast(biases, dtype=self.dtype)
 
         return biases
 
@@ -1277,9 +1277,9 @@ class ConvNet(object):
                 beta = tf.reshape(beta, var_shape)
                 gamma = tf.reshape(gamma, var_shape)
 
+            x = tf.reshape(x, shape=x_shape)
             if self.dtype is not tf.float32:
                 x = tf.cast(x, dtype=tf.float32)
-            x = tf.reshape(x, shape=x_shape)
             mean, var = tf.nn.moments(x, axes=axis, keepdims=True)
             x = (x - mean)/tf.math.sqrt(var + epsilon)
             x = tf.reshape(x, shape=[batch_size] + in_shape[1:])
