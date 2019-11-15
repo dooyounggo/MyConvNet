@@ -147,15 +147,15 @@ class EfficientNet(ConvNet):
         in_channels = x.get_shape()[1] if self.channel_first else x.get_shape()[-1]
         axis = [2, 3] if self.channel_first else [1, 2]
         with tf.variable_scope(name):
-            x = tf.reduce_mean(x, axis=axis)
+            x = tf.reduce_mean(x, axis=axis, keepdims=True)
 
-            with tf.variable_scope('fc_0'):
-                x = self.fc_layer(x, in_channels//reduction)
+            with tf.variable_scope('conv_0'):
+                x = self.conv_layer(x, 1, 1, in_channels//reduction)
 
             x = self.swish(x, name='swish')
 
-            with tf.variable_scope('fc_1'):
-                x = self.fc_layer(x, in_channels)
+            with tf.variable_scope('conv_1'):
+                x = self.conv_layer(x, 1, 1, in_channels)
 
             x = self.sigmoid(x)
             batch_size = tf.shape(x)[0]
