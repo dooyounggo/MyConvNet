@@ -9,7 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
 from evaluators import IoUEvaluator as Evaluator
-
+from subsets.cityscapes import CITY_COLORMAP
 
 COLORS1 = [(148, 255, 181),
            (66, 102, 0), (116, 10, 155), (94, 241, 242), (0, 153, 143),
@@ -378,7 +378,7 @@ def imshow_subplot(images, num_rows=3, num_cols=3, figure_title='Figure'):
                 break
 
 
-def plot_seg_results(images, y_true, y_pred=None, num_rows=3, num_cols=3, colors=None, save_dir=None, start_idx=0):
+def plot_seg_results(images, y_true, y_pred=None, num_rows=3, num_cols=3, colors=CITY_COLORMAP, save_dir=None, start_idx=0):
     if y_pred is None:
         y_pred = y_true
     if y_true.shape[-1] == 1:
@@ -400,8 +400,8 @@ def plot_seg_results(images, y_true, y_pred=None, num_rows=3, num_cols=3, colors
     if colors is None:
         mask_true = (seg_labels_to_images(y_t, num_classes, valid=valid)*255).astype(np.int)
     else:
-        y = y_t*valid + 1
-        mask_true = colors[y]
+        y = (y_t + 1)*valid
+        mask_true = np.array(colors)[y]
 
     fig, axes = plt.subplots(num_rows, num_cols, figsize=(9, 9))
     fig.subplots_adjust(left=0.075, right=0.95, bottom=0.05, top=0.9, wspace=0.3, hspace=0.3)
@@ -426,8 +426,8 @@ def plot_seg_results(images, y_true, y_pred=None, num_rows=3, num_cols=3, colors
     if colors is None:
         mask_pred = (seg_labels_to_images(y_p, num_classes, valid=valid)*255).astype(np.int)
     else:
-        y = y_p*valid + 1
-        mask_pred = colors[y]
+        y = (y_p + 1)*valid
+        mask_pred = np.array(colors)[y]
 
     fig, axes = plt.subplots(num_rows, num_cols, figsize=(9, 9))
     fig.subplots_adjust(left=0.075, right=0.95, bottom=0.05, top=0.9, wspace=0.3, hspace=0.3)
