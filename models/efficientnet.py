@@ -158,9 +158,6 @@ class EfficientNet(ConvNet):
                 x = self.conv_layer(x, 1, 1, in_channels)
 
             x = self.sigmoid(x)
-            batch_size = tf.shape(x)[0]
-            shape = [batch_size, in_channels, 1, 1] if self.channel_first else [batch_size, 1, 1, in_channels]
-            x = tf.reshape(x, shape=shape)
 
         return x
 
