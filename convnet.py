@@ -1316,7 +1316,7 @@ class ConvNet(object):
                                              half_pixel_centers=not align_corners, name=name)
             elif upsampling_method.lower() == 'biqubic':
                 x = tf.image.resize_bicubic(x, out_shape, align_corners=align_corners,
-                                             half_pixel_centers=not align_corners, name=name)
+                                            half_pixel_centers=not align_corners, name=name)
             else:
                 raise(ValueError, 'Resizing method of {} is not supported'.format(upsampling_method))
 
