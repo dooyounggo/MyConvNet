@@ -934,6 +934,14 @@ class ConvNet(object):
 
         return biases
 
+    def pooling_layer(self, x, kernel, stride, padding='SAME', pooling_type='AVG'):
+        if pooling_type.lower() == 'avg':
+            return self.avg_pool(x, kernel, stride, padding=padding)
+        elif pooling_type.lower() == 'max':
+            return self.max_pool(x, kernel, stride, padding=padding)
+        else:
+            raise ValueError('Pooling type of {} is not supported'.format(pooling_type))
+
     def max_pool(self, x, side_l, stride, padding='SAME'):
         if not isinstance(side_l, list):
             side_l = [side_l, side_l]
@@ -961,7 +969,7 @@ class ConvNet(object):
             out_size = [np.ceil(float(h - ksize[0] + 1)/stride[0]), np.ceil(float(w - ksize[1] + 1)/stride[1])]
 
         if not tf.get_variable_scope().reuse:
-            self._flops += out_size[0]*out_size[1]*in_channels
+            self._flops += side_l[0]*side_l[1]*out_size[0]*out_size[1]*in_channels
 
         return tf.nn.max_pool(x, ksize=ksize, strides=strides, data_format=data_format, padding=padding)
 
@@ -992,7 +1000,7 @@ class ConvNet(object):
             out_size = [np.ceil(float(h - ksize[0] + 1)/stride[0]), np.ceil(float(w - ksize[1] + 1)/stride[1])]
 
         if not tf.get_variable_scope().reuse:
-            self._flops += out_size[0]*out_size[1]*in_channels
+            self._flops += side_l[0]*side_l[1]*out_size[0]*out_size[1]*in_channels
 
         return tf.nn.avg_pool(x, ksize=ksize, strides=strides, data_format=data_format, padding=padding)
 
@@ -1290,7 +1298,8 @@ class ConvNet(object):
 
         return x
 
-    def upsampling_2d_layer(self, x, scale=2, out_shape=None, align_corners=True, name='upsampling'):
+    def upsampling_2d_layer(self, x, scale=2, out_shape=None, align_corners=False,
+                            upsampling_method='bilinear', name='upsampling'):
         with tf.variable_scope(name):
             if self.channel_first:
                 x = tf.transpose(x, perm=[0, 2, 3, 1])
@@ -1299,7 +1308,18 @@ class ConvNet(object):
             in_shape = x.get_shape()
             if out_shape is None:
                 out_shape = [in_shape[1]*scale, in_shape[2]*scale]
-            x = tf.image.resize_bilinear(x, out_shape, align_corners=align_corners, name=name)
+            if upsampling_method.lower() == 'nearest' or upsampling_method.lower() == 'nearest_neighbor':
+                x = tf.image.resize_nearest_neighbor(x, out_shape, align_corners=align_corners,
+                                                     half_pixel_centers=not align_corners, name=name)
+            elif upsampling_method.lower() == 'bilinear':
+                x = tf.image.resize_bilinear(x, out_shape, align_corners=align_corners,
+                                             half_pixel_centers=not align_corners, name=name)
+            elif upsampling_method.lower() == 'biqubic':
+                x = tf.image.resize_bicubic(x, out_shape, align_corners=align_corners,
+                                             half_pixel_centers=not align_corners, name=name)
+            else:
+                raise(ValueError, 'Resizing method of {} is not supported'.format(upsampling_method))
+
             if self.dtype is not tf.float32:
                 x = tf.cast(x, dtype=self.dtype)
             if self.channel_first:
@@ -1396,6 +1416,16 @@ class ConvNet(object):
             x = x*main_survived + skip*skip_survived
 
         return x
+
+    def activation(self, x, activation_type='ReLU'):
+        if activation_type.lower() == 'relu':
+            return self.relu(x, name=activation_type)
+        elif activation_type.lower() == 'swish':
+            return self.swish(x, name=activation_type)
+        elif activation_type.lower() == 'sigmoid':
+            return self.sigmoid(x, name=activation_type)
+        else:
+            raise ValueError('Activation type of {} is not supported'.format(activation_type))
 
     def relu(self, x, name='relu'):
         if not tf.get_variable_scope().reuse:
