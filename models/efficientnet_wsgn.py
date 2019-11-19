@@ -59,7 +59,7 @@ class EfficientNet(ConvNet):
                 x = self._mb_conv_unit(x, kernels[i], s, channels[i], multipliers[i], d,
                                        drop_rate=dr, name='block_{}/mbconv_{}'.format(i, j))
             d['block_{}'.format(self._curr_block)] = x
-            
+
         self._curr_block += 1
         with tf.variable_scope('block_{}'.format(self._curr_block)):
             with tf.variable_scope('conv_0'):
@@ -153,7 +153,7 @@ class EfficientNet(ConvNet):
             x = tf.reduce_mean(x, axis=axis, keepdims=True)
 
             with tf.variable_scope('conv_0'):
-                x = self.conv_layer(x, 1, 1, in_channels // reduction)
+                x = self.conv_layer(x, 1, 1, in_channels//reduction)
 
             x = self.swish(x, name='swish')
 
