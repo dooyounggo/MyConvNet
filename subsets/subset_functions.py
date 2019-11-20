@@ -135,7 +135,8 @@ def random_resized_crop(image, out_size, interpolation=cv2.INTER_LINEAR,
 
 
 def padded_resize(image, out_size, interpolation=cv2.INTER_LINEAR, random=False, scale=1.96):
-    scaled_out_size = [np.around(out_size[0]*scale).astype(int), np.around(out_size[1]*scale).astype(int)]
+    scaled_out_size = [np.around(out_size[0]*np.sqrt(scale)).astype(int),
+                       np.around(out_size[1]*np.sqrt(scale)).astype(int)]
     in_size = image.shape
     in_size_ratio = in_size[1]/in_size[0]
 
