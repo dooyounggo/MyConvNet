@@ -1171,9 +1171,11 @@ class ConvNet(object):
                     gamma = None
                     gamma_ema = None
 
-                mean, var, beta, gamma = tf.cond(self.is_train,
-                                                 lambda: (mu, sigma, beta, gamma),
-                                                 lambda: (mu_ema, sigma_ema, beta_ema, gamma_ema))
+                mean, var = tf.cond(self.is_train,
+                                    lambda: (mu, sigma),
+                                    lambda: (mu_ema, sigma_ema))
+                beta = tf.cond(self.is_train, lambda: beta, lambda: beta_ema) if beta is not None else None
+                gamma = tf.cond(self.is_train, lambda: gamma, lambda: gamma_ema) if gamma is not None else None
 
             if self.dtype is not tf.float32:
                 x = tf.cast(x, dtype=tf.float32)
@@ -1228,18 +1230,18 @@ class ConvNet(object):
             if len(in_shape) > 2:
                 if self.channel_first:
                     _, in_channels, h, w = in_shape
-                    x_shape = [batch_size, num_groups, in_channels // num_groups, h, w]
+                    x_shape = [batch_size, num_groups, in_channels//num_groups, h, w]
                     axis = [2, 3, 4]
                     var_shape = [1, in_channels, 1, 1]
                 else:
                     _, h, w, in_channels = in_shape
-                    x_shape = [batch_size, h, w, in_channels // num_groups, num_groups]
+                    x_shape = [batch_size, h, w, in_channels//num_groups, num_groups]
                     axis = [1, 2, 3]
                     var_shape = [1, 1, 1, in_channels]
             else:
                 in_channels = in_shape[1]
                 h, w = 1, 1
-                x_shape = [batch_size, num_groups, in_channels // num_groups]
+                x_shape = [batch_size, num_groups, in_channels//num_groups]
                 axis = [2]
                 var_shape = [1, in_channels]
 
@@ -1279,11 +1281,10 @@ class ConvNet(object):
                     gamma = None
                     gamma_ema = None
 
-                beta, gamma = tf.cond(self.is_train,
-                                      lambda: (beta, gamma),
-                                      lambda: (beta_ema, gamma_ema))
-                beta = tf.reshape(beta, var_shape)
-                gamma = tf.reshape(gamma, var_shape)
+                beta = tf.cond(self.is_train, lambda: beta, lambda: beta_ema) if beta is not None else None
+                gamma = tf.cond(self.is_train, lambda: gamma, lambda: gamma_ema) if gamma is not None else None
+                beta = tf.reshape(beta, var_shape) if beta is not None else None
+                gamma = tf.reshape(gamma, var_shape) if gamma is not None else None
 
             x = tf.reshape(x, shape=x_shape)
             if self.dtype is not tf.float32:
