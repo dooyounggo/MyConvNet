@@ -165,17 +165,23 @@ class EfficientNet(ConvNet):
         divisor = 8
         new_widths = []
         for w in widths:
-            w = coefficient*w
-            new_w = max(divisor, (int(w + divisor/2)//divisor)*divisor)
-            if new_w < 0.9*w:
-                new_w += divisor
-            new_widths.append(new_w)
+            if w is None:
+                new_widths.append(None)
+            else:
+                w = coefficient * w
+                new_w = max(divisor, (int(w + divisor / 2) // divisor) * divisor)
+                if new_w < 0.9 * w:
+                    new_w += divisor
+                new_widths.append(new_w)
         return new_widths
 
     def _calc_depths(self, depths, coefficient):
         new_depths = []
         for d in depths:
-            new_depths.append(int(np.ceil(coefficient*d)))
+            if d is None:
+                new_depths.append(None)
+            else:
+                new_depths.append(int(np.ceil(coefficient * d)))
         return new_depths
 
 
