@@ -200,6 +200,10 @@ class DataSet(object):
                 warnings.warn('The maximum scale ratio {} is greater than 1.0.'.format(scale), UserWarning)
             image = sf.random_resized_crop(image, image_size, interpolation=interpolation,
                                            random=self.resize_randomness, scale=scale, ratio=ratio)
+        elif self.resize_method.lower() == 'padded_resize' or self.resize_method.lower() == 'pad_resize':
+            scale = self._parameters.get('padded_resize_scale', 1.96)
+            image = sf.padded_resize(image, image_size, interpolation=interpolation,
+                                     random=self.resize_randomness, scale=scale)
         else:
             raise(ValueError, 'Resize type of {} is not supported.'.format(self.resize_method))
         return image
