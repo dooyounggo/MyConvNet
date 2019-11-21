@@ -66,7 +66,7 @@ class EfficientNet(ConvNet):
                 x = self.conv_layer(x, 1, 1, self.channels[-1], padding='SAME', biased=False, depthwise=False, ws=True)
                 print('block_{}'.format(self._curr_block) + '/conv_0.shape', x.get_shape().as_list())
                 d['logits' + '/conv_0'] = x
-                x = self.group_norm(x, num_groups=self.num_groups, shift=True, scale=True, scope='norm')
+                x = self.group_norm(x, num_groups=self.num_groups*4, shift=True, scale=True, scope='norm')
                 d['logits' + '/conv_0' + '/norm'] = x
                 x = self.swish(x, name='swish')
                 d['logits' + '/conv_0' + '/swish'] = x
@@ -114,7 +114,7 @@ class EfficientNet(ConvNet):
                                         depthwise=False, ws=True)
                     print(name + '/conv_0.shape', x.get_shape().as_list())
                     d[name + '/conv_0'] = x
-                    x = self.group_norm(x, num_groups=self.num_groups, shift=True, scale=True, scope='norm')
+                    x = self.group_norm(x, num_groups=self.num_groups*multiplier, shift=True, scale=True, scope='norm')
                     d[name + '/conv_0' + '/norm'] = x
                     x = self.swish(x, name='swish')
                     d[name + '/conv_0' + '/swish'] = x
@@ -124,7 +124,7 @@ class EfficientNet(ConvNet):
                                     depthwise=True, ws=True)
                 print(name + '/conv_1.shape', x.get_shape().as_list())
                 d[name + '/conv_1'] = x
-                x = self.group_norm(x, num_groups=self.num_groups, shift=True, scale=True, scope='norm')
+                x = self.group_norm(x, num_groups=self.num_groups*multiplier, shift=True, scale=True, scope='norm')
                 d[name + '/conv_1' + '/norm'] = x
                 x = self.swish(x, name='swish')
                 d[name + '/conv_1' + '/swish'] = x
