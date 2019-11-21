@@ -1226,7 +1226,7 @@ class ConvNet(object):
     def group_norm(self, x, num_groups=8, scale=True, shift=True, zero_scale_init=False, epsilon=1e-4, scope='gn'):
         if self.blocks_to_train is None:
             trainable = True
-        elif self._curr_block in self.blocks_to_train:
+        elif self._curr_block is None or self._curr_block in self.blocks_to_train:
             trainable = True
         else:
             trainable = False
