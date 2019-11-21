@@ -34,7 +34,7 @@ class Parameters(object):
     d['resize_random_test'] = False
     d['rand_resized_crop_scale'] = (0.08, 1.0)  # Scale for 'random_resized_crop' method
     d['rand_resized_crop_ratio'] = (3/4, 4/3)  # Aspect ratio for 'random_resized_crop' method
-    d['padded_resize_scale'] = 1.96  # Scale for 'padded_resize' method. (scale - 1)*num_pixels zeros are padded
+    d['padded_resize_scale'] = 2.0  # Scale for 'padded_resize' method. (scale - 1)*num_pixels zeros are padded
 
     d['input_size'] = (300, 300, 3)  # Network input size after augmentation
     d['image_mean'] = 0.5  # If None, it will be calculated and it may take some time
