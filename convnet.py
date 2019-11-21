@@ -858,7 +858,7 @@ class ConvNet(object):
         return x, y
 
     def weight_variable(self, shape, initializer=tf.initializers.he_normal(),
-                        weight_standardization=False, name='weights'):
+                        weight_standardization=False, paddings=((0, 0), (0, 0)), name='weights'):
         if self.blocks_to_train is None:
             trainable = True
         elif self._curr_block is None or self._curr_block in self.blocks_to_train:
@@ -896,6 +896,10 @@ class ConvNet(object):
 
         if self.dtype is not tf.float32:
             weights = tf.cast(weights, dtype=self.dtype)
+
+        if paddings[0][0] > 0 or paddings[0][1] > 0 or paddings[1][0] > 0 or paddings[1][1] > 0:
+            paddings = list(paddings) + [(0, 0), (0, 0)]
+            weights = tf.pad(weights, paddings)
 
         if self.dropout_weights:
             return tf.nn.dropout(weights, rate=self.dropout_rate_weights)
@@ -1005,7 +1009,8 @@ class ConvNet(object):
         return tf.nn.avg_pool(x, ksize=ksize, strides=strides, data_format=data_format, padding=padding)
 
     def conv_layer(self, x, kernel, stride, out_channels, padding='SAME', biased=True, depthwise=False, dilation=(1, 1),
-                   weight_initializer=tf.initializers.he_normal(), bias_initializer=tf.initializers.zeros(), ws=False):
+                   ws=False, kernel_paddings=((0, 0), (0, 0)),
+                   weight_initializer=tf.initializers.he_normal(), bias_initializer=tf.initializers.zeros()):
         if not isinstance(kernel, (list, tuple)):
             kernel = [kernel, kernel]
         elif len(kernel) == 1:
@@ -1038,7 +1043,8 @@ class ConvNet(object):
         if depthwise:
             channel_multiplier = out_channels//in_channels
             weights = self.weight_variable([kernel[0], kernel[1], in_channels, channel_multiplier],
-                                           initializer=weight_initializer, weight_standardization=ws)
+                                           initializer=weight_initializer,
+                                           weight_standardization=ws, paddings=kernel_paddings)
             convs = tf.nn.depthwise_conv2d(x, weights, strides=conv_strides, padding=padding,
                                            data_format=data_format, rate=dilation)
 
@@ -1047,7 +1053,8 @@ class ConvNet(object):
                 self._params += kernel[0]*kernel[1]*in_channels*channel_multiplier
         else:
             weights = self.weight_variable([kernel[0], kernel[1], in_channels, out_channels],
-                                           initializer=weight_initializer, weight_standardization=ws)
+                                           initializer=weight_initializer,
+                                           weight_standardization=ws, paddings=kernel_paddings)
             convs = tf.nn.conv2d(x, weights, strides=conv_strides, padding=padding,
                                  data_format=data_format, dilations=conv_dilations)
 
@@ -1466,7 +1473,7 @@ class ConvNet(object):
                 gcam = tf.cast(gcam, dtype=tf.float32)
             if self.channel_first:
                 gcam = tf.transpose(gcam, perm=[0, 2, 3, 1])
-            gcam = tf.image.resize_bilinear(gcam, self.input_size[0:2], align_corners=True)
+            gcam = tf.image.resize_bilinear(gcam, self.input_size[0:2], half_pixel_centers=True)
             gcam = gcam/(tf.reduce_max(gcam, axis=[1, 2, 3], keepdims=True) + eps)
 
             return gcam
