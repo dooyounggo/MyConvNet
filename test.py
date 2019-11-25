@@ -1,11 +1,5 @@
-import os
-import numpy as np
-import tensorflow as tf
-from dataset import DataSet
-import utils
-import matplotlib.pyplot as plt
-import csv
 from parameters import *
+import csv
 
 
 Param = Parameters()
