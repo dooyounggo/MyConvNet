@@ -3,11 +3,16 @@ Setup various (hyper)parameters
 """
 
 import os
+import numpy as np
 import tensorflow as tf
-import subsets.stanford_dogs as subset
-from models.resnet_v2 import ResNet50 as ConvNet
+import matplotlib.pyplot as plt
+from dataset import DataSet
+import subsets.ilsvrc_cls_loc as subset
+from models.efficientnet import EfficientNetB0 as ConvNet
+from optimizers import RMSPropOptimizer as Optimizer
 from evaluators import AccuracyEvaluator as Evaluator
 from models.init_from_checkpoint import resnet_v2_50_101 as init_from_pretrained_model
+import utils
 
 
 class Parameters(object):
