@@ -8,8 +8,8 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 from dataset import DataSet
 import subsets.ilsvrc_cls_loc as subset
-from models.efficientnet import EfficientNetB0 as ConvNet
-from optimizers import RMSPropOptimizer as Optimizer
+from models.resnet_v1_5 import ResNet50 as ConvNet
+from optimizers import MomentumOptimizer as Optimizer
 from evaluators import AccuracyEvaluator as Evaluator
 from models.init_from_checkpoint import resnet_v2_50_101 as init_from_pretrained_model
 import utils
