@@ -3,11 +3,16 @@ Setup various (hyper)parameters
 """
 
 import os
+import numpy as np
 import tensorflow as tf
-import subsets.oxford_iiit_two_class_seg as subset
-from models.gcn import GCN as ConvNet
-from evaluators import MeanIoUEvaluator as Evaluator
+import matplotlib.pyplot as plt
+from dataset import DataSet
+import subsets.cityscapes as subset
+from models.deeplabv3plus import DeepLabV3PlusResNet as ConvNet
+from optimizers import MomentumOptimizer as Optimizer
+from evaluators import MeanIoUBEvaluator as Evaluator
 from models.init_from_checkpoint import resnet_v2_50_101 as init_from_pretrained_model
+import utils
 
 
 class Parameters(object):
