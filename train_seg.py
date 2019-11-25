@@ -1,12 +1,5 @@
-import os
-import shutil
-import numpy as np
-import tensorflow as tf
-from dataset import DataSet
-import utils
-import matplotlib.pyplot as plt
-from optimizers import MomentumOptimizer as Optimizer
 from parameters_seg import *
+import shutil
 
 
 Param = Parameters()
