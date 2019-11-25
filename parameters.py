@@ -7,7 +7,7 @@ import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
 from dataset import DataSet
-import subsets.ilsvrc_cls_loc as subset
+import subsets.stanford_dogs as subset
 from models.resnet_v1_5 import ResNet50 as ConvNet
 from optimizers import MomentumOptimizer as Optimizer
 from evaluators import AccuracyEvaluator as Evaluator
@@ -31,9 +31,9 @@ class Parameters(object):
 
     d = dict()
     # FIXME: Image pre-processing (hyper)parameters
-    d['image_size'] = (330, 330, 3)  # Processed image size
+    d['image_size'] = (224, 224, 3)  # Processed image size
     d['image_size_test'] = None  # If None, same as 'image_size'
-    d['resize_type'] = 'resize_fit'  # Resize types: 'resize', 'resize_expand', 'random_resized_crop', ...
+    d['resize_type'] = 'random_resized_crop'  # Resize types: 'resize', 'resize_expand', 'random_resized_crop', ...
     d['resize_type_test'] = None  # If None, same as 'resize_type'
     d['resize_random'] = True  # Randomness of padding and crop operations
     d['resize_random_test'] = False
@@ -41,7 +41,7 @@ class Parameters(object):
     d['rand_resized_crop_ratio'] = (3/4, 4/3)  # Aspect ratio for 'random_resized_crop' method
     d['padded_resize_scale'] = 2.0  # Scale for 'padded_resize' method. (scale - 1)*num_pixels zeros are padded
 
-    d['input_size'] = (300, 300, 3)  # Network input size after augmentation
+    d['input_size'] = (224, 224, 3)  # Network input size after augmentation
     d['image_mean'] = 0.5  # If None, it will be calculated and it may take some time
     d['zero_center'] = True  # Whether to zero-center the images
     d['shuffle'] = True  # Whether to shuffle the data
@@ -115,8 +115,8 @@ class Parameters(object):
     d['rand_x_reflect'] = True  # Bool
     d['rand_y_reflect'] = False  # Bool
 
-    d['rand_crop'] = True  # Bool
-    d['rand_crop_scale'] = (0.3**2, 1.2**2)  # Scale*input_size patch crop from an image
+    d['rand_crop'] = False  # Bool
+    d['rand_crop_scale'] = (0.08, 1.0)  # Scale*input_size patch crop from an image
     d['rand_crop_ratio'] = (3/4, 4/3)
 
     d['rand_distortion'] = True  # Bool
