@@ -428,12 +428,8 @@ class Optimizer(object):
                             self.curr_multiplier *= self.decay_params[0]
                             self.learning_rate_update += 1
                 elif self.decay_method.lower() == 'exponential':  # params: (decay_factor, decay_every_n_epoch)
-                    while (self.curr_epoch - self.warmup_epoch - 1)//self.decay_params[1] > self.learning_rate_update:
-                        self.curr_multiplier *= self.decay_params[0]
-                        self.learning_rate_update += 1
-                elif self.decay_method.lower() == 'poly' or self.decay_method.lower() == 'polynomial':  # param: (power)
-                    total_steps = self.steps_per_epoch*self.num_epochs - warmup_steps
-                    self.curr_multiplier = (1 - (self.curr_step - warmup_steps)/total_steps)**self.decay_params[0]
+                    self.curr_multiplier = self.decay_params[0]**((self.curr_step - warmup_steps)/self.steps_per_epoch
+                                                                  * self.decay_params[1])
                 else:  # 'cosine': no parameter required
                     total_steps = self.steps_per_epoch*self.num_epochs - warmup_steps
                     self.curr_multiplier = 0.5*(1 + np.cos((self.curr_step - warmup_steps)*np.pi/total_steps))
@@ -482,5 +478,20 @@ class MomentumOptimizer(Optimizer):
               .format(self.init_learning_rate, gradient_threshold))
 
         optimizer = tf.train.MomentumOptimizer(self.learning_rate, momentum, use_nesterov=True)
+
+        return optimizer
+
+
+class RMSPropOptimizer(Optimizer):
+
+    def _optimizer(self, **kwargs):
+        momentum = kwargs.get('momentum', 0.9)
+        decay = 0.9
+        eps = 0.001
+        gradient_threshold = kwargs.get('gradient_threshold', 5.0)
+        print('Optimizer: RMSProp. Initial learning rate: {:.6f}. Gradient threshold: {}'
+              .format(self.init_learning_rate, gradient_threshold))
+
+        optimizer = tf.train.RMSPropOptimizer(self.learning_rate, decay=decay, momentum=momentum, epsilon=eps)
 
         return optimizer
