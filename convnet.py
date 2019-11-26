@@ -1132,8 +1132,8 @@ class ConvNet(object):
                     tf.add_to_collection('block{}_batch_norm_variables'.format(self._curr_block), mu)
                     with tf.variable_scope(self.top_scope):
                         self.update_ops.append(self.ema.apply([mu]))
-                if self._curr_device == 0:
-                    self._flops += h*w*in_channels
+                # if self._curr_device == 0:
+                #     self._flops += h*w*in_channels
                 mu_ema = self.ema.average(mu)
                 if not tf.get_variable_scope().reuse:
                     tf.add_to_collection('block{}_ema_variables'.format(self._curr_block), mu_ema)
@@ -1145,8 +1145,8 @@ class ConvNet(object):
                     tf.add_to_collection('block{}_batch_norm_variables'.format(self._curr_block), sigma)
                     with tf.variable_scope(self.top_scope):
                         self.update_ops.append(self.ema.apply([sigma]))
-                if self._curr_device == 0:
-                    self._flops += h*w*in_channels
+                # if self._curr_device == 0:
+                #     self._flops += h*w*in_channels
                 sigma_ema = self.ema.average(sigma)
                 if not tf.get_variable_scope().reuse:
                     tf.add_to_collection('block{}_ema_variables'.format(self._curr_block), sigma_ema)
@@ -1160,8 +1160,8 @@ class ConvNet(object):
                         with tf.variable_scope(self.top_scope):
                             self.update_ops.append(self.ema.apply([beta]))
                         self._params += in_channels
-                    if self._curr_device == 0:
-                        self._flops += h*w*in_channels
+                    # if self._curr_device == 0:
+                    #     self._flops += h*w*in_channels
                     beta_ema = self.ema.average(beta)
                     if not tf.get_variable_scope().reuse:
                         tf.add_to_collection('block{}_ema_variables'.format(self._curr_block), beta_ema)
@@ -1179,14 +1179,17 @@ class ConvNet(object):
                         with tf.variable_scope(self.top_scope):
                             self.update_ops.append(self.ema.apply([gamma]))
                         self._params += in_channels
-                    if self._curr_device == 0:
-                        self._flops += h*w*in_channels
+                    # if self._curr_device == 0:
+                    #     self._flops += h*w*in_channels
                     gamma_ema = self.ema.average(gamma)
                     if not tf.get_variable_scope().reuse:
                         tf.add_to_collection('block{}_ema_variables'.format(self._curr_block), gamma_ema)
                 else:
                     gamma = None
                     gamma_ema = None
+
+                if self._curr_device == 0:
+                    self._flops += h*w*in_channels
 
                 mean, var = tf.cond(self.is_train,
                                     lambda: (mu, sigma),
@@ -1272,8 +1275,8 @@ class ConvNet(object):
                         with tf.variable_scope(self.top_scope):
                             self.update_ops.append(self.ema.apply([beta]))
                         self._params += in_channels
-                    if self._curr_device == 0:
-                        self._flops += h*w*in_channels
+                    # if self._curr_device == 0:
+                    #     self._flops += h*w*in_channels
                     beta_ema = self.ema.average(beta)
                     if not tf.get_variable_scope().reuse:
                         tf.add_to_collection('block{}_ema_variables'.format(self._curr_block), beta_ema)
@@ -1291,14 +1294,17 @@ class ConvNet(object):
                         with tf.variable_scope(self.top_scope):
                             self.update_ops.append(self.ema.apply([gamma]))
                         self._params += in_channels
-                    if self._curr_device == 0:
-                        self._flops += h*w*in_channels
+                    # if self._curr_device == 0:
+                    #     self._flops += h*w*in_channels
                     gamma_ema = self.ema.average(gamma)
                     if not tf.get_variable_scope().reuse:
                         tf.add_to_collection('block{}_ema_variables'.format(self._curr_block), gamma_ema)
                 else:
                     gamma = None
                     gamma_ema = None
+
+                if self._curr_device == 0:
+                    self._flops += h*w*in_channels
 
                 beta = tf.cond(self.is_train, lambda: beta, lambda: beta_ema) if beta is not None else None
                 gamma = tf.cond(self.is_train, lambda: gamma, lambda: gamma_ema) if gamma is not None else None
@@ -1450,20 +1456,35 @@ class ConvNet(object):
             raise ValueError('Activation type of {} is not supported'.format(activation_type))
 
     def relu(self, x, name='relu'):
-        if not tf.get_variable_scope().reuse:
-            shape = x.get_shape().as_list()
+        if self.channel_first:
+            _, in_channels, h, w = x.get_shape().as_list()
+        else:
+            _, h, w, in_channels = x.get_shape().as_list()
+
+        # if self._curr_device == 0:
+        #     self._flops += h*w*in_channels
 
         return tf.nn.relu(x, name=name)
 
     def swish(self, x, name='swish'):
-        if not tf.get_variable_scope().reuse:
-            shape = x.get_shape().as_list()
+        if self.channel_first:
+            _, in_channels, h, w = x.get_shape().as_list()
+        else:
+            _, h, w, in_channels = x.get_shape().as_list()
+
+        # if self._curr_device == 0:
+        #     self._flops += h*w*in_channels
 
         return tf.nn.swish(x, name=name)
 
     def sigmoid(self, x, name=None):
-        if not tf.get_variable_scope().reuse:
-            shape = x.get_shape().as_list()
+        if self.channel_first:
+            _, in_channels, h, w = x.get_shape().as_list()
+        else:
+            _, h, w, in_channels = x.get_shape().as_list()
+
+        # if self._curr_device == 0:
+        #     self._flops += h*w*in_channels
 
         return tf.nn.sigmoid(x, name=name)
 
