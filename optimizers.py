@@ -429,7 +429,7 @@ class Optimizer(object):
                             self.learning_rate_update += 1
                 elif self.decay_method.lower() == 'exponential':  # params: (decay_factor, decay_every_n_epoch)
                     self.curr_multiplier = self.decay_params[0]**((self.curr_step - warmup_steps)/self.steps_per_epoch
-                                                                  * self.decay_params[1])
+                                                                  / self.decay_params[1])
                 else:  # 'cosine': no parameter required
                     total_steps = self.steps_per_epoch*self.num_epochs - warmup_steps
                     self.curr_multiplier = 0.5*(1 + np.cos((self.curr_step - warmup_steps)*np.pi/total_steps))
