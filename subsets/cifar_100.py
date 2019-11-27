@@ -65,6 +65,8 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True):
                 f.close()
                 i += 1
 
+            i_class += 1
+
     print('\nDone')
 
     print('(')
