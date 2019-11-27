@@ -9,7 +9,6 @@ import numpy as np
 import subsets.subset_functions as sf
 from skimage.io import imread
 from skimage.io import imsave
-from skimage.transform import resize
 
 
 def save_as_tfdata(subset_dir, destination_dir, copy=True):
