@@ -77,7 +77,7 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True):
             print('Saving training data: {:6d}/{}...'.format(i, len(train_images)))
 
         image = imread(image_dir)
-        imsave(os.path.join(destination_dir, 'train', '{:010d}.{}'.format(i, 'jpg')), image)
+        imsave(os.path.join(destination_dir, 'train', '{:010d}.{}'.format(i, 'jpg')), image, quality=100)
         if not copy:
             os.remove(label_dir)
 
@@ -94,7 +94,7 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True):
             print('Saving validation data: {:6d}/{}...'.format(i, len(val_images)))
 
         image = imread(image_dir)
-        imsave(os.path.join(destination_dir, 'validation', '{:010d}.{}'.format(i, 'jpg')), image)
+        imsave(os.path.join(destination_dir, 'validation', '{:010d}.{}'.format(i, 'jpg')), image, quality=100)
         if not copy:
             os.remove(label_dir)
 
@@ -111,7 +111,7 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True):
             print('Saving test data: {:6d}/{}...'.format(i, len(test_images)))
 
         image = imread(image_dir)
-        imsave(os.path.join(destination_dir, 'test', '{:010d}.{}'.format(i, 'jpg')), image)
+        imsave(os.path.join(destination_dir, 'test', '{:010d}.{}'.format(i, 'jpg')), image, quality=100)
         if not copy:
             os.remove(label_dir)
 
