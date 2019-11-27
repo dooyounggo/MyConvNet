@@ -6,10 +6,7 @@ https://research.sualab.com/practice/2018/11/23/image-segmentation-deep-learning
 import os
 import csv
 import shutil
-import numpy as np
 import subsets.subset_functions as sf
-from skimage.io import imread
-from skimage.transform import resize
 
 
 def save_as_tfdata(subset_dir, destination_dir, copy=True):
