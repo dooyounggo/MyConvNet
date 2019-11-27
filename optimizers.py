@@ -76,43 +76,51 @@ class Optimizer(object):
             for i in range(self.model.num_gpus):
                 with tf.device('/gpu:' + str(i)):
                     with tf.variable_scope('gpu{}/gradients'.format(i)):
-                        loss = loss_scaling_factor*self.model.losses[i]
+                        loss = self.model.losses[i]
+                        if loss_scaling_factor > 1.0:
+                            loss *= loss_scaling_factor
                         if self.model.dtype is not tf.float32:
                             loss = tf.cast(loss, dtype=self.model.dtype)
                         grads_and_vars = optimizer.compute_gradients(loss, var_list=self.update_vars)
                         grads, gvars = zip(*grads_and_vars)
+                        grads = list(grads)
+                        if loss_scaling_factor > 1.0:
+                            for ng in range(len(grads)):
+                                grads[ng] /= loss_scaling_factor
                         if gradient_threshold is not None:
-                            grads, _ = tf.clip_by_global_norm(grads, gradient_threshold*loss_scaling_factor)
+                            grads, _ = tf.clip_by_global_norm(grads, gradient_threshold)
                         tower_grads.append([gv for gv in zip(grads, gvars)])
                         tf.get_variable_scope().reuse_variables()
 
-        with tf.device('/cpu:0'):
-            with tf.variable_scope('calc/mean_gradients'):
-                avg_grads = []
-                avg_vars = []
-                for grads_and_vars in zip(*tower_grads):
-                    # Note that each grads_and_vars looks like the following:
-                    # ( (grad0_gpu0, var0_gpu0), ..., (grad0_gpuN, var0_gpuN) )
-                    grads = []
-                    for g, _ in grads_and_vars:
-                        # g = tf.where(tf.is_nan(g), tf.zeros_like(g), g)  # Prevent NaNs
-                        # if self.model.dtype is not tf.float32:
-                        #     g = tf.cast(g, dtype=tf.float32)
-                        g_exp = tf.expand_dims(g, 0)
-                        # Append on a 'tower' dimension which we will average over below.
-                        grads.append(g_exp)
+        if self.model.num_gpus == 1:
+            avg_grads_and_vars = tower_grads[0]
+        else:
+            with tf.device(self.model.param_device):
+                with tf.variable_scope('calc/mean_gradients'):
+                    avg_grads = []
+                    avg_vars = []
+                    for grads_and_vars in zip(*tower_grads):
+                        # Note that each grads_and_vars looks like the following:
+                        # ( (grad0_gpu0, var0_gpu0), ..., (grad0_gpuN, var0_gpuN) )
+                        grads = []
+                        for g, _ in grads_and_vars:
+                            # g = tf.where(tf.is_nan(g), tf.zeros_like(g), g)  # Prevent NaNs
+                            # if self.model.dtype is not tf.float32:
+                            #     g = tf.cast(g, dtype=tf.float32)
+                            g_exp = tf.expand_dims(g, 0)
+                            # Append on a 'tower' dimension which we will average over below.
+                            grads.append(g_exp)
 
-                    grad = tf.concat(grads, axis=0)
-                    grad = tf.reduce_mean(grad, axis=0)
-                    grad = grad/loss_scaling_factor
+                        grad = tf.concat(grads, axis=0)
+                        grad = tf.reduce_mean(grad, axis=0)
 
-                    # Pointers to the variables are the same for all towers since the variables are shared.
-                    avg_vars.append(grads_and_vars[0][1])
-                    avg_grads.append(grad)
-                # if gradient_threshold is not None:
-                #     avg_grads, _ = tf.clip_by_global_norm(avg_grads, gradient_threshold)
+                        # Pointers to the variables are the same for all towers since the variables are shared.
+                        avg_vars.append(grads_and_vars[0][1])
+                        avg_grads.append(grad)
+                    # if gradient_threshold is not None:
+                    #     avg_grads, _ = tf.clip_by_global_norm(avg_grads, gradient_threshold)
 
-                avg_grads_and_vars = [gv for gv in zip(avg_grads, avg_vars)]
+                    avg_grads_and_vars = [gv for gv in zip(avg_grads, avg_vars)]
 
         if weight_decay > 0.0:
             variables = tf.get_collection('weight_variables')
