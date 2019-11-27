@@ -6,7 +6,6 @@ http://www.vision.caltech.edu/visipedia/CUB-200-2011.html
 import os
 import csv
 import shutil
-import numpy as np
 import subsets.subset_functions as sf
 
 
