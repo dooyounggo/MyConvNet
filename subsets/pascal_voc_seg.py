@@ -9,7 +9,6 @@ import numpy as np
 import subsets.subset_functions as sf
 from skimage.io import imread
 from skimage.io import imsave
-from skimage.transform import resize
 
 
 VOC_COLORMAP = [[0, 0, 0], [128, 0, 0], [0, 128, 0], [128, 128, 0],
@@ -29,7 +28,7 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True):
 
         filename = label_names[i].split('.')[0]
 
-        image_dir = os.path.join(subset_dir, 'JPEGImages', filename + '.jpg')
+        image_dir = os.path.join(subset_dir, 'JPEGImages', filename, '.jpg')
         image_ext = image_dir.split('.')[-1]
         if copy:
             shutil.copy2(image_dir, os.path.join(destination_dir, '{:010d}.{}'.format(i, image_ext)))
@@ -53,8 +52,8 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True):
 
 
 if __name__ == '__main__':
-    subset_dir = "D:/Dropbox/Project/Python/datasets/pascal-voc/train"  # FIXME
-    destination_dir = "D:/Dropbox/Project/Python/tfdatasets/pascal-voc/train"  # FIXME
+    subset_dir = "D:/Dropbox/Project/Python/datasets/pascal-voc/test"  # FIXME
+    destination_dir = "D:/Dropbox/Project/Python/tfdatasets/pascal-voc/test"  # FIXME
     save_as_tfdata(subset_dir, destination_dir, copy=True)
 
 
