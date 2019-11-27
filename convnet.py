@@ -44,6 +44,7 @@ class ConvNet(object):
         self._channel_first = kwargs.get('channel_first', False)
         self._argmax_output = kwargs.get('argmax_output', False)
         self._num_gpus = kwargs.get('num_gpus', 1)
+        self._param_device = '/gpu:0' if self.num_gpus == 1 else '/cpu:0'
 
         self._padded_size = np.round(np.array(self.input_size[0:2])*(1.0 + kwargs.get('zero_pad_ratio', 0.0)))
         self.pad_value = kwargs.get('pad_value', 0.5)
@@ -118,7 +119,7 @@ class ConvNet(object):
         self._init_model(**kwargs)
 
         if self.argmax_output:
-            with tf.device('/cpu:0'):
+            with tf.device(self.param_device):
                 with tf.variable_scope('calc/'):
                     valid_mask = tf.cast(self.valid_mask, dtype=tf.int32)
                     invalid_mask = tf.cast(tf.logical_not(self.valid_mask), dtype=tf.int32)
@@ -158,6 +159,10 @@ class ConvNet(object):
     @property
     def num_gpus(self):
         return self._num_gpus
+
+    @property
+    def param_device(self):
+        return self._param_device
 
     @property
     def num_blocks(self):
@@ -261,7 +266,7 @@ class ConvNet(object):
 
                         self.bytes_in_use.append(tf.contrib.memory_stats.BytesInUse())
 
-        with tf.device('/cpu:0'):
+        with tf.device(self.param_device):
             with tf.variable_scope('calc/'):
                 self.X_all = tf.concat(self.Xs, axis=0, name='x') + self.image_mean
                 self.Y_all = tf.concat(self.Ys, axis=0, name='y_true')
@@ -867,7 +872,7 @@ class ConvNet(object):
         else:
             trainable = False
 
-        with tf.device('/cpu:0'):
+        with tf.device(self.param_device):
             weights = tf.get_variable(name, shape, tf.float32,
                                       initializer=initializer,
                                       trainable=trainable)
@@ -915,7 +920,7 @@ class ConvNet(object):
         else:
             trainable = False
 
-        with tf.device('/cpu:0'):
+        with tf.device(self.param_device):
             biases = tf.get_variable(name, shape, tf.float32,
                                      initializer=initializer,
                                      trainable=trainable)
@@ -1124,7 +1129,7 @@ class ConvNet(object):
         momentum = self.batch_norm_decay
 
         with tf.variable_scope(scope):
-            with tf.device('/cpu:0'):
+            with tf.device(self.param_device):
                 mu = tf.get_variable('mu', in_channels, dtype=tf.float32,
                                      initializer=tf.zeros_initializer(), trainable=False)
                 if not tf.get_variable_scope().reuse:
@@ -1265,7 +1270,7 @@ class ConvNet(object):
                 axis = [2]
                 var_shape = [1, in_channels]
 
-            with tf.device('/cpu:0'):
+            with tf.device(self.param_device):
                 if shift:
                     beta = tf.get_variable('beta', in_channels, dtype=tf.float32,
                                            initializer=tf.zeros_initializer(), trainable=trainable)
