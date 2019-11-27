@@ -6,7 +6,6 @@ http://vision.stanford.edu/aditya86/ImageNetDogs/
 import os
 import csv
 import shutil
-import numpy as np
 import subsets.subset_functions as sf
 from scipy.io import loadmat
 
