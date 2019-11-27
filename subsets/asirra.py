@@ -6,7 +6,6 @@ https://www.kaggle.com/c/dogs-vs-cats
 import os
 import csv
 import shutil
-import numpy as np
 import subsets.subset_functions as sf
 
 
