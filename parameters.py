@@ -37,6 +37,7 @@ class Parameters(object):
     d['resize_type_test'] = None  # If None, same as 'resize_type'
     d['resize_random'] = True  # Randomness of padding and crop operations
     d['resize_random_test'] = False
+    d['resize_interpolation'] = 'bilinear'  # Interpolation methods: 'nearest', 'bilinear', 'bicubic'
     d['rand_resized_crop_scale'] = (0.08, 1.0)  # Scale for 'random_resized_crop' method
     d['rand_resized_crop_ratio'] = (3/4, 4/3)  # Aspect ratio for 'random_resized_crop' method
     d['padded_resize_scale'] = 2.0  # Scale for 'padded_resize' method. (scale - 1)*num_pixels zeros are padded
