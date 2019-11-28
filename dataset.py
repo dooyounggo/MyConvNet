@@ -30,6 +30,7 @@ class DataSet(object):
         else:
             self._resize_method = resize_method
         self._resize_randomness = resize_randomness
+        self._resize_interpolation = kwargs.get('resize_interpolation', 'bilinear')
 
         if class_names is None:
             self._num_classes = None
@@ -106,6 +107,10 @@ class DataSet(object):
         return self._resize_randomness
 
     @property
+    def resize_interpolation(self):
+        return self._resize_interpolation
+
+    @property
     def image_mean(self):
         return self._image_mean
 
@@ -151,7 +156,15 @@ class DataSet(object):
         if isinstance(label_dir, bytes):
             label_dir = label_dir.decode()
         image = cv2.cvtColor(cv2.imread(image_dir), cv2.COLOR_BGR2RGB)
-        image = self._resize_function(image, self.image_size, interpolation=cv2.INTER_LINEAR)
+        if self.resize_interpolation.lower() == 'nearest' or self.resize_interpolation.lower() == 'nearest neighbor':
+            interpolation = cv2.INTER_NEAREST
+        elif self.resize_interpolation.lower() == 'bilinear':
+            interpolation = cv2.INTER_LINEAR
+        elif self.resize_interpolation.lower() == 'bicubic':
+            interpolation = cv2.INTER_CUBIC
+        else:
+            raise(ValueError, 'Interpolation method of {} is not supported.'.format(self.resize_interpolation))
+        image = self._resize_function(image, self.image_size, interpolation=interpolation)
 
         if not isinstance(label_dir, str):
             label = np.array(np.nan, dtype=np.float32)
