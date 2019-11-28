@@ -1470,36 +1470,12 @@ class ConvNet(object):
             raise ValueError('Activation type of {} is not supported'.format(activation_type))
 
     def relu(self, x, name='relu'):
-        if self.channel_first:
-            _, in_channels, h, w = x.get_shape().as_list()
-        else:
-            _, h, w, in_channels = x.get_shape().as_list()
-
-        # if self._curr_device == 0:
-        #     self._flops += h*w*in_channels
-
         return tf.nn.relu(x, name=name)
 
     def swish(self, x, name='swish'):
-        if self.channel_first:
-            _, in_channels, h, w = x.get_shape().as_list()
-        else:
-            _, h, w, in_channels = x.get_shape().as_list()
-
-        # if self._curr_device == 0:
-        #     self._flops += h*w*in_channels
-
         return tf.nn.swish(x, name=name)
 
     def sigmoid(self, x, name=None):
-        if self.channel_first:
-            _, in_channels, h, w = x.get_shape().as_list()
-        else:
-            _, h, w, in_channels = x.get_shape().as_list()
-
-        # if self._curr_device == 0:
-        #     self._flops += h*w*in_channels
-
         return tf.nn.sigmoid(x, name=name)
 
     def grad_cam(self, logits, conv_layer, y=None):
