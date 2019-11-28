@@ -642,6 +642,9 @@ class ConvNet(object):
             image = tf.image.resize_nearest_neighbor(tf.expand_dims(image, axis=0), re_size, half_pixel_centers=True)
         elif self.interpolation.lower() == 'bilinear':
             image = tf.image.resize_bilinear(tf.expand_dims(image, axis=0), re_size, half_pixel_centers=True)
+        elif self.interpolation.lower() == 'bicubic':
+            warnings.warn('Bicubic interpolation is not supported for GPU. Bilinear is used instead.', UserWarning)
+            image = tf.image.resize_bilinear(tf.expand_dims(image, axis=0), re_size, half_pixel_centers=True)
         else:
             raise(ValueError, 'Interpolation method of {} is not supported.'.format(self.interpolation))
 
@@ -1354,12 +1357,8 @@ class ConvNet(object):
             elif upsampling_method.lower() == 'bilinear':
                 x = tf.image.resize_bilinear(x, out_shape, align_corners=align_corners,
                                              half_pixel_centers=not align_corners, name=name)
-            elif upsampling_method.lower() == 'bicubic':
-                warnings.warn('Bicubic interpolation is not supported for GPU. Bilinear is used instead.', UserWarning)
-                x = tf.image.resize_bilinear(x, out_shape, align_corners=align_corners,
-                                             half_pixel_centers=not align_corners, name=name)
             else:
-                raise(ValueError, 'Resizing method of {} is not supported'.format(upsampling_method))
+                raise(ValueError, 'Upsampling method of {} is not supported'.format(upsampling_method))
 
             if self.dtype is not tf.float32:
                 x = tf.cast(x, dtype=self.dtype)
