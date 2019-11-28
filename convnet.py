@@ -18,6 +18,7 @@ CutMix: https://arxiv.org/abs/1905.04899
 """
 
 import time
+import warnings
 from abc import abstractmethod
 import tensorflow as tf
 import numpy as np
@@ -596,6 +597,7 @@ class ConvNet(object):
         with tf.variable_scope('rand_crop'):
             self.crop_scale = kwargs.get('rand_crop_scale', (1.0, 1.0))  # Size of crop windows
             self.crop_ratio = kwargs.get('rand_crop_ratio', (1.0, 1.0))  # Aspect ratio of crop windows
+            self.interpolation = kwargs.get('resize_interpolation', 'bilinear')  # Interpolation method
             if mask is None:
                 x = tf.map_fn(self.rand_crop_image, x, parallel_iterations=32, back_prop=False)
             else:
@@ -635,7 +637,14 @@ class ConvNet(object):
         offset_w = tf.random.uniform([], 0, w - size_w + 1, dtype=tf.int32)
 
         image = tf.slice(image, [offset_h, offset_w, 0], [size_h, size_w, -1])
-        image = tf.image.resize_bilinear(tf.expand_dims(image, axis=0), self.input_size[0:2], half_pixel_centers=True)
+        re_size = self.input_size[0:2]
+        if self.interpolation.lower() == 'nearest' or self.interpolation.lower() == 'nearest neighbor':
+            image = tf.image.resize_nearest_neighbor(tf.expand_dims(image, axis=0), re_size, half_pixel_centers=True)
+        elif self.interpolation.lower() == 'bilinear':
+            image = tf.image.resize_bilinear(tf.expand_dims(image, axis=0), re_size, half_pixel_centers=True)
+        else:
+            raise(ValueError, 'Interpolation method of {} is not supported.'.format(self.interpolation))
+
         image = tf.reshape(image, self.input_size)
 
         return image
@@ -1345,9 +1354,10 @@ class ConvNet(object):
             elif upsampling_method.lower() == 'bilinear':
                 x = tf.image.resize_bilinear(x, out_shape, align_corners=align_corners,
                                              half_pixel_centers=not align_corners, name=name)
-            elif upsampling_method.lower() == 'biqubic':
-                x = tf.image.resize_bicubic(x, out_shape, align_corners=align_corners,
-                                            half_pixel_centers=not align_corners, name=name)
+            elif upsampling_method.lower() == 'bicubic':
+                warnings.warn('Bicubic interpolation is not supported for GPU. Bilinear is used instead.', UserWarning)
+                x = tf.image.resize_bilinear(x, out_shape, align_corners=align_corners,
+                                             half_pixel_centers=not align_corners, name=name)
             else:
                 raise(ValueError, 'Resizing method of {} is not supported'.format(upsampling_method))
 
