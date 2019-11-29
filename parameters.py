@@ -63,6 +63,8 @@ class Parameters(object):
     d['half_precision'] = False  # Try half-precision if your GPU supports it
     d['channel_first'] = True  # If true, NCHW format is used instead of NHWC
     d['num_gpus'] = 1
+    d['cpu_offset'] = 0  # Offset for selecting CPU
+    d['gpu_offset'] = 0  # Offset for selecting GPU numbers
     d['batch_size'] = 16
     d['num_epochs'] = 30
     d['validation_frequency'] = None  # Validate every x iterations. None for every epoch
