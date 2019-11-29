@@ -77,7 +77,7 @@ class Parameters(object):
     d['gradient_threshold'] = 5.0  # Gradient thresholding using global norm. None for no thresholding
     d['loss_weighting'] = None  # None, 'balanced', [class0_weight, class1_weight, ...]. Loss = -w_c*log(y_c)
     d['focal_loss_factor'] = 0.0  # Focal_loss = -log(y_c)*(1 - y_c)^focal_loss_factor
-    d['sigmoid_focal_loss_factor'] = 0.0  # SFL = -log(y_c)*(1 - sigmoid(SFL_factor*(y_c - 0.5))
+    d['sigmoid_focal_loss_factor'] = 0.0  # SFL = -log(y_c)*(1 - sigmoid(SFL_factor*(y_c - 0.5)) (experimental)
     d['loss_scaling_factor'] = 1  # Loss scaling factor for half precision training
 
     d['learning_rate_decay_method'] = 'cosine'  # 'step', 'exponential', 'cosine' (default)
@@ -91,6 +91,7 @@ class Parameters(object):
     d['l1_reg'] = 0.0  # L1 regularization factor
     d['l2_reg'] = 0.0  # L2 regularization factor
     d['base_weight_decay'] = 0.00001  # Decoupled weight decay factor = base_weight_decay*batch_size/256
+    d['huber_decay_delta'] = None  # Huber loss delta for weight decay with weight standardization (experimental)
     d['label_smoothing'] = 0.0  # Label smoothing factor
     d['dropout_rate'] = 0.0  # Dropout rate
     d['dropout_weights'] = False
