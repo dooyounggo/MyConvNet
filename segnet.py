@@ -16,7 +16,7 @@ class SegNet(ConvNet):
         output_shapes = ([None, None, None, self.input_size[-1]],
                          None)
         with tf.variable_scope(tf.get_variable_scope()):
-            for i in range(self._num_gpus):
+            for i in range(self.gpu_offset, self.num_gpus + self.gpu_offset):
                 self._curr_block = 0
                 self._num_blocks = 0
                 with tf.device('/gpu:' + str(i)):
@@ -79,7 +79,7 @@ class SegNet(ConvNet):
 
                         self.bytes_in_use.append(tf.contrib.memory_stats.BytesInUse())
 
-        with tf.device('/cpu:0'):
+        with tf.device(self.param_device):
             with tf.variable_scope('calc/'):
                 self.X_all = tf.concat(self.Xs, axis=0, name='x') + self.image_mean
                 self.Y_all = tf.concat(self.Ys, axis=0, name='y_true')
