@@ -598,6 +598,7 @@ class ConvNet(object):
             self.crop_scale = kwargs.get('rand_crop_scale', (1.0, 1.0))  # Size of crop windows
             self.crop_ratio = kwargs.get('rand_crop_ratio', (1.0, 1.0))  # Aspect ratio of crop windows
             self.interpolation = kwargs.get('resize_interpolation', 'bilinear')  # Interpolation method
+            self.rand_interpolation = kwargs.get('rand_interpolation', False)
             if mask is None:
                 x = tf.map_fn(self.rand_crop_image, x, parallel_iterations=32, back_prop=False)
             else:
@@ -636,15 +637,20 @@ class ConvNet(object):
         offset_h = tf.random.uniform([], 0, h - size_h + 1, dtype=tf.int32)
         offset_w = tf.random.uniform([], 0, w - size_w + 1, dtype=tf.int32)
 
-        image = tf.slice(image, [offset_h, offset_w, 0], [size_h, size_w, -1])
+        image = tf.expand_dims(tf.slice(image, [offset_h, offset_w, 0], [size_h, size_w, -1]), axis=0)
         re_size = self.input_size[0:2]
-        if self.interpolation.lower() == 'nearest' or self.interpolation.lower() == 'nearest neighbor':
-            image = tf.image.resize_nearest_neighbor(tf.expand_dims(image, axis=0), re_size, half_pixel_centers=True)
+        if self.rand_interpolation:
+            num = tf.random.uniform([], 0, 2, dtype=tf.int32)
+            image = tf.cond(tf.cast(num, dtype=tf.bool),
+                            lambda: tf.image.resize_nearest_neighbor(image, re_size, half_pixel_centers=True),
+                            lambda: tf.image.resize_bilinear(image, re_size, half_pixel_centers=True))
+        elif self.interpolation.lower() == 'nearest' or self.interpolation.lower() == 'nearest neighbor':
+            image = tf.image.resize_nearest_neighbor(image, re_size, half_pixel_centers=True)
         elif self.interpolation.lower() == 'bilinear':
-            image = tf.image.resize_bilinear(tf.expand_dims(image, axis=0), re_size, half_pixel_centers=True)
+            image = tf.image.resize_bilinear(image, re_size, half_pixel_centers=True)
         elif self.interpolation.lower() == 'bicubic':
             warnings.warn('Bicubic interpolation is not supported for GPU. Bilinear is used instead.', UserWarning)
-            image = tf.image.resize_bilinear(tf.expand_dims(image, axis=0), re_size, half_pixel_centers=True)
+            image = tf.image.resize_bilinear(image, re_size, half_pixel_centers=True)
         else:
             raise(ValueError, 'Interpolation method of {} is not supported.'.format(self.interpolation))
 
@@ -683,12 +689,27 @@ class ConvNet(object):
         offset_h = tf.random.uniform([], 0, h - size_h + 1, dtype=tf.int32)
         offset_w = tf.random.uniform([], 0, w - size_w + 1, dtype=tf.int32)
 
-        image = tf.slice(image, [offset_h, offset_w, 0], [size_h, size_w, -1])
-        image = tf.image.resize_bilinear(tf.expand_dims(image, axis=0), self.input_size[0:2], half_pixel_centers=True)
+        image = tf.expand_dims(tf.slice(image, [offset_h, offset_w, 0], [size_h, size_w, -1]), axis=0)
+        re_size = self.input_size[0:2]
+        if self.rand_interpolation:
+            num = tf.random.uniform([], 0, 2, dtype=tf.int32)
+            image = tf.cond(tf.cast(num, dtype=tf.bool),
+                            lambda: tf.image.resize_nearest_neighbor(image, re_size, half_pixel_centers=True),
+                            lambda: tf.image.resize_bilinear(image, re_size, half_pixel_centers=True))
+        elif self.interpolation.lower() == 'nearest' or self.interpolation.lower() == 'nearest neighbor':
+            image = tf.image.resize_nearest_neighbor(image, re_size, half_pixel_centers=True)
+        elif self.interpolation.lower() == 'bilinear':
+            image = tf.image.resize_bilinear(image, re_size, half_pixel_centers=True)
+        elif self.interpolation.lower() == 'bicubic':
+            warnings.warn('Bicubic interpolation is not supported for GPU. Bilinear is used instead.', UserWarning)
+            image = tf.image.resize_bilinear(image, re_size, half_pixel_centers=True)
+        else:
+            raise (ValueError, 'Interpolation method of {} is not supported.'.format(self.interpolation))
+
         image = tf.reshape(image, self.input_size)
-        mask = tf.slice(mask, [offset_h, offset_w, 0], [size_h, size_w, -1])
-        mask = tf.image.resize_nearest_neighbor(tf.expand_dims(mask, axis=0),
-                                                self.input_size[0:2], half_pixel_centers=True)
+
+        mask = tf.expand_dims(tf.slice(mask, [offset_h, offset_w, 0], [size_h, size_w, -1]), axis=0)
+        mask = tf.image.resize_nearest_neighbor(mask, re_size, half_pixel_centers=True)
         mask = tf.reshape(mask, list(self.input_size[:-1]) + [1])
 
         return image, mask
