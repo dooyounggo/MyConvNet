@@ -73,7 +73,7 @@ class Optimizer(object):
 
         tower_grads = []
         with tf.variable_scope(tf.get_variable_scope()):
-            for i in range(self.model.num_gpus):
+            for i in range(self.model.gpu_offset, self.model.num_gpus + self.model.gpu_offset):
                 with tf.device('/gpu:' + str(i)):
                     with tf.variable_scope('gpu{}/gradients'.format(i)):
                         loss = self.model.losses[i]
@@ -206,7 +206,7 @@ class Optimizer(object):
 
         kwargs['monte_carlo'] = False       # Turn off monte carlo dropout for validation
 
-        with tf.device('/cpu:0'):
+        with tf.device('/cpu:{}'.format(self.model.cpu_offset)):
             with tf.variable_scope('summaries'):    # TensorBoard summaries
                 tf.summary.scalar('Loss', self.model.loss)
                 tf.summary.scalar('Learning Rate', self.learning_rate)
