@@ -45,7 +45,10 @@ class ConvNet(object):
         self._channel_first = kwargs.get('channel_first', False)
         self._argmax_output = kwargs.get('argmax_output', False)
         self._num_gpus = kwargs.get('num_gpus', 1)
-        self._param_device = '/gpu:0' if self.num_gpus == 1 else '/cpu:0'
+        self._cpu_offset = kwargs.get('cpu_offset', 0)
+        self._gpu_offset = kwargs.get('gpu_offset', 0)
+        self._param_device = '/gpu:{}'.format(self.gpu_offset) if self.num_gpus == 1\
+            else '/cpu:{}'.format(self.cpu_offset)
 
         self._padded_size = np.round(np.array(self.input_size[0:2])*(1.0 + kwargs.get('zero_pad_ratio', 0.0)))
         self.pad_value = kwargs.get('pad_value', 0.5)
@@ -79,7 +82,7 @@ class ConvNet(object):
         self.dicts = []
         self._update_ops = []
 
-        with tf.device('/cpu:0'):
+        with tf.device(self.param_device):
             with tf.variable_scope('conditions'):
                 self.is_train = tf.placeholder(tf.bool, shape=[], name='is_train')
                 self.monte_carlo = tf.placeholder(tf.bool, shape=[], name='monte_carlo')
@@ -162,6 +165,14 @@ class ConvNet(object):
         return self._num_gpus
 
     @property
+    def cpu_offset(self):
+        return self._cpu_offset
+
+    @property
+    def gpu_offset(self):
+        return self._gpu_offset
+
+    @property
     def param_device(self):
         return self._param_device
 
@@ -205,7 +216,7 @@ class ConvNet(object):
         output_shapes = ([None, None, None, self.input_size[-1]],
                          [None])
         with tf.variable_scope(tf.get_variable_scope()):
-            for i in range(self._num_gpus):
+            for i in range(self.gpu_offset, self.num_gpus + self.gpu_offset):
                 self._curr_device = i
                 self._curr_block = 0
                 self._num_blocks = 0
