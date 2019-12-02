@@ -70,6 +70,7 @@ class Optimizer(object):
         gradient_threshold = kwargs.get('gradient_threshold', 5.0)
         loss_scaling_factor = kwargs.get('loss_scaling_factor', 1.0)
         weight_decay = kwargs.get('base_weight_decay', 0.0)*self.batch_size/256
+        l1_weight_decay = kwargs.get('l1_weight_decay', False)
         huber_decay_delta = kwargs.get('huber_decay_delta', None)
 
         tower_grads = []
@@ -132,7 +133,10 @@ class Optimizer(object):
                 for var in variables:
                     if var.trainable:
                         if huber_decay_delta is None:
-                            decay_op = var.assign_sub(weight_decay*var)
+                            if l1_weight_decay:
+                                decay_op = var.assign_sub(weight_decay*tf.math.sign(var))
+                            else:
+                                decay_op = var.assign_sub(weight_decay*var)
                         else:  # Pseudo-Huber weight decay
                             decay_op = var.assign_sub(weight_decay*var/tf.math.sqrt(1 + (var/delta)**2))
                         self.update_ops.append(decay_op)
