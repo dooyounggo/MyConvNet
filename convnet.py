@@ -1149,7 +1149,7 @@ class ConvNet(object):
         else:
             return tf.matmul(x, weights)
 
-    def batch_norm(self, x, scale=True, shift=True, zero_scale_init=False, epsilon=1e-4, scope='bn'):
+    def batch_norm(self, x, scale=True, shift=True, zero_scale_init=False, epsilon=1e-3, scope='bn'):
         if self.update_batch_norm is not None:
             update = self.update_batch_norm
         else:
@@ -1285,7 +1285,7 @@ class ConvNet(object):
 
         return x
 
-    def group_norm(self, x, num_groups=8, scale=True, shift=True, zero_scale_init=False, epsilon=1e-4, scope='gn'):
+    def group_norm(self, x, num_groups=8, scale=True, shift=True, zero_scale_init=False, epsilon=1e-3, scope='gn'):
         if self.blocks_to_train is None:
             trainable = True
         elif self._curr_block is None or self._curr_block in self.blocks_to_train:
