@@ -168,15 +168,15 @@ class Optimizer(object):
             var_list = []
             if blocks_to_load is None:
                 for i in range(self.model.num_blocks):
-                    var_list += tf.get_collection('block{}_variables'.format(i))
-                    var_list += tf.get_collection('block{}_ema_variables'.format(i))
+                    var_list += tf.get_collection('block_{}_variables'.format(i))
+                    var_list += tf.get_collection('block_{}_ema_variables'.format(i))
             else:
                 for i in blocks_to_load:
-                    var_list += tf.get_collection('block{}_variables'.format(i))
-                    var_list += tf.get_collection('block{}_ema_variables'.format(i))
+                    var_list += tf.get_collection('block_{}_variables'.format(i))
+                    var_list += tf.get_collection('block_{}_ema_variables'.format(i))
             if load_logits:
-                var_list += tf.get_collection('block{}_variables'.format(None))
-                var_list += tf.get_collection('block{}_ema_variables'.format(None))
+                var_list += tf.get_collection('block_{}_variables'.format(None))
+                var_list += tf.get_collection('block_{}_ema_variables'.format(None))
 
             if load_moving_average:
                 variables = {}
@@ -239,7 +239,7 @@ class Optimizer(object):
                                  max_outputs=4)
                 tf.summary.histogram('Image Histogram', self.model.X_all)
                 for i in range(self.model.num_blocks):
-                    weights = tf.get_collection('block{}_weight_variables'.format(i))
+                    weights = tf.get_collection('block_{}_weight_variables'.format(i))
                     if len(weights) > 0:
                         tf.summary.histogram('Block {} Weight Histogram'.format(i), weights[0])
                 merged = tf.summary.merge_all()
