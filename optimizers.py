@@ -218,10 +218,10 @@ class Optimizer(object):
         saver = tf.train.Saver(max_to_keep=max_to_keep)
         saver.export_meta_graph(filename=os.path.join(save_dir, 'model.ckpt.meta'))
 
-        kwargs['monte_carlo'] = False       # Turn off monte carlo dropout for validation
+        kwargs['monte_carlo'] = False  # Turn off monte carlo dropout for validation
 
         with tf.device('/cpu:{}'.format(self.model.cpu_offset)):
-            with tf.variable_scope('summaries'):    # TensorBoard summaries
+            with tf.variable_scope('summaries'):  # TensorBoard summaries
                 tf.summary.scalar('Loss', self.model.loss)
                 tf.summary.scalar('Learning Rate', self.learning_rate)
                 tf.summary.scalar('Debug Value', self.model.debug_value)
@@ -238,6 +238,10 @@ class Optimizer(object):
                                  tf.cast(self.model.debug_images_1*255, dtype=tf.uint8),
                                  max_outputs=4)
                 tf.summary.histogram('Image Histogram', self.model.X_all)
+                for i in range(self.model.num_blocks):
+                    weights = tf.get_collection('block{}_weight_variables'.format(i))
+                    if len(weights) > 0:
+                        tf.summary.histogram('Block {} Weight Histogram'.format(i), weights[0])
                 merged = tf.summary.merge_all()
                 writer = tf.summary.FileWriter(os.path.join(save_dir, 'logs'), self.model.session.graph)
 
