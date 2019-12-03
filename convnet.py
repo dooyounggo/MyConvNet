@@ -288,8 +288,8 @@ class ConvNet(object):
                 self.gcam = tf.concat(self.gcams, axis=0, name='grad_cam')
 
                 self.input_images = tf.concat(self.X_in, axis=0, name='x_in')
-                self.debug_images_0 = tf.clip_by_value(self.gcam/2 + self.X_all + 0.5, 0, 1)
-                self.debug_images_1 = tf.clip_by_value(self.gcam*(self.X_all + 0.5), 0, 1)
+                self.debug_images_0 = tf.clip_by_value(self.gcam/2 + self.X_all, 0, 1)
+                self.debug_images_1 = tf.clip_by_value(self.gcam*self.X_all, 0, 1)
 
     @abstractmethod
     def _init_params(self):
@@ -653,15 +653,15 @@ class ConvNet(object):
         if self.rand_interpolation:
             num = tf.random.uniform([], 0, 2, dtype=tf.int32)
             image = tf.cond(tf.cast(num, dtype=tf.bool),
-                            lambda: tf.image.resize_nearest_neighbor(image, re_size, half_pixel_centers=True),
-                            lambda: tf.image.resize_bilinear(image, re_size, half_pixel_centers=True))
+                            lambda: tf.image.resize_nearest_neighbor(image, re_size, align_corners=True),
+                            lambda: tf.image.resize_bilinear(image, re_size, align_corners=True))
         elif self.interpolation.lower() == 'nearest' or self.interpolation.lower() == 'nearest neighbor':
-            image = tf.image.resize_nearest_neighbor(image, re_size, half_pixel_centers=True)
+            image = tf.image.resize_nearest_neighbor(image, re_size, align_corners=True)
         elif self.interpolation.lower() == 'bilinear':
-            image = tf.image.resize_bilinear(image, re_size, half_pixel_centers=True)
+            image = tf.image.resize_bilinear(image, re_size, align_corners=True)
         elif self.interpolation.lower() == 'bicubic':
             warnings.warn('Bicubic interpolation is not supported for GPU. Bilinear is used instead.', UserWarning)
-            image = tf.image.resize_bilinear(image, re_size, half_pixel_centers=True)
+            image = tf.image.resize_bilinear(image, re_size, align_corners=True)
         else:
             raise(ValueError, 'Interpolation method of {} is not supported.'.format(self.interpolation))
 
@@ -705,22 +705,22 @@ class ConvNet(object):
         if self.rand_interpolation:
             num = tf.random.uniform([], 0, 2, dtype=tf.int32)
             image = tf.cond(tf.cast(num, dtype=tf.bool),
-                            lambda: tf.image.resize_nearest_neighbor(image, re_size, half_pixel_centers=True),
-                            lambda: tf.image.resize_bilinear(image, re_size, half_pixel_centers=True))
+                            lambda: tf.image.resize_nearest_neighbor(image, re_size, align_corners=True),
+                            lambda: tf.image.resize_bilinear(image, re_size, align_corners=True))
         elif self.interpolation.lower() == 'nearest' or self.interpolation.lower() == 'nearest neighbor':
-            image = tf.image.resize_nearest_neighbor(image, re_size, half_pixel_centers=True)
+            image = tf.image.resize_nearest_neighbor(image, re_size, align_corners=True)
         elif self.interpolation.lower() == 'bilinear':
-            image = tf.image.resize_bilinear(image, re_size, half_pixel_centers=True)
+            image = tf.image.resize_bilinear(image, re_size, align_corners=True)
         elif self.interpolation.lower() == 'bicubic':
             warnings.warn('Bicubic interpolation is not supported for GPU. Bilinear is used instead.', UserWarning)
-            image = tf.image.resize_bilinear(image, re_size, half_pixel_centers=True)
+            image = tf.image.resize_bilinear(image, re_size, align_corners=True)
         else:
             raise (ValueError, 'Interpolation method of {} is not supported.'.format(self.interpolation))
 
         image = tf.reshape(image, self.input_size)
 
         mask = tf.expand_dims(tf.slice(mask, [offset_h, offset_w, 0], [size_h, size_w, -1]), axis=0)
-        mask = tf.image.resize_nearest_neighbor(mask, re_size, half_pixel_centers=True)
+        mask = tf.image.resize_nearest_neighbor(mask, re_size, align_corners=True)
         mask = tf.reshape(mask, list(self.input_size[:-1]) + [1])
 
         return image, mask
@@ -923,13 +923,13 @@ class ConvNet(object):
 
             if not tf.get_variable_scope().reuse:
                 tf.add_to_collection('weight_variables', weights)
-                tf.add_to_collection('block{}_variables'.format(self._curr_block), weights)
-                tf.add_to_collection('block{}_weight_variables'.format(self._curr_block), weights)
+                tf.add_to_collection('block_{}_variables'.format(self._curr_block), weights)
+                tf.add_to_collection('block_{}_weight_variables'.format(self._curr_block), weights)
                 with tf.variable_scope(self.top_scope):
                     self.update_ops.append(self.ema.apply([weights]))
             weights_ema = self.ema.average(weights)
             if not tf.get_variable_scope().reuse:
-                tf.add_to_collection('block{}_ema_variables'.format(self._curr_block), weights_ema)
+                tf.add_to_collection('block_{}_ema_variables'.format(self._curr_block), weights_ema)
 
             weights = tf.cond(self.is_train,
                               lambda: weights,
@@ -971,13 +971,13 @@ class ConvNet(object):
 
             if not tf.get_variable_scope().reuse:
                 tf.add_to_collection('bias_variables', biases)
-                tf.add_to_collection('block{}_variables'.format(self._curr_block), biases)
-                tf.add_to_collection('block{}_bias_variables'.format(self._curr_block), biases)
+                tf.add_to_collection('block_{}_variables'.format(self._curr_block), biases)
+                tf.add_to_collection('block_{}_bias_variables'.format(self._curr_block), biases)
                 with tf.variable_scope(self.top_scope):
                     self.update_ops.append(self.ema.apply([biases]))
             biases_ema = self.ema.average(biases)
             if not tf.get_variable_scope().reuse:
-                tf.add_to_collection('block{}_ema_variables'.format(self._curr_block), biases_ema)
+                tf.add_to_collection('block_{}_ema_variables'.format(self._curr_block), biases_ema)
 
             biases = tf.cond(self.is_train,
                              lambda: biases,
@@ -1177,35 +1177,35 @@ class ConvNet(object):
                 mu = tf.get_variable('mu', in_channels, dtype=tf.float32,
                                      initializer=tf.zeros_initializer(), trainable=False)
                 if not tf.get_variable_scope().reuse:
-                    tf.add_to_collection('block{}_variables'.format(self._curr_block), mu)
-                    tf.add_to_collection('block{}_batch_norm_variables'.format(self._curr_block), mu)
+                    tf.add_to_collection('block_{}_variables'.format(self._curr_block), mu)
+                    tf.add_to_collection('block_{}_batch_norm_variables'.format(self._curr_block), mu)
                     with tf.variable_scope(self.top_scope):
                         self.update_ops.append(self.ema.apply([mu]))
                 # if self._curr_device == 0:
                 #     self._flops += h*w*in_channels
                 mu_ema = self.ema.average(mu)
                 if not tf.get_variable_scope().reuse:
-                    tf.add_to_collection('block{}_ema_variables'.format(self._curr_block), mu_ema)
+                    tf.add_to_collection('block_{}_ema_variables'.format(self._curr_block), mu_ema)
 
                 sigma = tf.get_variable('sigma', in_channels, dtype=tf.float32,
                                         initializer=tf.ones_initializer(), trainable=False)
                 if not tf.get_variable_scope().reuse:
-                    tf.add_to_collection('block{}_variables'.format(self._curr_block), sigma)
-                    tf.add_to_collection('block{}_batch_norm_variables'.format(self._curr_block), sigma)
+                    tf.add_to_collection('block_{}_variables'.format(self._curr_block), sigma)
+                    tf.add_to_collection('block_{}_batch_norm_variables'.format(self._curr_block), sigma)
                     with tf.variable_scope(self.top_scope):
                         self.update_ops.append(self.ema.apply([sigma]))
                 # if self._curr_device == 0:
                 #     self._flops += h*w*in_channels
                 sigma_ema = self.ema.average(sigma)
                 if not tf.get_variable_scope().reuse:
-                    tf.add_to_collection('block{}_ema_variables'.format(self._curr_block), sigma_ema)
+                    tf.add_to_collection('block_{}_ema_variables'.format(self._curr_block), sigma_ema)
 
                 if shift:
                     beta = tf.get_variable('beta', in_channels, dtype=tf.float32,
                                            initializer=tf.zeros_initializer(), trainable=trainable)
                     if not tf.get_variable_scope().reuse:
-                        tf.add_to_collection('block{}_variables'.format(self._curr_block), beta)
-                        tf.add_to_collection('block{}_batch_norm_variables'.format(self._curr_block), beta)
+                        tf.add_to_collection('block_{}_variables'.format(self._curr_block), beta)
+                        tf.add_to_collection('block_{}_batch_norm_variables'.format(self._curr_block), beta)
                         with tf.variable_scope(self.top_scope):
                             self.update_ops.append(self.ema.apply([beta]))
                         self._params += in_channels
@@ -1213,7 +1213,7 @@ class ConvNet(object):
                     #     self._flops += h*w*in_channels
                     beta_ema = self.ema.average(beta)
                     if not tf.get_variable_scope().reuse:
-                        tf.add_to_collection('block{}_ema_variables'.format(self._curr_block), beta_ema)
+                        tf.add_to_collection('block_{}_ema_variables'.format(self._curr_block), beta_ema)
                 else:
                     beta = None
                     beta_ema = None
@@ -1223,8 +1223,8 @@ class ConvNet(object):
                     gamma = tf.get_variable('gamma', in_channels, dtype=tf.float32,
                                             initializer=scale_initializer, trainable=trainable)
                     if not tf.get_variable_scope().reuse:
-                        tf.add_to_collection('block{}_variables'.format(self._curr_block), gamma)
-                        tf.add_to_collection('block{}_batch_norm_variables'.format(self._curr_block), gamma)
+                        tf.add_to_collection('block_{}_variables'.format(self._curr_block), gamma)
+                        tf.add_to_collection('block_{}_batch_norm_variables'.format(self._curr_block), gamma)
                         with tf.variable_scope(self.top_scope):
                             self.update_ops.append(self.ema.apply([gamma]))
                         self._params += in_channels
@@ -1232,7 +1232,7 @@ class ConvNet(object):
                     #     self._flops += h*w*in_channels
                     gamma_ema = self.ema.average(gamma)
                     if not tf.get_variable_scope().reuse:
-                        tf.add_to_collection('block{}_ema_variables'.format(self._curr_block), gamma_ema)
+                        tf.add_to_collection('block_{}_ema_variables'.format(self._curr_block), gamma_ema)
                 else:
                     gamma = None
                     gamma_ema = None
@@ -1319,8 +1319,8 @@ class ConvNet(object):
                     beta = tf.get_variable('beta', in_channels, dtype=tf.float32,
                                            initializer=tf.zeros_initializer(), trainable=trainable)
                     if not tf.get_variable_scope().reuse:
-                        tf.add_to_collection('block{}_variables'.format(self._curr_block), beta)
-                        tf.add_to_collection('block{}_batch_norm_variables'.format(self._curr_block), beta)
+                        tf.add_to_collection('block_{}_variables'.format(self._curr_block), beta)
+                        tf.add_to_collection('block_{}_batch_norm_variables'.format(self._curr_block), beta)
                         with tf.variable_scope(self.top_scope):
                             self.update_ops.append(self.ema.apply([beta]))
                         self._params += in_channels
@@ -1328,7 +1328,7 @@ class ConvNet(object):
                     #     self._flops += h*w*in_channels
                     beta_ema = self.ema.average(beta)
                     if not tf.get_variable_scope().reuse:
-                        tf.add_to_collection('block{}_ema_variables'.format(self._curr_block), beta_ema)
+                        tf.add_to_collection('block_{}_ema_variables'.format(self._curr_block), beta_ema)
                 else:
                     beta = None
                     beta_ema = None
@@ -1338,8 +1338,8 @@ class ConvNet(object):
                     gamma = tf.get_variable('gamma', in_channels, dtype=tf.float32,
                                             initializer=scale_initializer, trainable=trainable)
                     if not tf.get_variable_scope().reuse:
-                        tf.add_to_collection('block{}_variables'.format(self._curr_block), gamma)
-                        tf.add_to_collection('block{}_batch_norm_variables'.format(self._curr_block), gamma)
+                        tf.add_to_collection('block_{}_variables'.format(self._curr_block), gamma)
+                        tf.add_to_collection('block_{}_batch_norm_variables'.format(self._curr_block), gamma)
                         with tf.variable_scope(self.top_scope):
                             self.update_ops.append(self.ema.apply([gamma]))
                         self._params += in_channels
@@ -1347,7 +1347,7 @@ class ConvNet(object):
                     #     self._flops += h*w*in_channels
                     gamma_ema = self.ema.average(gamma)
                     if not tf.get_variable_scope().reuse:
-                        tf.add_to_collection('block{}_ema_variables'.format(self._curr_block), gamma_ema)
+                        tf.add_to_collection('block_{}_ema_variables'.format(self._curr_block), gamma_ema)
                 else:
                     gamma = None
                     gamma_ema = None
