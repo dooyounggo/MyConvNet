@@ -70,6 +70,7 @@ class Optimizer(object):
         gradient_threshold = kwargs.get('gradient_threshold', 5.0)
         loss_scaling_factor = kwargs.get('loss_scaling_factor', 1.0)
         weight_decay = kwargs.get('base_weight_decay', 0.0)*self.batch_size/256
+        weight_decay_scheduling = kwargs.get('weight_decay_scheduling', False)
         l1_weight_decay = kwargs.get('l1_weight_decay', False)
         huber_decay_delta = kwargs.get('huber_decay_delta', None)
 
@@ -127,7 +128,9 @@ class Optimizer(object):
         if weight_decay > 0.0:
             variables = tf.get_collection('weight_variables')
             with tf.variable_scope('weight_decay'):
-                weight_decay = self.learning_rate_multiplier*weight_decay
+                weight_decay = tf.constant(weight_decay, dtype=tf.float32, name='weight_decay_factor')
+                if weight_decay_scheduling:
+                    weight_decay = self.learning_rate_multiplier*weight_decay
                 if huber_decay_delta is not None:
                     delta = tf.constant(huber_decay_delta, dtype=tf.float32, name='huber_delta')
                 for var in variables:
