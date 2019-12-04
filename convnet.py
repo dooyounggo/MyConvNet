@@ -334,7 +334,7 @@ class ConvNet(object):
             with tf.variable_scope('l1_loss'):
                 if l1_factor > 0.0:
                     l1_factor = tf.constant(l1_factor, dtype=tf.float32, name='L1_factor')
-                    l1_reg_loss = l1_factor*tf.add_n([tf.reduce_sum(tf.abs(var)) for var in variables])
+                    l1_reg_loss = l1_factor*tf.accumulate_n([tf.reduce_sum(tf.math.abs(var)) for var in variables])
                 else:
                     l1_reg_loss = tf.constant(0.0, dtype=tf.float32, name='0')
             with tf.variable_scope('l2_loss'):
