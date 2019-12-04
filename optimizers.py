@@ -242,6 +242,11 @@ class Optimizer(object):
                     weights = tf.get_collection('block_{}_weight_variables'.format(i))
                     if len(weights) > 0:
                         tf.summary.histogram('Block {} Weight Histogram'.format(i), weights[0])
+                weights = tf.get_collection('weight_variables')
+                weights_l1 = tf.math.accumulate_n([tf.reduce_sum(tf.math.abs(w)) for w in weights])
+                weights_l2 = tf.math.accumulate_n([tf.nn.l2_loss(w) for w in weights])
+                tf.summary.scalar('Weights L1', weights_l1)
+                tf.summary.scalar('Weights L2', weights_l2)
                 merged = tf.summary.merge_all()
                 writer = tf.summary.FileWriter(os.path.join(save_dir, 'logs'), self.model.session.graph)
 
