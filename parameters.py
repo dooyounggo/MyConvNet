@@ -124,7 +124,7 @@ class Parameters(object):
     d['rand_crop'] = False  # Bool
     d['rand_crop_scale'] = (0.08, 1.0)  # Scale*input_size patch crop from an image
     d['rand_crop_ratio'] = (3/4, 4/3)
-    d['rand_interpolation'] = True  # If true, interpolation method is randomly selected between nearest and bilinear
+    d['rand_interpolation'] = True  # If true, interpolation method is randomly selected from nearest and bilinear
 
     d['rand_distortion'] = True  # Bool
     d['rand_hue'] = 0.2  # Hue range in proportion
