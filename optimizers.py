@@ -243,10 +243,21 @@ class Optimizer(object):
                     if len(weights) > 0:
                         tf.summary.histogram('Block {} Weight Histogram'.format(i), weights[0])
                 weights = tf.get_collection('weight_variables')
-                weights_l1 = tf.math.accumulate_n([tf.reduce_sum(tf.math.abs(w)) for w in weights])
-                weights_l2 = tf.math.accumulate_n([tf.nn.l2_loss(w) for w in weights])
+                with tf.variable_scope('weights_l1'):
+                    weights_l1 = tf.math.accumulate_n([tf.reduce_sum(tf.math.abs(w)) for w in weights])
                 tf.summary.scalar('Weights L1', weights_l1)
+                with tf.variable_scope('weights_l2'):
+                    weights_l2 = tf.math.accumulate_n([tf.nn.l2_loss(w) for w in weights])
                 tf.summary.scalar('Weights L2', weights_l2)
+                tail_scores = []
+                with tf.variable_scope('weights_tail_score'):
+                    for w in weights:
+                        tail_threshold = 1.96*tf.math.reduce_std(w)
+                        num_weights = tf.math.reduce_sum(tf.cast(tf.math.greater(tf.math.abs(w), tail_threshold),
+                                                                 dtype=tf.float32))
+                        tail_scores.append(num_weights/(0.05*tf.size(w, out_type=tf.float32)))
+                    tail_score = tf.math.accumulate_n(tail_scores)/len(tail_scores)
+                tf.summary.scalar('Weights Tail Score', tail_score)
                 merged = tf.summary.merge_all()
                 writer = tf.summary.FileWriter(os.path.join(save_dir, 'logs'), self.model.session.graph)
 
