@@ -249,15 +249,25 @@ class Optimizer(object):
                 with tf.variable_scope('weights_l2'):
                     weights_l2 = tf.math.accumulate_n([tf.nn.l2_loss(w) for w in weights])
                 tf.summary.scalar('Weights L2', weights_l2)
-                tail_scores = []
+                tail_scores_5 = []
+                tail_scores_1 = []
                 with tf.variable_scope('weights_tail_score'):
                     for w in weights:
-                        tail_threshold = 1.96*tf.math.reduce_std(w)
-                        num_weights = tf.math.reduce_sum(tf.cast(tf.math.greater(tf.math.abs(w), tail_threshold),
-                                                                 dtype=tf.float32))
-                        tail_scores.append(num_weights/(0.05*tf.size(w, out_type=tf.float32)))
-                    tail_score = tf.math.accumulate_n(tail_scores)/len(tail_scores)
-                tf.summary.scalar('Weights Tail Score', tail_score)
+                        w_size = tf.size(w, out_type=tf.float32)
+                        w_std = tf.math.reduce_std(w)
+                        w_abs = tf.math.abs(w)
+                        tail_threshold_5 = 1.96*w_std
+                        tail_threshold_1 = 2.58*w_std
+                        num_weights_5 = tf.math.reduce_sum(tf.cast(tf.math.greater(w_abs, tail_threshold_5),
+                                                                   dtype=tf.float32))
+                        num_weights_1 = tf.math.reduce_sum(tf.cast(tf.math.greater(w_abs, tail_threshold_1),
+                                                                   dtype=tf.float32))
+                        tail_scores_5.append(num_weights_5/(0.05*w_size))
+                        tail_scores_1.append(num_weights_1/(0.01*w_size))
+                    tail_score_5 = tf.math.accumulate_n(tail_scores_5)/len(tail_scores_5)
+                    tail_score_1 = tf.math.accumulate_n(tail_scores_1)/len(tail_scores_1)
+                tf.summary.scalar('Weights Tail Score 5%', tail_score_5)
+                tf.summary.scalar('Weights Tail Score 1%', tail_score_1)
                 merged = tf.summary.merge_all()
                 writer = tf.summary.FileWriter(os.path.join(save_dir, 'logs'), self.model.session.graph)
 
