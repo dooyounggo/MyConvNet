@@ -939,6 +939,8 @@ class ConvNet(object):
             with tf.variable_scope('ws'):
                 w_len = len(shape)
                 w_idx = list(range(w_len))
+                while len(w_idx) > 2 and shape[w_idx[-1]] == 1:
+                    w_idx = w_idx[:-1]
                 mean = tf.math.reduce_mean(weights, axis=w_idx[:-1], keepdims=True)
                 weights = weights - mean
                 std = tf.math.reduce_std(weights, axis=w_idx[:-1], keepdims=True)
@@ -1303,8 +1305,8 @@ class ConvNet(object):
             if len(in_shape) > 2:
                 if self.channel_first:
                     _, in_channels, h, w = in_shape
-                    x_shape = [batch_size, num_groups, in_channels//num_groups, h, w]
-                    axis = [2, 3, 4]
+                    x_shape = [batch_size, in_channels//num_groups, num_groups, h, w]
+                    axis = [1, 3, 4]
                     var_shape = [1, in_channels, 1, 1]
                 else:
                     _, h, w, in_channels = in_shape
@@ -1404,8 +1406,8 @@ class ConvNet(object):
             if len(in_shape) > 2:
                 if self.channel_first:
                     _, in_channels, h, w = in_shape
-                    x_shape = [batch_size, num_groups, in_channels//num_groups, h, w]
-                    axis = [2, 3, 4]
+                    x_shape = [batch_size, in_channels//num_groups, num_groups, h, w]
+                    axis = [1, 3, 4]
                     var_shape = [1, in_channels, 1, 1]
                 else:
                     _, h, w, in_channels = in_shape
