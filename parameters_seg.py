@@ -60,11 +60,12 @@ class Parameters(object):
     d['update_batch_norm'] = False  # Whether to update batch norm gamma and beta. None to follow blocks_to_train
 
     # FIXME: Training hyperparameters
-    d['half_precision'] = False  # Try half-precision if your GPU supports it
-    d['channel_first'] = True  # If true, NCHW format is used instead of NHWC
+    d['half_precision'] = False  # If True, the float16 data type is used
+    d['channel_first'] = True  # If True, the "NCHW" format is used instead of "NHWC"
+    d['argmax_output'] = True  # If True, the network output will be argmaxed (output shape=(N, H, W, 1))
     d['num_gpus'] = 1
-    d['cpu_offset'] = 0  # Offset for selecting CPU
-    d['gpu_offset'] = 0  # Offset for selecting GPU numbers
+    d['cpu_offset'] = 0  # CPU device offset
+    d['gpu_offset'] = 0  # GPU device offset
     d['batch_size'] = 4
     d['num_epochs'] = 30
     d['validation_frequency'] = None  # Validate every x iterations. None for every epoch
