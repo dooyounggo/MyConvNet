@@ -266,8 +266,8 @@ class Optimizer(object):
                         tail_scores_1.append(num_weights_1/(0.01*w_size))
                     tail_score_5 = tf.math.accumulate_n(tail_scores_5)/len(tail_scores_5)
                     tail_score_1 = tf.math.accumulate_n(tail_scores_1)/len(tail_scores_1)
-                tf.summary.scalar('Weights Tail Score 5%', tail_score_5)
-                tf.summary.scalar('Weights Tail Score 1%', tail_score_1)
+                tf.summary.scalar('Weights Tail Score 5p', tail_score_5)
+                tf.summary.scalar('Weights Tail Score 1p', tail_score_1)
                 merged = tf.summary.merge_all()
                 writer = tf.summary.FileWriter(os.path.join(save_dir, 'logs'), self.model.session.graph)
 
