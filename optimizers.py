@@ -245,10 +245,10 @@ class Optimizer(object):
                 weights = tf.get_collection('weight_variables')
                 with tf.variable_scope('weights_l1'):
                     weights_l1 = tf.math.accumulate_n([tf.reduce_sum(tf.math.abs(w)) for w in weights])
-                tf.summary.scalar('Weights L1', weights_l1)
+                    tf.summary.scalar('Weights L1', weights_l1)
                 with tf.variable_scope('weights_l2'):
                     weights_l2 = tf.math.accumulate_n([tf.nn.l2_loss(w) for w in weights])
-                tf.summary.scalar('Weights L2', weights_l2)
+                    tf.summary.scalar('Weights L2', weights_l2)
                 tail_scores_5 = []
                 tail_scores_1 = []
                 with tf.variable_scope('weights_tail_score'):
@@ -266,8 +266,8 @@ class Optimizer(object):
                         tail_scores_1.append(num_weights_1/(0.01*w_size))
                     tail_score_5 = tf.math.accumulate_n(tail_scores_5)/len(tail_scores_5)
                     tail_score_1 = tf.math.accumulate_n(tail_scores_1)/len(tail_scores_1)
-                tf.summary.scalar('Weights Tail Score 5p', tail_score_5)
-                tf.summary.scalar('Weights Tail Score 1p', tail_score_1)
+                    tf.summary.scalar('Weights Tail Score 5p', tail_score_5)
+                    tf.summary.scalar('Weights Tail Score 1p', tail_score_1)
                 merged = tf.summary.merge_all()
                 writer = tf.summary.FileWriter(os.path.join(save_dir, 'logs'), self.model.session.graph)
 
