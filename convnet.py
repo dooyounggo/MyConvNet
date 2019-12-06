@@ -939,8 +939,8 @@ class ConvNet(object):
             with tf.variable_scope('ws'):
                 w_len = len(shape)
                 w_idx = list(range(w_len))
-                while len(w_idx) > 2 and shape[w_idx[-1]] == 1:
-                    w_idx = w_idx[:-1]
+                # while len(w_idx) > 2 and shape[w_idx[-1]] == 1:  # Idx correction for depthwise convolution
+                #     w_idx = w_idx[:-1]
                 mean = tf.math.reduce_mean(weights, axis=w_idx[:-1], keepdims=True)
                 weights = weights - mean
                 std = tf.math.reduce_std(weights, axis=w_idx[:-1], keepdims=True)
