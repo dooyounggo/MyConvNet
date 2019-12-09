@@ -317,7 +317,7 @@ class Optimizer(object):
         self.curr_step += start_step
         step_loss, step_score = 0, 0
         start_time = time.time()
-        for i in range(num_steps - start_step):
+        for i in range(num_steps - start_step):  # Training iterations
             self._update_learning_rate()
 
             try:
@@ -337,7 +337,7 @@ class Optimizer(object):
                 step_scores += step_score
             self.curr_step += 1
 
-            if (i + 1) % validation_frequency == 0:     # Validation every validation_frequency iterations
+            if (i + 1) % validation_frequency == 0:  # Validation every validation_frequency iterations
                 if self.val_set is not None:
                     _, eval_Y_true, eval_Y_pred, eval_loss = self.model.predict(self.val_set, verbose=False,
                                                                                 return_images=False, **kwargs)
@@ -390,7 +390,7 @@ class Optimizer(object):
                     train_scores.append(step_score)
                     step_losses, step_scores = 0, 0
 
-            if (i + 1) % num_steps_per_epoch == 0:      # Print and plot results every epoch
+            if (i + 1) % num_steps_per_epoch == 0:  # Print and plot results every epoch
                 self.train_set.initialize(self.model.session)  # Initialize training iterator every epoch
                 if self.val_set is not None:
                     if verbose:
@@ -444,7 +444,7 @@ class Optimizer(object):
 
             return train_results
 
-    def _step(self, handles, merged=None, writer=None, summarize=False):     # Optimization step
+    def _step(self, handles, merged=None, writer=None, summarize=False):  # Optimization step
         feed_dict = {self.model.is_train: True,
                      self.model.monte_carlo: self.monte_carlo,
                      self.model.augmentation: self.augment_train,
