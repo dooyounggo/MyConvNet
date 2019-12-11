@@ -9,7 +9,7 @@
 
 ## How To Run
 - Download all the files.
-- Preprocess your data using scripts in subsets/.
+- Prepare your data using scripts in subsets/.
 - Build your own networks by modifying scripts in models/.
 - Edit parameters.py to change the dataset, model, directories, etc...
 - Run train.py to train the model.
