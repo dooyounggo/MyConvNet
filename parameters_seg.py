@@ -7,7 +7,7 @@ import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
 from dataset import DataSet
-import subsets.cityscapes as subset
+from subsets.cityscapes import read_subset
 from models.deeplabv3plus import DeepLabV3PlusResNet as ConvNet
 from optimizers import MomentumOptimizer as Optimizer
 from evaluators import MeanIoUBEvaluator as Evaluator
