@@ -322,8 +322,8 @@ class ConvNet(object):
         sigmoid_focal_loss_factor = kwargs.get('sigmoid_focal_loss_factor', 0.0)
 
         variables = tf.get_collection('weight_variables')
-        if kwargs.get('norm_weight_decay', False):
-            variables += tf.get_collection('norm_variables')
+        if kwargs.get('bias_norm_decay', False):
+            variables += tf.get_collection('norm_variables') + tf.get_collection('bias_variables')
         valid_eps = 1e-5
 
         w = self.loss_weights
