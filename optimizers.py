@@ -126,7 +126,9 @@ class Optimizer(object):
                     avg_grads_and_vars = [gv for gv in zip(avg_grads, avg_vars)]
 
         if weight_decay > 0.0:
-            variables = tf.get_collection('weight_variables') + tf.get_collection('norm_variables')
+            variables = tf.get_collection('weight_variables')
+            if kwargs.get('norm_weight_decay', False):
+                variables += tf.get_collection('norm_variables')
             with tf.variable_scope('weight_decay'):
                 weight_decay = tf.constant(weight_decay, dtype=tf.float32, name='weight_decay_factor')
                 if weight_decay_scheduling:
@@ -483,12 +485,16 @@ class Optimizer(object):
                 elif self.decay_method.lower() == 'exponential':  # params: (decay_factor, decay_every_n_epoch)
                     self.curr_multiplier = self.decay_params[0]**((self.curr_step - warmup_steps)/self.steps_per_epoch
                                                                   / self.decay_params[1])
-                elif self.decay_method.lower() == 'poly' or self.decay_method.lower() == 'polynomial':  # param: (power)
+                elif self.decay_method.lower() == 'poly' or self.decay_method.lower() == 'polynomial':  # param: power
+                    power = self.decay_params[0] if isinstance(self.decay_params, (list, tuple)) else self.decay_params
                     total_steps = self.steps_per_epoch*self.num_epochs - warmup_steps
-                    self.curr_multiplier = (1 - (self.curr_step - warmup_steps)/total_steps)**self.decay_params[0]
-                else:  # 'cosine': no parameter required
+                    self.curr_multiplier = (1 - (self.curr_step - warmup_steps)/total_steps)**power
+                else:  # 'cosine', param: num_restarts (annealing)
+                    anneal = self.decay_params[0] if isinstance(self.decay_params, (list, tuple)) else self.decay_params
+                    anneal = int(anneal)
                     total_steps = self.steps_per_epoch*self.num_epochs - warmup_steps
-                    self.curr_multiplier = 0.5*(1 + np.cos((self.curr_step - warmup_steps)*np.pi/total_steps))
+                    curr_prog = ((anneal + 1)*(self.curr_step - warmup_steps)/total_steps) % 1.0
+                    self.curr_multiplier = 0.5*(1 + np.cos(curr_prog*np.pi))
 
     def _test_drive(self, save_dir):
         self.train_set.initialize(self.model.session)  # Initialize training iterator
