@@ -54,7 +54,7 @@ class Parameters(object):
     d['load_logits'] = False  # Whether to load variables related to logits
     d['load_moving_average'] = True  # Whether to load exponential moving averages of variables onto variables
     d['start_epoch'] = 0  # Start epoch to continue training from
-    d['model_to_load'] = 0  # The (n+1)-th best model is loaded for transfer learning and test.
+    d['model_to_load'] = 0  # The (n+1)-th best model is loaded for transfer learning and test
 
     d['blocks_to_train'] = None  # Blocks to train. None for all blocks and [None] for logits only
     d['update_batch_norm'] = False  # Whether to update batch norm gamma and beta. None to follow blocks_to_train
@@ -93,9 +93,11 @@ class Parameters(object):
     d['l1_reg'] = 0.0  # L1 regularization factor
     d['l2_reg'] = 0.0  # L2 regularization factor
     d['base_weight_decay'] = 0.00001  # Decoupled weight decay factor = base_weight_decay*batch_size/256
+    d['norm_weight_decay'] = False  # Whether to apply weight decay to variables of normalization layers
     d['weight_decay_scheduling'] = True  # If true, weight decay follows learning rate scheduling
     d['l1_weight_decay'] = False  # If True, l1 weight decay is used: w := w - weight_decay*sign(w) (experimental)
     d['huber_decay_delta'] = None  # Huber loss delta for weight decay with weight standardization (experimental)
+    
     d['label_smoothing'] = 0.0  # Label smoothing factor
     d['dropout_rate'] = 0.0  # Dropout rate
     d['dropout_weights'] = False
