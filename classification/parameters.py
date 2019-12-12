@@ -7,7 +7,7 @@ import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
 from dataset import DataSet
-import subsets.stanford_dogs as subset
+from subsets.stanford_dogs import read_subset
 from models.resnet_v1_5 import ResNet50 as ConvNet
 from optimizers import MomentumOptimizer as Optimizer
 from evaluators import AccuracyEvaluator as Evaluator
