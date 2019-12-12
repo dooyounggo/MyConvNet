@@ -24,5 +24,5 @@
 - opencv-python: 4.1.0.25
 
 ### TODO
-- Speedup: Training is roughly 2-3 times slower than tf_cnn_benchmark presumably due to CPU <-> GPU data transfer time.
+- Speedup: Training is slower than tf_cnn_benchmark.
 - Include detection task
