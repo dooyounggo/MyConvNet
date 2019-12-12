@@ -323,7 +323,7 @@ class ConvNet(object):
 
         variables = tf.get_collection('weight_variables')
         if kwargs.get('bias_norm_decay', False):
-            variables += tf.get_collection('norm_variables') + tf.get_collection('bias_variables')
+            variables += tf.get_collection('bias_variables') + tf.get_collection('norm_variables')
         valid_eps = 1e-5
 
         w = self.loss_weights
