@@ -166,7 +166,7 @@ class DataSet(object):
             raise(ValueError, 'Interpolation method of {} is not supported.'.format(self.resize_interpolation))
         image = self._resize_function(image, self.image_size, interpolation=interpolation)
 
-        if not isinstance(label_dir, str):
+        if not isinstance(label_dir, str):  # No label
             label = np.array(np.nan, dtype=np.float32)
         else:   # Note that the labels are not one-hot encoded.
             if label_dir.split('.')[-1].lower() == 'csv':   # Classification and detection
