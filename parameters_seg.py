@@ -62,31 +62,32 @@ class Parameters(object):
     # FIXME: Training (hyper)parameters
     d['half_precision'] = False  # If True, the float16 data type is used
     d['channel_first'] = True  # If True, the "NCHW" format is used instead of "NHWC"
-    d['argmax_output'] = True  # If True, the network output will be argmaxed (output shape=(N, H, W, 1))
-    d['num_gpus'] = 1
+    d['argmax_output'] = True  # If True, the network's output will be argmaxed (output shape=(N, H, W, 1))
     d['cpu_offset'] = 0  # CPU device offset
     d['gpu_offset'] = 0  # GPU device offset
-    d['batch_size'] = 4
-    d['num_epochs'] = 30
-    d['validation_frequency'] = None  # Validate every x iterations. None for every epoch
-    d['summary_frequency'] = None  # Tensorboard summary every x iterations. None for every epoch
+    d['param_on_cpu'] = None  # None: param_device is CPU if num_gpus == 1 else CPU. T/F: param_device is CPU/GPU
 
-    d['base_learning_rate'] = 0.05  # Learning rate = base_learning_rate*batch_size/256
-    d['momentum'] = 0.9
-    d['moving_average_decay'] = 0.9999
-    d['batch_norm_decay'] = 0.997
-    d['gradient_threshold'] = 5.0  # Gradient thresholding using global norm. None for no thresholding
+    d['num_gpus'] = 1
+    d['batch_size'] = 4  # Total batch size (= batch_size_per_gpu*num_gpus)
+    d['num_epochs'] = 360
+    d['base_learning_rate'] = 0.1  # Learning rate = base_learning_rate*batch_size/256
+    d['momentum'] = 0.9  # Momentum of optimizers
+    d['moving_average_decay'] = 0.999  # Decay rate of exponential moving average
+    d['batch_norm_decay'] = 0.99  # Decay rate of batch statistics
+    d['gradient_threshold'] = None  # Gradient thresholding using global norm. None for no thresholding
     d['loss_weighting'] = None  # None, 'balanced', [class0_weight, class1_weight, ...]. Loss = -w_c*log(y_c)
     d['focal_loss_factor'] = 0.0  # Focal_loss = -log(y_c)*(1 - y_c)^focal_loss_factor
     d['sigmoid_focal_loss_factor'] = 0.0  # SFL = -log(y_c)*(1 - sigmoid(SFL_factor*(y_c - 0.5)) (experimental)
     d['loss_scaling_factor'] = 1  # Loss scaling factor for half precision training
 
-    d['learning_rate_decay_method'] = 'cosine'  # 'step', 'exponential', 'cosine' (default)
-    d['learning_rate_decay_params'] = (0.94, 2)
+    d['learning_rate_decay_method'] = 'polynomial'  # None, 'step', 'exponential', 'polynomial', 'cosine' (default)
+    d['learning_rate_decay_params'] = 0.9
     d['learning_warmup_epoch'] = 5.0  # Linear warmup epoch
 
     d['max_to_keep'] = 5  # Maximum number of models to save
-    d['score_threshold'] = 0.0  # A model is saved if its score is better by this threshold
+    d['score_threshold'] = 0.0  # Model is saved if its score is better by this threshold
+    d['validation_frequency'] = None  # Validate every x iterations. None for every epoch
+    d['summary_frequency'] = None  # Tensorboard summary every x iterations. None for every epoch
 
     # FIXME: Regularization hyperparameters
     d['l1_reg'] = 0.0  # L1 regularization factor
