@@ -93,8 +93,8 @@ class Parameters(object):
     d['l1_reg'] = 0.0  # L1 regularization factor
     d['l2_reg'] = 0.0  # L2 regularization factor
     d['base_weight_decay'] = 0.00001  # Decoupled weight decay factor = base_weight_decay*batch_size/256
-    d['norm_weight_decay'] = False  # Whether to apply weight decay to variables of normalization layers
-    d['weight_decay_scheduling'] = True  # If true, weight decay follows learning rate scheduling
+    d['bias_norm_decay'] = False  # Whether to apply weight decay to biases and variables of normalization layers
+    d['weight_decay_scheduling'] = True  # Whether to apply learning rate scheduling to decoupled weight decay
     d['l1_weight_decay'] = False  # If True, l1 weight decay is used: w := w - weight_decay*sign(w) (experimental)
     d['huber_decay_delta'] = None  # Huber loss delta for weight decay with weight standardization (experimental)
     
