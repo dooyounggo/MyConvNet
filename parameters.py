@@ -80,7 +80,7 @@ class Parameters(object):
     d['sigmoid_focal_loss_factor'] = 0.0  # SFL = -log(y_c)*(1 - sigmoid(SFL_factor*(y_c - 0.5)) (experimental)
     d['loss_scaling_factor'] = 1  # Loss scaling factor for half precision training
 
-    d['learning_rate_decay_method'] = 'step'  # 'step', 'exponential', 'cosine' (default)
+    d['learning_rate_decay_method'] = 'step'  # None, 'step', 'exponential', 'polynomial', 'cosine' (default)
     d['learning_rate_decay_params'] = (0.1, 40, 80)
     d['learning_warmup_epoch'] = 5.0  # Linear warmup epoch
 
