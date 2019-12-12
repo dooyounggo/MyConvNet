@@ -3,7 +3,7 @@
 
   Build your own convolutional neural networks using TensorFlow.
   
-  Supports image classification and segmentation tasks.
+  Supports image classification and semantic segmentation tasks.
   
   The code was verified using PyCharm on Windows.
 
