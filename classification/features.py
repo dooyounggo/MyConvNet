@@ -2,7 +2,7 @@
 Deep feature visualization.
 """
 
-from parameters import *
+from classification.parameters import *
 
 
 Param = Parameters()
@@ -13,7 +13,7 @@ num_cols = 5
 sample_size = 4
 
 # Load test set
-image_dirs, label_dirs, class_names = subset.read_subset(Param.test_dir, shuffle=True, sample_size=sample_size)
+image_dirs, label_dirs, class_names = read_subset(Param.test_dir, shuffle=True, sample_size=sample_size)
 Param.d['num_gpus'] = 1  # Utilizes only one GPU for convenience
 Param.d['shuffle'] = False
 test_set = DataSet(image_dirs, label_dirs, class_names=class_names, out_size=Param.d['image_size_test'],
