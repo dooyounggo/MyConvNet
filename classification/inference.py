@@ -2,7 +2,7 @@
 Inference using trained networks.
 """
 
-from parameters import *
+from classification.parameters import *
 
 
 Param = Parameters()
@@ -11,8 +11,7 @@ idx_start = 0
 idx_end = 10000
 
 # Load test set
-image_dirs, label_dirs, class_names = subset.read_subset(Param.test_dir, shuffle=False,
-                                                         sample_size=Param.test_sample_size)
+image_dirs, label_dirs, class_names = read_subset(Param.test_dir, shuffle=False, sample_size=Param.test_sample_size)
 num_data = len(image_dirs)
 image_dirs = image_dirs[idx_start:min(num_data, idx_end)]
 if label_dirs is not None:
