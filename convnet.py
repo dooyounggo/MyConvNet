@@ -47,8 +47,15 @@ class ConvNet(object):
         self._num_gpus = kwargs.get('num_gpus', 1)
         self._cpu_offset = kwargs.get('cpu_offset', 0)
         self._gpu_offset = kwargs.get('gpu_offset', 0)
-        self._param_device = '/gpu:{}'.format(self.gpu_offset) if self.num_gpus == 1\
-            else '/cpu:{}'.format(self.cpu_offset)
+
+        param_on_cpu = kwargs.get('param_on_cpu', None)
+        if param_on_cpu is None:
+            self._param_device = '/gpu:{}'.format(self.gpu_offset) if self.num_gpus == 1\
+                else '/cpu:{}'.format(self.cpu_offset)
+        elif param_on_cpu:
+            self._param_device = '/cpu:{}'.format(self.cpu_offset)
+        else:
+            self._param_device = '/gpu:{}'.format(self.gpu_offset)
 
         self._padded_size = np.round(np.array(self.input_size[0:2])*(1.0 + kwargs.get('zero_pad_ratio', 0.0)))
         self.pad_value = kwargs.get('pad_value', 0.5)
@@ -314,7 +321,9 @@ class ConvNet(object):
         focal_loss_factor = kwargs.get('focal_loss_factor', 0.0)
         sigmoid_focal_loss_factor = kwargs.get('sigmoid_focal_loss_factor', 0.0)
 
-        variables = tf.get_collection('weight_variables') + tf.get_collection('norm_variables')
+        variables = tf.get_collection('weight_variables')
+        if kwargs.get('norm_weight_decay', False):
+            variables += tf.get_collection('norm_variables')
         valid_eps = 1e-5
 
         w = self.loss_weights
