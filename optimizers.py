@@ -127,8 +127,8 @@ class Optimizer(object):
 
         if weight_decay > 0.0:
             variables = tf.get_collection('weight_variables')
-            if kwargs.get('norm_weight_decay', False):
-                variables += tf.get_collection('norm_variables')
+            if kwargs.get('bias_norm_decay', False):
+                variables += tf.get_collection('norm_variables') + tf.get_collection('bias_variables')
             with tf.variable_scope('weight_decay'):
                 weight_decay = tf.constant(weight_decay, dtype=tf.float32, name='weight_decay_factor')
                 if weight_decay_scheduling:
