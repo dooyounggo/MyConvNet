@@ -201,7 +201,7 @@ class Optimizer(object):
 
             self.model.session.run(tf.global_variables_initializer())
 
-            if model_to_load is None:       # Find a model to be transferred
+            if model_to_load is None:  # Find a model to be transferred
                 ckpt_to_load = tf.train.latest_checkpoint(transfer_dir)
             elif isinstance(model_to_load, str):
                 ckpt_to_load = os.path.join(transfer_dir, model_to_load)
@@ -455,7 +455,7 @@ class Optimizer(object):
         for h_t, h in zip(self.model.handles, handles):
             feed_dict.update({h_t: h})
 
-        if summarize:       # Write summaries on TensorBoard
+        if summarize:  # Write summaries on TensorBoard
             assert merged is not None, 'No merged summary exists.'
             assert writer is not None, 'No summary writer exists.'
             _, loss, Y_true, Y_pred, summary = self.model.session.run([self.optimization_operation, self.model.loss,
