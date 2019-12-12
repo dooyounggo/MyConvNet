@@ -1,4 +1,4 @@
-from parameters import *
+from classification.parameters import *
 import shutil
 
 
@@ -25,8 +25,8 @@ else:
 print('')
 
 # Load trainval set and split into train/val sets
-image_dirs, label_dirs, class_names = subset.read_subset(Param.train_dir, shuffle=Param.d['shuffle'],
-                                                         sample_size=Param.train_sample_size)
+image_dirs, label_dirs, class_names = read_subset(Param.train_dir, shuffle=Param.d['shuffle'],
+                                                  sample_size=Param.train_sample_size)
 train_size = len(image_dirs)
 if Param.val_dir is None:
     val_size = int(train_size*0.1)    # FIXME
@@ -39,8 +39,8 @@ if Param.val_dir is None:
                         resize_randomness=Param.d['resize_random'],
                         **Param.d)
 else:
-    image_dirs_val, label_dirs_val, _ = subset.read_subset(Param.val_dir, shuffle=Param.d['shuffle'],
-                                                           sample_size=Param.val_sample_size)
+    image_dirs_val, label_dirs_val, _ = read_subset(Param.val_dir, shuffle=Param.d['shuffle'],
+                                                    sample_size=Param.val_sample_size)
     val_set = DataSet(image_dirs_val, label_dirs_val, class_names=class_names,
                       out_size=Param.d['image_size_test'], resize_method=Param.d['resize_type_test'],
                       resize_randomness=Param.d['resize_random_test'],
