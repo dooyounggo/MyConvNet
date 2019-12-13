@@ -21,7 +21,7 @@ class Optimizer(object):
         :param train_set: DataSet, training set to be used.
         :param evaluator: Evaluator, for computing performance scores during training.
         :param val_set: DataSet, validation set to be used, which can be None if not used.
-        :param kwargs: dict, extra arguments containing training hyperparameters.
+        :param kwargs: dict, extra arguments containing (hyper)parameters.
         """
         self.model = model
         self.train_set = train_set
