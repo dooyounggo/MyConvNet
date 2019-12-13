@@ -573,11 +573,11 @@ class ConvNet(object):
 
             lower, upper = kwargs.get('rand_scale', (1.0, 1.0))
             if scheduling > 0:
-                lower = tf.math.pow(lower, self.linear_schedule_multiplier)
-                upper = tf.math.pow(upper, self.linear_schedule_multiplier)
+                lower = 1.0 - (1.0 - lower)*self.linear_schedule_multiplier
+                upper = 1.0 - (1.0 - upper)*self.linear_schedule_multiplier
             elif scheduling < 0:
-                lower = tf.math.pow(lower, 1.0 - self.linear_schedule_multiplier)
-                upper = tf.math.pow(upper, 1.0 - self.linear_schedule_multiplier)
+                lower = 1.0 - (1.0 - lower)*(1.0 - self.linear_schedule_multiplier)
+                upper = 1.0 - (1.0 - upper)*(1.0 - self.linear_schedule_multiplier)
             # base = upper/lower
             # randvals = tf.random.uniform([batch_size, 1], dtype=tf.float32)
             # rand_scale = lower*tf.math.pow(base, randvals)
@@ -697,11 +697,11 @@ class ConvNet(object):
 
         lower, upper = self._crop_scale
         if self._crop_scheduling > 0:
-            lower = tf.math.pow(lower, self.linear_schedule_multiplier)
-            upper = tf.math.pow(upper, self.linear_schedule_multiplier)
+            lower = 1.0 - (1.0 - lower)*self.linear_schedule_multiplier
+            upper = 1.0 - (1.0 - upper)*self.linear_schedule_multiplier
         elif self._crop_scheduling < 0:
-            lower = tf.math.pow(lower, 1.0 - self.linear_schedule_multiplier)
-            upper = tf.math.pow(upper, 1.0 - self.linear_schedule_multiplier)
+            lower = 1.0 - (1.0 - lower)*(1.0 - self.linear_schedule_multiplier)
+            upper = 1.0 - (1.0 - upper)*(1.0 - self.linear_schedule_multiplier)
         # a = upper**2 - lower**2
         # b = lower**2
         # randval = tf.random.uniform([], dtype=tf.float32)
@@ -761,11 +761,11 @@ class ConvNet(object):
 
         lower, upper = self._crop_scale
         if self._crop_scheduling > 0:
-            lower = tf.math.pow(lower, self.linear_schedule_multiplier)
-            upper = tf.math.pow(upper, self.linear_schedule_multiplier)
+            lower = 1.0 - (1.0 - lower)*self.linear_schedule_multiplier
+            upper = 1.0 - (1.0 - upper)*self.linear_schedule_multiplier
         elif self._crop_scheduling < 0:
-            lower = tf.math.pow(lower, 1.0 - self.linear_schedule_multiplier)
-            upper = tf.math.pow(upper, 1.0 - self.linear_schedule_multiplier)
+            lower = 1.0 - (1.0 - lower)*(1.0 - self.linear_schedule_multiplier)
+            upper = 1.0 - (1.0 - upper)*(1.0 - self.linear_schedule_multiplier)
         # a = upper**2 - lower**2
         # b = lower**2
         # randval = tf.random.uniform([], dtype=tf.float32)
@@ -982,11 +982,11 @@ class ConvNet(object):
             batch_size = shape_tensor[0]
             lower, upper = kwargs.get('rand_solarization', (0.0, 1.0))
             if scheduling > 0:
-                lower = 1.0 - tf.math.pow(1.0 - lower, self.linear_schedule_multiplier)
-                upper = tf.math.pow(upper, self.linear_schedule_multiplier)
+                lower = lower*self.linear_schedule_multiplier
+                upper = 1.0 - (1.0 - upper)*self.linear_schedule_multiplier
             elif scheduling < 0:
-                lower = 1.0 - tf.math.pow(1.0 - lower, 1.0 - self.linear_schedule_multiplier)
-                upper = tf.math.pow(upper, 1.0 - self.linear_schedule_multiplier)
+                lower = lower*(1.0 - self.linear_schedule_multiplier)
+                upper = 1.0 - (1.0 - upper)*(1.0 - self.linear_schedule_multiplier)
 
             thres_lower = tf.random.uniform([batch_size, 1, 1, 1], -0.5, lower - 0.5, dtype=tf.float32)
             thres_lower = tf.broadcast_to(thres_lower, shape_tensor)
