@@ -1,5 +1,5 @@
 """
-Setup various (hyper)parameters
+Setup various hyperparameters
 """
 
 import os
@@ -30,7 +30,7 @@ class Parameters(object):
     _pretrained_dir = os.path.join(_root_dir, 'pretrained_models', 'resnet_v2_50', 'resnet_v2_50.ckpt')
 
     d = dict()
-    # FIXME: Image pre-processing (hyper)parameters
+    # FIXME: Image pre-processing hyperparameters
     d['image_size'] = (224, 224, 3)  # Processed image size
     d['image_size_test'] = None  # If None, same as 'image_size'
     d['resize_type'] = 'random_resized_crop'  # Resize types: 'resize', 'resize_expand', 'random_resized_crop', ...
@@ -59,7 +59,7 @@ class Parameters(object):
     d['blocks_to_train'] = None  # Blocks to train. None for all blocks and [None] for logits only
     d['update_batch_norm'] = True  # Whether to update batch statistics. None to follow blocks_to_train
 
-    # FIXME: Training (hyper)parameters
+    # FIXME: Training hyperparameters
     d['half_precision'] = False  # If True, the float16 data type is used
     d['channel_first'] = True  # If True, the "NCHW" format is used instead of "NHWC"
     d['argmax_output'] = False  # If True, the network's output will be argmaxed (output shape=(N, H, W, 1))
@@ -107,7 +107,7 @@ class Parameters(object):
 
     d['feature_reduction_factor'] = 0  # Feature dimensionality reduction factor for small datasets
 
-    # FIXME: Data augmentation (hyper)parameters
+    # FIXME: Data augmentation hyperparameters
     d['augment_train'] = True  # Online augmentation for training data
     d['augment_test'] = False  # Online augmentation for validation or test data
 
