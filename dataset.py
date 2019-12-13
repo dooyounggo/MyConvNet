@@ -11,9 +11,17 @@ import subsets.subset_functions as sf
 
 
 class DataSet(object):
-    def __init__(self, image_dirs, label_dirs=None, class_names=None,
-                 out_size=None, resize_method=None, resize_randomness=False,
-                 **kwargs):
+    def __init__(self, image_dirs, label_dirs=None, class_names=None, out_size=None,
+                 resize_method=None, resize_randomness=False, **kwargs):
+        """
+        :param image_dirs: list or tuple, paths to images
+        :param label_dirs: list or tuple, paths to labels. If None, fake labels are created.
+        :param class_names: list or tuple, names of each class. Used to count the number of classes.
+        :param out_size: list or tuple, size of images to be used for training.
+        :param resize_method: string, resizing method for image preprocessing.
+        :param resize_randomness: Bool, randomness of resize operations such as crop and padding.
+        :param kwargs: dict, extra arguments containing (hyper)parameters.
+        """
         if label_dirs is None:
             label_dirs = [np.nan for _ in image_dirs]  # Fake labels
         assert len(image_dirs) == len(label_dirs), 'Number of examples mismatch, between images and labels'
