@@ -11,7 +11,7 @@ from subsets.stanford_dogs import read_subset
 from models.resnet_v1_5 import ResNet50 as ConvNet
 from optimizers import MomentumOptimizer as Optimizer
 from evaluators import AccuracyEvaluator as Evaluator
-from models.init_from_checkpoint import resnet_v1_50 as init_from_checkpoint
+from models.init_from_checkpoint import resnet_v1_50_101 as init_from_checkpoint
 import utils
 
 
