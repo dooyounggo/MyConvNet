@@ -118,11 +118,11 @@ class ConvNet(object):
                 else:
                     self.image_mean = tf.constant(0.0, dtype=tf.float32, name='0')
 
-                self.linear_multiplier = global_step/tf.cast(self.total_steps, dtype=tf.float32)
+                self.linear_schedule_multiplier = global_step / tf.cast(self.total_steps, dtype=tf.float32)
 
         self.ema = tf.train.ExponentialMovingAverage(decay=self.moving_average_decay)
 
-        self.debug_value = self.linear_multiplier
+        self.debug_value = self.linear_schedule_multiplier
         self.debug_images_0 = np.zeros([4, 8, 8, 3], dtype=np.float32)
         self.debug_images_1 = np.zeros([4, 8, 8, 3], dtype=np.float32)
 
@@ -252,6 +252,7 @@ class ConvNet(object):
                                          lambda: self.center_crop(self.X),
                                          name='augmentation')
                         if kwargs.get('cutmix', False):
+                            self._cutmix_scheduling = kwargs.get('cutmix_scheduling', False)
                             self.X, self.Y = tf.cond(self.is_train,
                                                      lambda: self.cutmix(self.X, self.Y),
                                                      lambda: (self.X, self.Y),
@@ -532,6 +533,11 @@ class ConvNet(object):
     def gaussian_blur(self, x, **kwargs):
         with tf.variable_scope('gaussian_blur'):
             max_stddev = kwargs.get('rand_blur_stddev', 0.0)
+            scheduling = kwargs.get('rand_blur_scheduling', False)
+            if scheduling > 0:
+                max_stddev *= self.linear_schedule_multiplier
+            elif scheduling < 0:
+                max_stddev *= 1.0 - self.linear_schedule_multiplier
 
             column_base = -0.5*np.array([[7, 6, 5, 4, 3, 2, 1, 0, 1, 2, 3, 4, 5, 6, 7]], dtype=np.float32)**2
             row_base = np.transpose(column_base)
@@ -552,6 +558,7 @@ class ConvNet(object):
         return x
 
     def affine_augment(self, x, mask=None, **kwargs):  # Scale, ratio, translation, rotation, shear, and reflection
+        scheduling = kwargs.get('rand_affine_scheduling', False)
         with tf.variable_scope('affine_augment'):
             shape_tensor = tf.shape(x)
             batch_size = shape_tensor[0]
@@ -559,24 +566,60 @@ class ConvNet(object):
             w = tf.cast(shape_tensor[2], dtype=tf.float32)
 
             lower, upper = kwargs.get('rand_scale', (1.0, 1.0))
-            base = float(upper/lower)
-            randvals = tf.random.uniform([batch_size, 1], dtype=tf.float32)
-            rand_scale = lower*tf.math.pow(base, randvals)
+            if scheduling > 0:
+                lower = tf.math.pow(lower, self.linear_schedule_multiplier)
+                upper = tf.math.pow(upper, self.linear_schedule_multiplier)
+            elif scheduling < 0:
+                lower = tf.math.pow(lower, 1.0 - self.linear_schedule_multiplier)
+                upper = tf.math.pow(upper, 1.0 - self.linear_schedule_multiplier)
+            # base = upper/lower
+            # randvals = tf.random.uniform([batch_size, 1], dtype=tf.float32)
+            # rand_scale = lower*tf.math.pow(base, randvals)
+            rand_scale = tf.random.uniform([], lower, upper, dtype=tf.float32)
 
             lower, upper = kwargs.get('rand_ratio', (1.0, 1.0))
-            base = float(upper/lower)
+            if scheduling > 0:
+                lower = tf.math.pow(lower, self.linear_schedule_multiplier)
+                upper = tf.math.pow(upper, self.linear_schedule_multiplier)
+            elif scheduling < 0:
+                lower = tf.math.pow(lower, 1.0 - self.linear_schedule_multiplier)
+                upper = tf.math.pow(upper, 1.0 - self.linear_schedule_multiplier)
+            base = upper/lower
             randvals = tf.random.uniform([batch_size, 1], dtype=tf.float32)
             rand_ratio = lower*tf.math.pow(base, randvals)
 
-            rand_x_scale = rand_scale*tf.math.sqrt(rand_ratio)
-            rand_y_scale = rand_scale/tf.math.sqrt(rand_ratio)
+            rand_x_scale = tf.math.sqrt(rand_scale*rand_ratio)
+            rand_y_scale = tf.math.sqrt(rand_scale/rand_ratio)
 
-            rand_rotation = (tf.random.uniform([batch_size, 1]) - 0.5)*kwargs.get('rand_rotation', 0)*(np.pi/180)
-            rand_shear = (tf.random.uniform([batch_size, 1]) - 0.5)*kwargs.get('rand_shear', 0)*(np.pi/180)
-            rand_x_trans = (tf.random.uniform([batch_size, 1]) - 0.5)*kwargs.get('rand_x_trans', 0)*w \
+            val = kwargs.get('rand_rotation', 0)
+            if scheduling > 0:
+                val *= self.linear_schedule_multiplier
+            elif scheduling < 0:
+                val *= 1.0 - self.linear_schedule_multiplier
+            rand_rotation = (tf.random.uniform([batch_size, 1]) - 0.5)*val*(np.pi/180)
+
+            val = kwargs.get('rand_shear', 0)
+            if scheduling > 0:
+                val *= self.linear_schedule_multiplier
+            elif scheduling < 0:
+                val *= 1.0 - self.linear_schedule_multiplier
+            rand_shear = (tf.random.uniform([batch_size, 1]) - 0.5)*val*(np.pi/180)
+
+            val = kwargs.get('rand_x_trans', 0)
+            if scheduling > 0:
+                val *= self.linear_schedule_multiplier
+            elif scheduling < 0:
+                val *= 1.0 - self.linear_schedule_multiplier
+            rand_x_trans = (tf.random.uniform([batch_size, 1]) - 0.5)*val*w \
                            + 0.5*w*(1.0 - rand_x_scale*tf.math.cos(rand_rotation)) \
                            + 0.5*h*rand_y_scale*tf.math.sin(rand_rotation + rand_shear)
-            rand_y_trans = (tf.random.uniform([batch_size, 1]) - 0.5)*kwargs.get('rand_y_trans', 0)*h \
+
+            val = kwargs.get('rand_y_trans', 0)
+            if scheduling > 0:
+                val *= self.linear_schedule_multiplier
+            elif scheduling < 0:
+                val *= 1.0 - self.linear_schedule_multiplier
+            rand_y_trans = (tf.random.uniform([batch_size, 1]) - 0.5)*val*h \
                            - 0.5*w*rand_x_scale*tf.math.sin(rand_rotation) \
                            + 0.5*h*(1.0 - rand_y_scale*tf.math.cos(rand_rotation + rand_shear))
 
@@ -587,8 +630,19 @@ class ConvNet(object):
             b1a = rand_y_scale*tf.math.cos(rand_rotation)
             b2a = rand_y_trans
 
-            rand_x_reflect = tf.math.round(tf.random.uniform([batch_size, 1])*kwargs.get('rand_x_reflect', False))
-            rand_y_reflect = tf.math.round(tf.random.uniform([batch_size, 1])*kwargs.get('rand_y_reflect', False))
+            val = kwargs.get('rand_x_reflect', False)
+            if scheduling > 0:
+                val *= self.linear_schedule_multiplier
+            elif scheduling < 0:
+                val *= 1.0 - self.linear_schedule_multiplier
+            rand_x_reflect = tf.math.round(tf.random.uniform([batch_size, 1])*val)
+
+            val = kwargs.get('rand_y_reflect', False)
+            if scheduling > 0:
+                val *= self.linear_schedule_multiplier
+            elif scheduling < 0:
+                val *= 1.0 - self.linear_schedule_multiplier
+            rand_y_reflect = tf.math.round(tf.random.uniform([batch_size, 1])*val)
 
             a0r = 1.0 - 2.0*rand_x_reflect
             # a1r = tf.zeros([batch_size, 1], dtype=tf.float32)
@@ -615,10 +669,11 @@ class ConvNet(object):
 
     def rand_crop(self, x, mask=None, **kwargs):
         with tf.variable_scope('rand_crop'):
-            self.crop_scale = kwargs.get('rand_crop_scale', (1.0, 1.0))  # Size of crop windows
-            self.crop_ratio = kwargs.get('rand_crop_ratio', (1.0, 1.0))  # Aspect ratio of crop windows
-            self.interpolation = kwargs.get('resize_interpolation', 'bilinear')  # Interpolation method
-            self.rand_interpolation = kwargs.get('rand_interpolation', False)
+            self._crop_scale = kwargs.get('rand_crop_scale', (1.0, 1.0))  # Size of crop windows
+            self._crop_ratio = kwargs.get('rand_crop_ratio', (1.0, 1.0))  # Aspect ratio of crop windows
+            self._interpolation = kwargs.get('resize_interpolation', 'bilinear')  # Interpolation method
+            self._rand_interpolation = kwargs.get('rand_interpolation', False)
+            self._crop_scheduling = kwargs.get('rand_crop_scheduling', False)
             if mask is None:
                 x = tf.map_fn(self.rand_crop_image, x, parallel_iterations=32, back_prop=False)
             else:
@@ -634,15 +689,27 @@ class ConvNet(object):
         h = tf.cast(shape_tensor[0], dtype=tf.int32)
         w = tf.cast(shape_tensor[1], dtype=tf.int32)
 
-        lower, upper = self.crop_scale
+        lower, upper = self._crop_scale
+        if self._crop_scheduling > 0:
+            lower = tf.math.pow(lower, self.linear_schedule_multiplier)
+            upper = tf.math.pow(upper, self.linear_schedule_multiplier)
+        elif self._crop_scheduling < 0:
+            lower = tf.math.pow(lower, 1.0 - self.linear_schedule_multiplier)
+            upper = tf.math.pow(upper, 1.0 - self.linear_schedule_multiplier)
         # a = upper**2 - lower**2
         # b = lower**2
         # randval = tf.random.uniform([], dtype=tf.float32)
         # rand_scale = tf.math.sqrt(a*randval + b)
         rand_scale = tf.random.uniform([], lower, upper, dtype=tf.float32)
 
-        lower, upper = self.crop_ratio
-        base = float(upper/lower)
+        lower, upper = self._crop_ratio
+        if self._crop_scheduling > 0:
+            lower = tf.math.pow(lower, self.linear_schedule_multiplier)
+            upper = tf.math.pow(upper, self.linear_schedule_multiplier)
+        elif self._crop_scheduling < 0:
+            lower = tf.math.pow(lower, 1.0 - self.linear_schedule_multiplier)
+            upper = tf.math.pow(upper, 1.0 - self.linear_schedule_multiplier)
+        base = upper/lower
         randval = tf.random.uniform([], dtype=tf.float32)
         rand_ratio = lower*tf.math.pow(base, randval)
 
@@ -659,20 +726,20 @@ class ConvNet(object):
 
         image = tf.expand_dims(tf.slice(image, [offset_h, offset_w, 0], [size_h, size_w, -1]), axis=0)
         re_size = self.input_size[0:2]
-        if self.rand_interpolation:
+        if self._rand_interpolation:
             num = tf.random.uniform([], 0, 2, dtype=tf.int32)
             image = tf.cond(tf.cast(num, dtype=tf.bool),
                             lambda: tf.image.resize_nearest_neighbor(image, re_size, align_corners=True),
                             lambda: tf.image.resize_bilinear(image, re_size, align_corners=True))
-        elif self.interpolation.lower() == 'nearest' or self.interpolation.lower() == 'nearest neighbor':
+        elif self._interpolation.lower() == 'nearest' or self._interpolation.lower() == 'nearest neighbor':
             image = tf.image.resize_nearest_neighbor(image, re_size, align_corners=True)
-        elif self.interpolation.lower() == 'bilinear':
+        elif self._interpolation.lower() == 'bilinear':
             image = tf.image.resize_bilinear(image, re_size, align_corners=True)
-        elif self.interpolation.lower() == 'bicubic':
+        elif self._interpolation.lower() == 'bicubic':
             warnings.warn('Bicubic interpolation is not supported for GPU. Bilinear is used instead.', UserWarning)
             image = tf.image.resize_bilinear(image, re_size, align_corners=True)
         else:
-            raise(ValueError, 'Interpolation method of {} is not supported.'.format(self.interpolation))
+            raise(ValueError, 'Interpolation method of {} is not supported.'.format(self._interpolation))
 
         image = tf.reshape(image, self.input_size)
 
@@ -686,15 +753,27 @@ class ConvNet(object):
         h = tf.cast(shape_tensor[0], dtype=tf.int32)
         w = tf.cast(shape_tensor[1], dtype=tf.int32)
 
-        lower, upper = self.crop_scale
+        lower, upper = self._crop_scale
+        if self._crop_scheduling > 0:
+            lower = tf.math.pow(lower, self.linear_schedule_multiplier)
+            upper = tf.math.pow(upper, self.linear_schedule_multiplier)
+        elif self._crop_scheduling < 0:
+            lower = tf.math.pow(lower, 1.0 - self.linear_schedule_multiplier)
+            upper = tf.math.pow(upper, 1.0 - self.linear_schedule_multiplier)
         # a = upper**2 - lower**2
         # b = lower**2
         # randval = tf.random.uniform([], dtype=tf.float32)
         # rand_scale = tf.math.sqrt(a*randval + b)
         rand_scale = tf.random.uniform([], lower, upper, dtype=tf.float32)
 
-        lower, upper = self.crop_ratio
-        base = float(upper/lower)
+        lower, upper = self._crop_ratio
+        if self._crop_scheduling > 0:
+            lower = tf.math.pow(lower, self.linear_schedule_multiplier)
+            upper = tf.math.pow(upper, self.linear_schedule_multiplier)
+        elif self._crop_scheduling < 0:
+            lower = tf.math.pow(lower, 1.0 - self.linear_schedule_multiplier)
+            upper = tf.math.pow(upper, 1.0 - self.linear_schedule_multiplier)
+        base = upper/lower
         randval = tf.random.uniform([], dtype=tf.float32)
         rand_ratio = lower*tf.math.pow(base, randval)
 
@@ -711,20 +790,20 @@ class ConvNet(object):
 
         image = tf.expand_dims(tf.slice(image, [offset_h, offset_w, 0], [size_h, size_w, -1]), axis=0)
         re_size = self.input_size[0:2]
-        if self.rand_interpolation:
+        if self._rand_interpolation:
             num = tf.random.uniform([], 0, 2, dtype=tf.int32)
             image = tf.cond(tf.cast(num, dtype=tf.bool),
                             lambda: tf.image.resize_nearest_neighbor(image, re_size, align_corners=True),
                             lambda: tf.image.resize_bilinear(image, re_size, align_corners=True))
-        elif self.interpolation.lower() == 'nearest' or self.interpolation.lower() == 'nearest neighbor':
+        elif self._interpolation.lower() == 'nearest' or self._interpolation.lower() == 'nearest neighbor':
             image = tf.image.resize_nearest_neighbor(image, re_size, align_corners=True)
-        elif self.interpolation.lower() == 'bilinear':
+        elif self._interpolation.lower() == 'bilinear':
             image = tf.image.resize_bilinear(image, re_size, align_corners=True)
-        elif self.interpolation.lower() == 'bicubic':
+        elif self._interpolation.lower() == 'bicubic':
             warnings.warn('Bicubic interpolation is not supported for GPU. Bilinear is used instead.', UserWarning)
             image = tf.image.resize_bilinear(image, re_size, align_corners=True)
         else:
-            raise (ValueError, 'Interpolation method of {} is not supported.'.format(self.interpolation))
+            raise (ValueError, 'Interpolation method of {} is not supported.'.format(self._interpolation))
 
         image = tf.reshape(image, self.input_size)
 
@@ -750,8 +829,13 @@ class ConvNet(object):
         return x
 
     def rand_hue(self, x, **kwargs):
+        scheduling = kwargs.get('rand_distortion_scheduling')
         with tf.variable_scope('rand_hue'):
             max_delta = kwargs.get('rand_hue', 0.0)
+            if scheduling > 0:
+                max_delta *= self.linear_schedule_multiplier
+            elif scheduling < 0:
+                max_delta *= 1.0 - self.linear_schedule_multiplier
 
             delta = tf.random.uniform([], minval=-max_delta/2, maxval=max_delta/2, dtype=tf.float32)
 
@@ -762,10 +846,17 @@ class ConvNet(object):
         return x
 
     def rand_saturation(self, x, **kwargs):
+        scheduling = kwargs.get('rand_distortion_scheduling')
         with tf.variable_scope('rand_saturation'):
             lower, upper = kwargs.get('rand_saturation', (1.0, 1.0))
+            if scheduling > 0:
+                lower = tf.math.pow(lower, self.linear_schedule_multiplier)
+                upper = tf.math.pow(upper, self.linear_schedule_multiplier)
+            elif scheduling < 0:
+                lower = tf.math.pow(lower, 1.0 - self.linear_schedule_multiplier)
+                upper = tf.math.pow(upper, 1.0 - self.linear_schedule_multiplier)
 
-            base = float(upper/lower)
+            base = upper/lower
             randval = tf.random.uniform([], dtype=tf.float32)
             randval = lower*tf.math.pow(base, randval)
 
@@ -776,12 +867,19 @@ class ConvNet(object):
         return x
 
     def rand_color_balance(self, x, **kwargs):
+        scheduling = kwargs.get('rand_distortion_scheduling')
         with tf.variable_scope('random_color_balance'):
-            shape_tensor = tf.shape(x)
+            batch_size = tf.shape(x)[0]
             lower, upper = kwargs.get('rand_color_balance', (1.0, 1.0))
+            if scheduling > 0:
+                lower = tf.math.pow(lower, self.linear_schedule_multiplier)
+                upper = tf.math.pow(upper, self.linear_schedule_multiplier)
+            elif scheduling < 0:
+                lower = tf.math.pow(lower, 1.0 - self.linear_schedule_multiplier)
+                upper = tf.math.pow(upper, 1.0 - self.linear_schedule_multiplier)
 
-            base = float(upper/lower)
-            randvals = tf.random.uniform([shape_tensor[0], 1, 1, 3], dtype=tf.float32)
+            base = upper/lower
+            randvals = tf.random.uniform([batch_size, 1, 1, 3], dtype=tf.float32)
             randvals = lower*tf.math.pow(base, randvals)
 
             image_mean = tf.reduce_mean(x, axis=[1, 2], keepdims=True)
@@ -793,11 +891,16 @@ class ConvNet(object):
         return x
 
     def rand_equalization(self, x, **kwargs):
+        scheduling = kwargs.get('rand_distortion_scheduling')
         with tf.variable_scope('random_equalization'):
-            shape_tensor = tf.shape(x)
+            batch_size = tf.shape(x)[0]
             prob = kwargs.get('rand_equalization', 0.0)
+            if scheduling > 0:
+                prob *= self.linear_schedule_multiplier
+            elif scheduling < 0:
+                prob *= 1.0 - self.linear_schedule_multiplier
 
-            normal = tf.cast(tf.greater(tf.random.uniform([shape_tensor[0], 1, 1, 1]), prob), dtype=tf.float32)
+            normal = tf.cast(tf.greater(tf.random.uniform([batch_size, 1, 1, 1]), prob), dtype=tf.float32)
             maxvals = tf.reduce_max(tf.math.abs(x), axis=[1, 2], keepdims=True)
 
             image_mean = tf.reduce_mean(x, axis=[1, 2], keepdims=True)
@@ -809,12 +912,19 @@ class ConvNet(object):
         return x
 
     def rand_contrast(self, x, **kwargs):
+        scheduling = kwargs.get('rand_distortion_scheduling')
         with tf.variable_scope('random_contrast'):
-            shape_tensor = tf.shape(x)
+            batch_size = tf.shape(x)[0]
             lower, upper = kwargs.get('rand_contrast', (1.0, 1.0))
+            if scheduling > 0:
+                lower = tf.math.pow(lower, self.linear_schedule_multiplier)
+                upper = tf.math.pow(upper, self.linear_schedule_multiplier)
+            elif scheduling < 0:
+                lower = tf.math.pow(lower, 1.0 - self.linear_schedule_multiplier)
+                upper = tf.math.pow(upper, 1.0 - self.linear_schedule_multiplier)
 
-            base = float(upper/lower)
-            randvals = tf.random.uniform([shape_tensor[0], 1, 1, 1], dtype=tf.float32)
+            base = upper/lower
+            randvals = tf.random.uniform([batch_size, 1, 1, 1], dtype=tf.float32)
             randvals = lower*tf.math.pow(base, randvals)
 
             image_mean = tf.reduce_mean(x, axis=[1, 2], keepdims=True)
@@ -826,38 +936,57 @@ class ConvNet(object):
         return x
 
     def rand_brightness(self, x, **kwargs):
+        scheduling = kwargs.get('rand_distortion_scheduling')
         with tf.variable_scope('random_brightness'):
-            shape_tensor = tf.shape(x)
+            batch_size = tf.shape(x)[0]
             max_delta = kwargs.get('rand_brightness', 0.0)
+            if scheduling > 0:
+                max_delta *= self.linear_schedule_multiplier
+            elif scheduling < 0:
+                max_delta *= 1.0 - self.linear_schedule_multiplier
 
-            randval = tf.random.uniform([shape_tensor[0], 1, 1, 1], minval=-max_delta/2, maxval=max_delta/2,
+            randval = tf.random.uniform([batch_size, 1, 1, 1], minval=-max_delta/2, maxval=max_delta/2,
                                         dtype=tf.float32)
             x = x + randval
 
         return x
 
     def rand_noise(self, x, **kwargs):
+        scheduling = kwargs.get('rand_distortion_scheduling')
         with tf.variable_scope('rand_noise'):
             shape_tensor = tf.shape(x)
+            batch_size = shape_tensor[0]
             noise_mean = kwargs.get('rand_noise_mean', 0.0)
             noise_stddev = kwargs.get('rand_noise_stddev', 0.0)
 
-            noise = tf.random.normal(shape_tensor, mean=0.0, stddev=noise_stddev, dtype=tf.float32)
-            noise_mask = tf.random.uniform([shape_tensor[0], 1, 1, 1], dtype=tf.float32)
-            x = x + noise_mask*noise + noise_mean
+            noise = tf.random.normal(shape_tensor, mean=noise_mean, stddev=noise_stddev, dtype=tf.float32)
+            noise_mask = tf.random.uniform([batch_size, 1, 1, 1], dtype=tf.float32)
+            if scheduling > 0:
+                noise_mask *= self.linear_schedule_multiplier
+            elif scheduling < 0:
+                noise_mask *= 1.0 - self.linear_schedule_multiplier
+            x = x + noise_mask*noise
 
         return x
 
     def rand_solarization(self, x, **kwargs):
+        scheduling = kwargs.get('rand_distortion_scheduling')
         with tf.variable_scope('rand_solarization'):
             shape_tensor = tf.shape(x)
+            batch_size = shape_tensor[0]
             lower, upper = kwargs.get('rand_solarization', (0.0, 1.0))
+            if scheduling > 0:
+                lower = 1.0 - tf.math.pow(1.0 - lower, self.linear_schedule_multiplier)
+                upper = tf.math.pow(upper, self.linear_schedule_multiplier)
+            elif scheduling < 0:
+                lower = 1.0 - tf.math.pow(1.0 - lower, 1.0 - self.linear_schedule_multiplier)
+                upper = tf.math.pow(upper, 1.0 - self.linear_schedule_multiplier)
 
-            thres_lower = tf.random.uniform([shape_tensor[0], 1, 1, 1], -0.5, lower - 0.5, dtype=tf.float32)
+            thres_lower = tf.random.uniform([batch_size, 1, 1, 1], -0.5, lower - 0.5, dtype=tf.float32)
             thres_lower = tf.broadcast_to(thres_lower, shape_tensor)
             lower_pixels = tf.less(x, thres_lower)
 
-            thres_upper = tf.random.uniform([shape_tensor[0], 1, 1, 1], upper - 0.5, 0.5, dtype=tf.float32)
+            thres_upper = tf.random.uniform([batch_size, 1, 1, 1], upper - 0.5, 0.5, dtype=tf.float32)
             thres_upper = tf.broadcast_to(thres_upper, shape_tensor)
             upper_pixels = tf.greater(x, thres_upper)
 
@@ -868,11 +997,16 @@ class ConvNet(object):
         return x
 
     def rand_posterization(self, x, **kwargs):
+        scheduling = kwargs.get('rand_distortion_scheduling')
         with tf.variable_scope('rand_posterization'):
-            shape_tensor = tf.shape(x)
+            batch_size = tf.shape(x)[0]
             lower, upper = kwargs.get('rand_posterization', (8, 8))
+            if scheduling > 0:
+                lower = upper - (upper - lower)*self.linear_schedule_multiplier
+            elif scheduling < 0:
+                lower = upper - (upper - lower)*(1.0 - self.linear_schedule_multiplier)
 
-            factors = tf.math.round(tf.random.uniform([shape_tensor[0], 1, 1, 1],
+            factors = tf.math.round(tf.random.uniform([batch_size, 1, 1, 1],
                                                       lower - 0.5, upper + 0.5, dtype=tf.float32))
             maxvals = tf.pow(2.0, factors)
             x = tf.math.round(x*maxvals)
@@ -888,10 +1022,14 @@ class ConvNet(object):
             W = tf.cast(shape_tensor[2], tf.float32)
 
             randval = tf.random.uniform([], dtype=tf.float32)
+            if self._cutmix_scheduling > 0:
+                randval *= self.linear_schedule_multiplier
+            elif self._cutmix_scheduling < 0:
+                randval *= 1.0 - self.linear_schedule_multiplier
             r_h = tf.random.uniform([], 0, H, dtype=tf.float32)
             r_w = tf.random.uniform([], 0, W, dtype=tf.float32)
-            size_h = H*tf.math.sqrt(1.0 - randval)
-            size_w = W*tf.math.sqrt(1.0 - randval)
+            size_h = H*tf.math.sqrt(randval)
+            size_w = W*tf.math.sqrt(randval)
 
             hs = tf.cast(tf.math.round(tf.math.maximum(r_h - size_h/2, 0)), dtype=tf.int32)
             he = tf.cast(tf.math.round(tf.math.minimum(r_h + size_h/2, H)), dtype=tf.int32)
@@ -1644,7 +1782,7 @@ class ConvNet(object):
         with tf.variable_scope(name):
             batch_size = tf.shape(x)[0]
             main_drop_rate = tf.cond(self.is_train, lambda: drop_rate, lambda: 0.0)
-            skip_drop_rate = tf.cond(self.is_train, lambda: drop_rate, lambda: 0.0)*self.linear_multiplier
+            skip_drop_rate = tf.cond(self.is_train, lambda: drop_rate, lambda: 0.0)*self.linear_schedule_multiplier
             eff_skip_drop_rate = (1.0 - main_drop_rate)*skip_drop_rate
 
             main_s = tf.math.greater_equal(tf.random.uniform([batch_size, 1, 1, 1], dtype=tf.float32), main_drop_rate)
