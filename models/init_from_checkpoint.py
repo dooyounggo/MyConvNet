@@ -70,7 +70,9 @@ def resnet_v1_50_101(ckpt_dir, load_moving_average=True, verbose=True):
                         if conv_num == 'skip':
                             var_name_splitted.append(key_match_dict[block_name] + str(int(block_num) + start_idx[0]))
                             var_name_splitted.append(key_match_dict[unit_name] + str(int(unit_num) + start_idx[1]))
-                            var_name_splitted.append('bottleneck_v2/shortcut')
+                            var_name_splitted.append('bottleneck_v1/shortcut')
+                            if keys[3] == 'bn':
+                                var_name_splitted.append('BatchNorm')
                         else:
                             raise (ValueError, 'conv_{} is not considered as an exception'.format(conv_num))
                         if keys[-1] == 'ExponentialMovingAverage':  # To load exponential moving averages
