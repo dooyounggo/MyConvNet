@@ -20,7 +20,7 @@ class DataSet(object):
         :param out_size: list or tuple, size of images to be used for training.
         :param resize_method: string, resizing method for image preprocessing.
         :param resize_randomness: Bool, randomness of resize operations such as crop and padding.
-        :param kwargs: dict, extra arguments containing (hyper)parameters.
+        :param kwargs: dict, extra arguments containing hyperparameters.
         """
         if label_dirs is None:
             label_dirs = [np.nan for _ in image_dirs]  # Fake labels
