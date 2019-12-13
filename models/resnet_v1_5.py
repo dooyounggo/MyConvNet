@@ -83,7 +83,7 @@ class ResNet(ConvNet):  # Base model. ResNet-18 (v1.5: stride = 2 at 3x3 convolu
                     skip = x
             else:
                 with tf.variable_scope('conv_skip'):
-                    skip = self.conv_layer(x, 1, stride, out_channels, padding='SAME')
+                    skip = self.conv_layer(x, 1, stride, out_channels, padding='SAME', biased=False)
                     skip = self.batch_norm(skip, shift=True, scale=True, scope='bn')
             d[name + '/branch'] = skip
 
