@@ -118,7 +118,7 @@ class ConvNet(object):
                 else:
                     self.image_mean = tf.constant(0.0, dtype=tf.float32, name='0')
 
-                self.linear_schedule_multiplier = global_step / tf.cast(self.total_steps, dtype=tf.float32)
+                self.linear_schedule_multiplier = global_step/tf.cast(self.total_steps, dtype=tf.float32)
 
         self.ema = tf.train.ExponentialMovingAverage(decay=self.moving_average_decay)
 
