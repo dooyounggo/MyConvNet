@@ -11,7 +11,7 @@ from subsets.cityscapes import read_subset
 from models.deeplabv3plus import DeepLabV3PlusResNet as ConvNet
 from optimizers import MomentumOptimizer as Optimizer
 from evaluators import MeanIoUBEvaluator as Evaluator
-from models.init_from_checkpoint import resnet_v2_50_101 as init_from_pretrained_model
+from models.init_from_checkpoint import resnet_v1_50 as init_from_checkpoint
 import utils
 
 
@@ -27,7 +27,7 @@ class Parameters(object):
     _save_dir = 'D:/trained_models/gcn_iiitdogcat-384'
 
     _transfer_dir = None
-    _pretrained_dir = os.path.join(_root_dir, 'pretrained_models', 'resnet_v2_50_2017_04_14', 'resnet_v2_50.ckpt')
+    _checkpoint_dir = os.path.join(_root_dir, 'pretrained_models', 'resnet_v1_50', 'resnet_v1_50.ckpt')
 
     d = dict()
     # FIXME: Image pre-processing hyperparameters
@@ -49,7 +49,7 @@ class Parameters(object):
     d['num_parallel_calls'] = 4  # Number of parallel operations for dataset.map function
 
     # FIXME: Transfer learning parameters
-    d['init_from_pretrained_model'] = False  # Whether to use pre-trained model in _pretrained_dir
+    d['init_from_public_checkpoint'] = False  # Whether to use pre-trained model in checkpoint_dir
     d['blocks_to_load'] = None  # Blocks to load variables on. None for all blocks
     d['load_logits'] = False  # Whether to load variables related to logits
     d['load_moving_average'] = True  # Whether to load exponential moving averages of variables onto variables
@@ -204,5 +204,6 @@ class Parameters(object):
         return self._transfer_dir
 
     @property
-    def pretrained_dir(self):
-        return self._pretrained_dir
+    def checkpoint_dir(self):
+        return self._checkpoint_dir
+    
