@@ -30,7 +30,7 @@ class ResNet(ConvNet):  # Base model. ResNet-18 (v1.5: stride = 2 at 3x3 convolu
 
         with tf.variable_scope('block_0'):
             with tf.variable_scope('conv_0'):
-                x = self.conv_layer(X_input, kernels[0], strides[0], channels[0], padding='SAME')
+                x = self.conv_layer(X_input, kernels[0], strides[0], channels[0], padding='SAME', biased=False)
                 print('block_0' + '/conv_0.shape', x.get_shape().as_list())
                 d['block_0' + '/conv_0'] = x
                 x = self.batch_norm(x, shift=True, scale=True, scope='bn')
@@ -84,10 +84,11 @@ class ResNet(ConvNet):  # Base model. ResNet-18 (v1.5: stride = 2 at 3x3 convolu
             else:
                 with tf.variable_scope('conv_skip'):
                     skip = self.conv_layer(x, 1, stride, out_channels, padding='SAME')
+                    skip = self.batch_norm(skip, shift=True, scale=True, scope='bn')
             d[name + '/branch'] = skip
 
             with tf.variable_scope('conv_0'):
-                x = self.conv_layer(x, kernel, stride, out_channels, padding='SAME')
+                x = self.conv_layer(x, kernel, stride, out_channels, padding='SAME', biased=False)
                 print(name + '/conv_0.shape', x.get_shape().as_list())
                 d[name + '/conv_0'] = x
                 x = self.batch_norm(x, shift=True, scale=True, scope='bn')
@@ -96,7 +97,7 @@ class ResNet(ConvNet):  # Base model. ResNet-18 (v1.5: stride = 2 at 3x3 convolu
                 d[name + '/conv_0' + '/relu'] = x
 
             with tf.variable_scope('conv_1'):
-                x = self.conv_layer(x, 3, 1, out_channels, padding='SAME')
+                x = self.conv_layer(x, 3, 1, out_channels, padding='SAME', biased=False)
                 print(name + '/conv_1.shape', x.get_shape().as_list())
                 d[name + '/conv_1'] = x
                 x = self.batch_norm(x, shift=True, scale=True, scope='bn')
@@ -132,7 +133,8 @@ class ResNetBot(ResNet):  # ResNet with bottlenecks. ResNet-50
                     skip = x
             else:
                 with tf.variable_scope('conv_skip'):
-                    skip = self.conv_layer(x, 1, stride, out_channels, padding='SAME')
+                    skip = self.conv_layer(x, 1, stride, out_channels, padding='SAME', biased=False)
+                    skip = self.batch_norm(skip, shift=True, scale=True, scope='bn')
             d[name + '/branch'] = skip
 
             with tf.variable_scope('conv_0'):
@@ -154,7 +156,7 @@ class ResNetBot(ResNet):  # ResNet with bottlenecks. ResNet-50
                 d[name + '/conv_1' + '/relu'] = x
 
             with tf.variable_scope('conv_2'):
-                x = self.conv_layer(x, 1, 1, out_channels, padding='SAME')
+                x = self.conv_layer(x, 1, 1, out_channels, padding='SAME', biased=False)
                 print(name + '/conv_2.shape', x.get_shape().as_list())
                 d[name + '/conv_2'] = x
                 x = self.batch_norm(x, shift=True, scale=True, scope='bn')
