@@ -44,6 +44,7 @@ class SegNet(ConvNet):
                                                  lambda: (self.center_crop(self.X), self.center_crop(self.Y)),
                                                  name='augmentation')
                         if kwargs.get('cutmix', False):
+                            self._cutmix_scheduling = kwargs.get('cutmix_scheduling', False)
                             self.X, self.Y = tf.cond(self.is_train,
                                                      lambda: self.cutmix(self.X, self.Y),
                                                      lambda: (self.X, self.Y),
@@ -113,19 +114,23 @@ class SegNet(ConvNet):
         with tf.variable_scope('cutmix'):
             shape_tensor = tf.shape(x)
             batch_size = shape_tensor[0]
-            H = tf.cast(shape_tensor[1], tf.float32)
-            W = tf.cast(shape_tensor[2], tf.float32)
+            h = tf.cast(shape_tensor[1], tf.float32)
+            w = tf.cast(shape_tensor[2], tf.float32)
 
             randval = tf.random.uniform([], dtype=tf.float32)
-            r_h = tf.random.uniform([], 0, H, dtype=tf.float32)
-            r_w = tf.random.uniform([], 0, W, dtype=tf.float32)
-            size_h = H*tf.math.sqrt(1.0 - randval)
-            size_w = W*tf.math.sqrt(1.0 - randval)
+            if self._cutmix_scheduling > 0:
+                randval *= self.linear_schedule_multiplier
+            elif self._cutmix_scheduling < 0:
+                randval *= 1.0 - self.linear_schedule_multiplier
+            r_h = tf.random.uniform([], 0, h, dtype=tf.float32)
+            r_w = tf.random.uniform([], 0, w, dtype=tf.float32)
+            size_h = h*tf.math.sqrt(randval)
+            size_w = w*tf.math.sqrt(randval)
 
             hs = tf.cast(tf.math.round(tf.math.maximum(r_h - size_h/2, 0)), dtype=tf.int32)
-            he = tf.cast(tf.math.round(tf.math.minimum(r_h + size_h/2, H)), dtype=tf.int32)
+            he = tf.cast(tf.math.round(tf.math.minimum(r_h + size_h/2, h)), dtype=tf.int32)
             ws = tf.cast(tf.math.round(tf.math.maximum(r_w - size_w/2, 0)), dtype=tf.int32)
-            we = tf.cast(tf.math.round(tf.math.minimum(r_w + size_w/2, W)), dtype=tf.int32)
+            we = tf.cast(tf.math.round(tf.math.minimum(r_w + size_w/2, w)), dtype=tf.int32)
 
             m = tf.ones([1, he - hs, we - ws, 1], dtype=tf.float32)
             paddings = [[0, 0],
