@@ -26,6 +26,12 @@ import numpy as np
 
 class ConvNet(object):
     def __init__(self, input_shape, num_classes, loss_weights=None, **kwargs):
+        """
+        :param input_shape: list or tuple, network input size.
+        :param num_classes: int, number of classes.
+        :param loss_weights: list or tuple, weighting factors for softmax losses.
+        :param kwargs: dict, extra arguments containing (hyper)parameters.
+        """
         graph = tf.get_default_graph()
         config = tf.ConfigProto()
         config.intra_op_parallelism_threads = kwargs.get('num_parallel_calls', 0)
