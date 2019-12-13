@@ -1018,23 +1018,23 @@ class ConvNet(object):
         with tf.variable_scope('cutmix'):
             shape_tensor = tf.shape(x)
             batch_size = shape_tensor[0]
-            H = tf.cast(shape_tensor[1], tf.float32)
-            W = tf.cast(shape_tensor[2], tf.float32)
+            h = tf.cast(shape_tensor[1], tf.float32)
+            w = tf.cast(shape_tensor[2], tf.float32)
 
             randval = tf.random.uniform([], dtype=tf.float32)
             if self._cutmix_scheduling > 0:
                 randval *= self.linear_schedule_multiplier
             elif self._cutmix_scheduling < 0:
                 randval *= 1.0 - self.linear_schedule_multiplier
-            r_h = tf.random.uniform([], 0, H, dtype=tf.float32)
-            r_w = tf.random.uniform([], 0, W, dtype=tf.float32)
-            size_h = H*tf.math.sqrt(randval)
-            size_w = W*tf.math.sqrt(randval)
+            r_h = tf.random.uniform([], 0, h, dtype=tf.float32)
+            r_w = tf.random.uniform([], 0, w, dtype=tf.float32)
+            size_h = h*tf.math.sqrt(randval)
+            size_w = w*tf.math.sqrt(randval)
 
             hs = tf.cast(tf.math.round(tf.math.maximum(r_h - size_h/2, 0)), dtype=tf.int32)
-            he = tf.cast(tf.math.round(tf.math.minimum(r_h + size_h/2, H)), dtype=tf.int32)
+            he = tf.cast(tf.math.round(tf.math.minimum(r_h + size_h/2, h)), dtype=tf.int32)
             ws = tf.cast(tf.math.round(tf.math.maximum(r_w - size_w/2, 0)), dtype=tf.int32)
-            we = tf.cast(tf.math.round(tf.math.minimum(r_w + size_w/2, W)), dtype=tf.int32)
+            we = tf.cast(tf.math.round(tf.math.minimum(r_w + size_w/2, w)), dtype=tf.int32)
 
             m = tf.ones([1, he - hs, we - ws, 1], dtype=tf.float32)
             paddings = [[0, 0],
@@ -1043,7 +1043,7 @@ class ConvNet(object):
                         [0, 0]]
             m = tf.pad(m, paddings, constant_values=0.0)
 
-            lamb = 1.0 - (tf.cast((he - hs)*(we - ws), dtype=tf.float32))/(H*W)
+            lamb = 1.0 - (tf.cast((he - hs)*(we - ws), dtype=tf.float32))/(h*w)
 
             idx = tf.random.uniform([batch_size], 0, batch_size, dtype=tf.int32)
             shuffled_x = tf.gather(x, idx, axis=0)
@@ -1171,7 +1171,7 @@ class ConvNet(object):
         else:
             out_size = [np.ceil(float(h - ksize[0] + 1)/stride[0]), np.ceil(float(w - ksize[1] + 1)/stride[1])]
 
-        if self._curr_device == 0:
+        if self._curr_device == self.gpu_offset:
             self._flops += side_l[0]*side_l[1]*out_size[0]*out_size[1]*in_channels
 
         return tf.nn.max_pool(x, ksize=ksize, strides=strides, data_format=data_format, padding=padding)
@@ -1202,7 +1202,7 @@ class ConvNet(object):
         else:
             out_size = [np.ceil(float(h - ksize[0] + 1)/stride[0]), np.ceil(float(w - ksize[1] + 1)/stride[1])]
 
-        if self._curr_device == 0:
+        if self._curr_device == self.gpu_offset:
             self._flops += side_l[0]*side_l[1]*out_size[0]*out_size[1]*in_channels
 
         return tf.nn.avg_pool(x, ksize=ksize, strides=strides, data_format=data_format, padding=padding)
@@ -1249,7 +1249,7 @@ class ConvNet(object):
 
             if not tf.get_variable_scope().reuse:
                 self._params += kernel[0]*kernel[1]*in_channels*channel_multiplier
-            if self._curr_device == 0:
+            if self._curr_device == self.gpu_offset:
                 self._flops += out_size[0]*out_size[1]*kernel[0]*kernel[1]*in_channels*channel_multiplier
         else:
             weights = self.weight_variable([kernel[0], kernel[1], in_channels, out_channels],
@@ -1260,7 +1260,7 @@ class ConvNet(object):
 
             if not tf.get_variable_scope().reuse:
                 self._params += kernel[0]*kernel[1]*in_channels*out_channels
-            if self._curr_device == 0:
+            if self._curr_device == self.gpu_offset:
                 self._flops += out_size[0]*out_size[1]*kernel[0]*kernel[1]*in_channels*out_channels
 
         if biased:
@@ -1268,7 +1268,7 @@ class ConvNet(object):
 
             if not tf.get_variable_scope().reuse:
                 self._params += out_channels
-            if self._curr_device == 0:
+            if self._curr_device == self.gpu_offset:
                 self._flops += out_size[0]*out_size[1]*out_channels
 
             return tf.nn.bias_add(convs, biases, data_format=data_format)
@@ -1283,7 +1283,7 @@ class ConvNet(object):
 
         if not tf.get_variable_scope().reuse:
             self._params += in_dim*out_dim
-        if self._curr_device == 0:
+        if self._curr_device == self.gpu_offset:
             self._flops += in_dim*out_dim
 
         if biased:
@@ -1291,7 +1291,7 @@ class ConvNet(object):
 
             if not tf.get_variable_scope().reuse:
                 self._params += out_dim
-            if self._curr_device == 0:
+            if self._curr_device == self.gpu_offset:
                 self._flops += out_dim
 
             return tf.matmul(x, weights) + biases
@@ -1331,7 +1331,7 @@ class ConvNet(object):
                     tf.add_to_collection('block_{}_norm_statistics'.format(self._curr_block), mu)
                     with tf.variable_scope(self.top_scope):
                         self.update_ops.append(self.ema.apply([mu]))
-                # if self._curr_device == 0:
+                # if self._curr_device == self.gpu_offset:
                 #     self._flops += h*w*in_channels
                 mu_ema = self.ema.average(mu)
                 if not tf.get_variable_scope().reuse:
@@ -1345,7 +1345,7 @@ class ConvNet(object):
                     tf.add_to_collection('block_{}_norm_statistics'.format(self._curr_block), sigma)
                     with tf.variable_scope(self.top_scope):
                         self.update_ops.append(self.ema.apply([sigma]))
-                # if self._curr_device == 0:
+                # if self._curr_device == self.gpu_offset:
                 #     self._flops += h*w*in_channels
                 sigma_ema = self.ema.average(sigma)
                 if not tf.get_variable_scope().reuse:
@@ -1362,7 +1362,7 @@ class ConvNet(object):
                         with tf.variable_scope(self.top_scope):
                             self.update_ops.append(self.ema.apply([gamma]))
                         self._params += in_channels
-                    # if self._curr_device == 0:
+                    # if self._curr_device == self.gpu_offset:
                     #     self._flops += h*w*in_channels
                     gamma_ema = self.ema.average(gamma)
                     if not tf.get_variable_scope().reuse:
@@ -1381,7 +1381,7 @@ class ConvNet(object):
                         with tf.variable_scope(self.top_scope):
                             self.update_ops.append(self.ema.apply([beta]))
                         self._params += in_channels
-                    # if self._curr_device == 0:
+                    # if self._curr_device == self.gpu_offset:
                     #     self._flops += h*w*in_channels
                     beta_ema = self.ema.average(beta)
                     if not tf.get_variable_scope().reuse:
@@ -1390,7 +1390,7 @@ class ConvNet(object):
                     beta = None
                     beta_ema = None
 
-                if self._curr_device == 0:
+                if self._curr_device == self.gpu_offset:
                     self._flops += h*w*in_channels
 
                 mean, var = tf.cond(self.is_train,
@@ -1479,7 +1479,7 @@ class ConvNet(object):
                         with tf.variable_scope(self.top_scope):
                             self.update_ops.append(self.ema.apply([gamma]))
                         self._params += in_channels
-                    # if self._curr_device == 0:
+                    # if self._curr_device == self.gpu_offset:
                     #     self._flops += h*w*in_channels
                     gamma_ema = self.ema.average(gamma)
                     if not tf.get_variable_scope().reuse:
@@ -1498,7 +1498,7 @@ class ConvNet(object):
                         with tf.variable_scope(self.top_scope):
                             self.update_ops.append(self.ema.apply([beta]))
                         self._params += in_channels
-                    # if self._curr_device == 0:
+                    # if self._curr_device == self.gpu_offset:
                     #     self._flops += h*w*in_channels
                     beta_ema = self.ema.average(beta)
                     if not tf.get_variable_scope().reuse:
@@ -1507,7 +1507,7 @@ class ConvNet(object):
                     beta = None
                     beta_ema = None
 
-                if self._curr_device == 0:
+                if self._curr_device == self.gpu_offset:
                     self._flops += h*w*in_channels
 
             beta = tf.cond(self.is_train, lambda: beta, lambda: beta_ema) if beta is not None else None
@@ -1577,7 +1577,7 @@ class ConvNet(object):
                     tf.add_to_collection('block_{}_norm_statistics'.format(self._curr_block), mu)
                     with tf.variable_scope(self.top_scope):
                         self.update_ops.append(self.ema.apply([mu]))
-                # if self._curr_device == 0:
+                # if self._curr_device == self.gpu_offset:
                 #     self._flops += h*w*in_channels
                 mu_ema = self.ema.average(mu)
                 if not tf.get_variable_scope().reuse:
@@ -1591,7 +1591,7 @@ class ConvNet(object):
                     tf.add_to_collection('block_{}_norm_statistics'.format(self._curr_block), sigma)
                     with tf.variable_scope(self.top_scope):
                         self.update_ops.append(self.ema.apply([sigma]))
-                # if self._curr_device == 0:
+                # if self._curr_device == self.gpu_offset:
                 #     self._flops += h*w*in_channels
                 sigma_ema = self.ema.average(sigma)
                 if not tf.get_variable_scope().reuse:
@@ -1608,7 +1608,7 @@ class ConvNet(object):
                         with tf.variable_scope(self.top_scope):
                             self.update_ops.append(self.ema.apply([gamma]))
                         self._params += in_channels
-                    # if self._curr_device == 0:
+                    # if self._curr_device == self.gpu_offset:
                     #     self._flops += h*w*in_channels
                     gamma_ema = self.ema.average(gamma)
                     if not tf.get_variable_scope().reuse:
@@ -1627,7 +1627,7 @@ class ConvNet(object):
                         with tf.variable_scope(self.top_scope):
                             self.update_ops.append(self.ema.apply([beta]))
                         self._params += in_channels
-                    # if self._curr_device == 0:
+                    # if self._curr_device == self.gpu_offset:
                     #     self._flops += h*w*in_channels
                     beta_ema = self.ema.average(beta)
                     if not tf.get_variable_scope().reuse:
@@ -1636,7 +1636,7 @@ class ConvNet(object):
                     beta = None
                     beta_ema = None
 
-                if self._curr_device == 0:
+                if self._curr_device == self.gpu_offset:
                     self._flops += h*w*in_channels
 
                 moving_mean, moving_var = tf.cond(self.is_train,
@@ -1751,7 +1751,7 @@ class ConvNet(object):
 
         if not tf.get_variable_scope().reuse:
             self._params += kernel[0]*kernel[1]*in_channels*out_channels
-        if self._curr_device == 0:
+        if self._curr_device == self.gpu_offset:
             self._flops += out_size[0]*out_size[1]*kernel[0]*kernel[1]*in_channels*out_channels
 
         if biased:
@@ -1759,7 +1759,7 @@ class ConvNet(object):
 
             if not tf.get_variable_scope().reuse:
                 self._params += out_channels
-            if self._curr_device == 0:
+            if self._curr_device == self.gpu_offset:
                 self._flops += out_size[0]*out_size[1]*out_channels
 
             return tf.nn.bias_add(convs, biases, data_format=data_format)
