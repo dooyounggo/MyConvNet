@@ -79,7 +79,7 @@ class Optimizer(object):
             for i in range(self.model.gpu_offset, self.model.num_gpus + self.model.gpu_offset):
                 with tf.device('/gpu:' + str(i)):
                     with tf.variable_scope('gpu{}/gradients'.format(i)):
-                        loss = self.model.losses[i]
+                        loss = self.model.losses[i - self.model.gpu_offset]
                         if loss_scaling_factor > 1.0:
                             loss *= loss_scaling_factor
                         if self.model.dtype is not tf.float32:
@@ -158,7 +158,6 @@ class Optimizer(object):
             load_logits = kwargs.get('load_logits', False)
             load_moving_average = kwargs.get('load_moving_average', True)
             start_epoch = kwargs.get('start_epoch', 0)
-
             with tf.Graph().as_default():   # Find variables to be transferred
                 tf.train.import_meta_graph(os.path.join(transfer_dir, 'model.ckpt.meta'))
                 transfer_variables = tf.global_variables()
@@ -180,6 +179,7 @@ class Optimizer(object):
                 var_list += tf.get_collection('block_{}_variables'.format(None))
                 var_list += tf.get_collection('block_{}_ema_variables'.format(None))
 
+            variables_not_loaded = []
             if load_moving_average:
                 variables = {}
                 for var in var_list:
@@ -190,12 +190,16 @@ class Optimizer(object):
                     elif var.name in var_names:
                         variables[var.name.rstrip(':0')] = var
                         var_names.remove(var.name)
+                    else:
+                        variables_not_loaded.append(var.name)
             else:
                 variables = []
                 for var in var_list:
                     if var.name in var_names:
                         variables.append(var)
                         var_names.remove(var.name)
+                    else:
+                        variables_not_loaded.append(var.name)
 
             saver_transfer = tf.train.Saver(variables)
 
@@ -212,6 +216,13 @@ class Optimizer(object):
                 ckpt_to_load = os.path.join(transfer_dir, ckpt_list[model_to_load].rstrip())
 
             saver_transfer.restore(self.model.session, ckpt_to_load)
+
+            print('Variables have been initialized using the following checkpoint:')
+            print(ckpt_to_load)
+            print('The following variables in the checkpoint were not used:')
+            print(var_names)
+            print('The following variables do not exist in the checkpoints, so they were initialized randomly:')
+            print(variables_not_loaded)
         else:
             start_epoch = 0
             self.model.session.run(tf.global_variables_initializer())
