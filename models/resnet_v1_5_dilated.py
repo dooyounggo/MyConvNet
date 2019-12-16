@@ -133,10 +133,7 @@ class ResNetDilated(ConvNet):  # Dilated ResNet-50
 
 class ResNet50OS16(ResNetDilated):
     def _init_params(self):
-        super()._init_params()
-        self.strides = [2, 1, 2, 2, 1]
-        self.res_units = [None, 3, 4, 6, 3]
-        self.dilations = [None, 1, 1, 1, 2]
+        pass
 
 
 class ResNet50OS8(ResNetDilated):
