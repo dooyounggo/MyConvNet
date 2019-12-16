@@ -35,8 +35,10 @@ def resnet_v1_50_101(ckpt_dir, load_moving_average=True, verbose=True):
 
     reader = pywrap_tensorflow.NewCheckpointReader(ckpt_dir)
     var_to_shape_map = reader.get_variable_to_shape_map()
+    var_names = [var for var in var_to_shape_map.keys()]
 
     variables = tf.global_variables()
+    variables_not_loaded = [var.name for var in variables]
     assign_dict = dict()
     for var in variables:
         keys = var.name.rstrip(':0').split('/')
@@ -44,7 +46,7 @@ def resnet_v1_50_101(ckpt_dir, load_moving_average=True, verbose=True):
             var_name_splitted = []
             block_name = '_'.join(keys[0].split('_')[:-1])
             block_num = keys[0].split('_')[-1]
-            if block_num in exception_blocks:       # FIXME
+            if block_num in exception_blocks:  # FIXME
                 if block_num == '0':
                     part_name = keys[2]
                     if part_name == 'bn':
@@ -65,7 +67,7 @@ def resnet_v1_50_101(ckpt_dir, load_moving_average=True, verbose=True):
                 unit_name = '_'.join(keys[1].split('_')[:-1])
                 unit_num = keys[1].split('_')[-1]
                 conv_num = keys[2].split('_')[-1]
-                if conv_num in exception_convs:     # FIXME
+                if conv_num in exception_convs:  # FIXME
                     if unit_name in key_match_dict:
                         if conv_num == 'skip':
                             var_name_splitted.append(key_match_dict[block_name] + str(int(block_num) + start_idx[0]))
@@ -110,27 +112,40 @@ def resnet_v1_50_101(ckpt_dir, load_moving_average=True, verbose=True):
                 if var_name + '/ExponentialMovingAverage' in var_to_shape_map:
                     if var.get_shape() == var_to_shape_map[var_name + '/ExponentialMovingAverage']:
                         assign_dict[var_name] = var
+                        var_names.remove(var_name + '/ExponentialMovingAverage')
+                        variables_not_loaded.remove(var.name)
                         if verbose:
                             print('Init. {} <===== {}'.format(var.name, var_name + '/ExponentialMovingAverage'))
                     elif verbose:
-                        print('Init. {} <==/== {}'.format(var.name, var_name + '/ExponentialMovingAverage'))
+                        print('Init. {} <==/== {} variable shapes do not match'
+                              .format(var.name, var_name + '/ExponentialMovingAverage'))
                 elif var_name in var_to_shape_map:
                     if var.get_shape() == var_to_shape_map[var_name]:
                         assign_dict[var_name] = var
+                        var_names.remove(var_name)
+                        variables_not_loaded.remove(var.name)
                         if verbose:
                             print('Init. {} <===== {}'.format(var.name, var_name))
                     elif verbose:
-                        print('Init. {} <==/== {}'.format(var.name, var_name))
+                        print('Init. {} <==/== {} variable shapes do not match'.format(var.name, var_name))
             else:
                 if var_name in var_to_shape_map:
                     if var.get_shape() == var_to_shape_map[var_name]:
                         assign_dict[var_name] = var
+                        var_names.remove(var_name)
+                        variables_not_loaded.remove(var.name)
                         if verbose:
                             print('Init. {} <===== {}'.format(var.name, var_name))
                     elif verbose:
-                        print('Init. {} <==/== {}'.format(var.name, var_name))
+                        print('Init. {} <==/== {} variable shapes do not match'.format(var.name, var_name))
 
     tf.train.init_from_checkpoint(ckpt_dir, assign_dict)
+    print('Variables have been initialized using the following checkpoint:')
+    print(ckpt_dir)
+    print('The following variables in the checkpoint were not used:')
+    print(var_names)
+    print('The following variables do not exist in the checkpoints, so they were initialized randomly:')
+    print(variables_not_loaded)
 
 
 def resnet_v2_50_101(ckpt_dir, load_moving_average=True, verbose=True):
@@ -159,8 +174,10 @@ def resnet_v2_50_101(ckpt_dir, load_moving_average=True, verbose=True):
 
     reader = pywrap_tensorflow.NewCheckpointReader(ckpt_dir)
     var_to_shape_map = reader.get_variable_to_shape_map()
+    var_names = [var for var in var_to_shape_map.keys()]
 
     variables = tf.global_variables()
+    variables_not_loaded = [var.name for var in variables]
     assign_dict = dict()
     for var in variables:
         keys = var.name.rstrip(':0').split('/')
@@ -168,7 +185,7 @@ def resnet_v2_50_101(ckpt_dir, load_moving_average=True, verbose=True):
             var_name_splitted = []
             block_name = '_'.join(keys[0].split('_')[:-1])
             block_num = keys[0].split('_')[-1]
-            if block_num in exception_blocks:       # FIXME
+            if block_num in exception_blocks:  # FIXME
                 if block_num == '0':
                     conv_num = keys[1].split('_')[-1]
                     var_name_splitted.append('conv' + str(int(conv_num) + start_idx[2]))
@@ -187,7 +204,7 @@ def resnet_v2_50_101(ckpt_dir, load_moving_average=True, verbose=True):
                 unit_num = keys[1].split('_')[-1]
                 conv_name = '_'.join(keys[2].split('_')[:-1])
                 conv_num = keys[2].split('_')[-1]
-                if conv_num in exception_convs:     # FIXME
+                if conv_num in exception_convs:  # FIXME
                     if unit_name in key_match_dict:
                         if conv_num == '0':
                             var_name_splitted.append(key_match_dict[block_name] + str(int(block_num) + start_idx[0]))
@@ -237,24 +254,38 @@ def resnet_v2_50_101(ckpt_dir, load_moving_average=True, verbose=True):
                 if var_name + '/ExponentialMovingAverage' in var_to_shape_map:
                     if var.get_shape() == var_to_shape_map[var_name + '/ExponentialMovingAverage']:
                         assign_dict[var_name] = var
+                        var_names.remove(var_name + '/ExponentialMovingAverage')
+                        variables_not_loaded.remove(var.name)
                         if verbose:
                             print('Init. {} <===== {}'.format(var.name, var_name + '/ExponentialMovingAverage'))
                     elif verbose:
-                        print('Init. {} <==/== {}'.format(var.name, var_name + '/ExponentialMovingAverage'))
+                        print('Init. {} <==/== {} variable shapes do not match'
+                              .format(var.name, var_name + '/ExponentialMovingAverage'))
                 elif var_name in var_to_shape_map:
                     if var.get_shape() == var_to_shape_map[var_name]:
                         assign_dict[var_name] = var
+                        var_names.remove(var_name)
+                        variables_not_loaded.remove(var.name)
                         if verbose:
                             print('Init. {} <===== {}'.format(var.name, var_name))
                     elif verbose:
-                        print('Init. {} <==/== {}'.format(var.name, var_name))
+                        print('Init. {} <==/== {} variable shapes do not match'.format(var.name, var_name))
             else:
                 if var_name in var_to_shape_map:
                     if var.get_shape() == var_to_shape_map[var_name]:
                         assign_dict[var_name] = var
+                        var_names.remove(var_name)
+                        variables_not_loaded.remove(var.name)
                         if verbose:
                             print('Init. {} <===== {}'.format(var.name, var_name))
                     elif verbose:
-                        print('Init. {} <==/== {}'.format(var.name, var_name))
+                        print('Init. {} <==/== {} variable shapes do not match'.format(var.name, var_name))
 
     tf.train.init_from_checkpoint(ckpt_dir, assign_dict)
+    print('Variables have been initialized using the following checkpoint:')
+    print(ckpt_dir)
+    print('The following variables in the checkpoint were not used:')
+    print(var_names)
+    print(
+        'The following variables do not exist in the checkpoints, so they were initialized randomly:')
+    print(variables_not_loaded)
