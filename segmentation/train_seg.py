@@ -52,7 +52,7 @@ else:
 
 # Data check
 image_mean = Param.d['image_mean']
-weighting_method = Param.d['loss_weighting']
+weighting_method = Param.d.get('loss_weighting', None)
 if weighting_method is not None:
     if isinstance(weighting_method, (list, tuple)):
         w = weighting_method
@@ -80,7 +80,7 @@ fp.close()
 # Initialize
 model = ConvNet(Param.d['input_size'], len(class_names), loss_weights=w, **Param.d)
 if Param.d['init_from_public_checkpoint']:
-    init_from_checkpoint(Param.checkpoint_dir, load_moving_average=Param.d['load_moving_average'])
+    init_from_checkpoint(Param.checkpoint_dir, load_moving_average=Param.d.get('load_moving_average', False))
 evaluator = Evaluator()
 optimizer = Optimizer(model, train_set, evaluator, val_set=val_set, **Param.d)
 
