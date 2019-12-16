@@ -743,9 +743,10 @@ class ConvNet(object):
 
             crop_h = y_max - y_min
             crop_w = x_max - x_min
-            crop_area = tf.cast(crop_h*crop_w, dtype=tf.float32)
-            crop_ratio = tf.cast(crop_h, dtype=tf.float32)/tf.cast(crop_w, dtype=tf.float32)
             min_object_area = self._min_object_size*tf.cast(h, dtype=tf.float32)*tf.cast(w, dtype=tf.float32)
+            output_ratio = self.input_size[1]/self.input_size[0]
+            crop_area = tf.cast(crop_h*crop_w, dtype=tf.float32)
+            crop_ratio = tf.cast(crop_h, dtype=tf.float32)/tf.cast(crop_w, dtype=tf.float32)*output_ratio
 
             valid_size = tf.math.greater_equal(crop_area, min_object_area)
             valid_ratio = tf.math.logical_and(tf.math.greater_equal(crop_ratio, self._crop_ratio[0]),
@@ -830,9 +831,10 @@ class ConvNet(object):
 
             crop_h = y_max - y_min
             crop_w = x_max - x_min
-            crop_area = tf.cast(crop_h*crop_w, dtype=tf.float32)
-            crop_ratio = tf.cast(crop_h, dtype=tf.float32)/tf.cast(crop_w, dtype=tf.float32)
             min_object_area = self._min_object_size*tf.cast(h, dtype=tf.float32)*tf.cast(w, dtype=tf.float32)
+            output_ratio = self.input_size[1]/self.input_size[0]
+            crop_area = tf.cast(crop_h*crop_w, dtype=tf.float32)
+            crop_ratio = tf.cast(crop_h, dtype=tf.float32)/tf.cast(crop_w, dtype=tf.float32)*output_ratio
 
             valid_size = tf.math.greater_equal(crop_area, min_object_area)
             valid_ratio = tf.math.logical_and(tf.math.greater_equal(crop_ratio, self._crop_ratio[0]),
