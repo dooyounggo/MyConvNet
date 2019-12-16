@@ -40,6 +40,8 @@ class Parameters(object):
     d['resize_interpolation'] = 'bilinear'  # Interpolation methods: 'nearest', 'bilinear', 'bicubic'
     d['rand_resized_crop_scale'] = (0.08, 1.0)  # Scale for 'random_resized_crop' method
     d['rand_resized_crop_ratio'] = (3/4, 4/3)  # Aspect ratio for 'random_resized_crop' method
+    d['max_crop_attempts'] = 0  # Maximum number of 'random_resized_crop' attempts to crop a image with a proper size
+    d['min_object_size'] = 0.1  # Minimum object area (proportion) of 'random_resized_crop'
     d['padded_resize_scale'] = 2.0  # Scale for 'padded_resize' method. (scale - 1)*num_pixels zeros are padded
 
     d['input_size'] = (224, 224, 3)  # Network input size after augmentation
@@ -131,6 +133,7 @@ class Parameters(object):
     d['rand_crop_scheduling'] = True  # Augmentation scheduling (experimental)
     d['rand_crop_scale'] = (0.08, 1.0)  # Scale*input_size patch crop from an image
     d['rand_crop_ratio'] = (3/4, 4/3)
+    d['extend_bbox_index_range'] = True  # If True, bounding boxes can be snipped, resulting in smaller crop sizes.
     d['rand_interpolation'] = True  # If true, interpolation method is randomly selected from nearest and bilinear
 
     d['rand_distortion'] = True  # Bool
