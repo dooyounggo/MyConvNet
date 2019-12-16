@@ -322,7 +322,7 @@ class ConvNet(object):
         pass
 
     def _build_loss(self, **kwargs):
-        l1_factor = kwargs.get('l1_reg', 1e-8)
+        l1_factor = kwargs.get('l1_reg', 0e-8)
         l2_factor = kwargs.get('l2_reg', 1e-4)
         ls_factor = kwargs.get('label_smoothing', 0.0)
         focal_loss_factor = kwargs.get('focal_loss_factor', 0.0)
@@ -636,7 +636,7 @@ class ConvNet(object):
             b1a = rand_y_scale*tf.math.cos(rand_rotation)
             b2a = rand_y_trans
 
-            val = kwargs.get('rand_x_reflect', False)
+            val = kwargs.get('rand_x_reflect', True)
             if scheduling > 0:
                 val *= self.linear_schedule_multiplier
             elif scheduling < 0:
@@ -901,7 +901,7 @@ class ConvNet(object):
     def rand_hue(self, x, **kwargs):
         scheduling = kwargs.get('rand_distortion_scheduling')
         with tf.variable_scope('rand_hue'):
-            max_delta = kwargs.get('rand_hue', 0.0)
+            max_delta = kwargs.get('rand_hue', 0.2)
             if scheduling > 0:
                 max_delta *= self.linear_schedule_multiplier
             elif scheduling < 0:
@@ -918,7 +918,7 @@ class ConvNet(object):
     def rand_saturation(self, x, **kwargs):
         scheduling = kwargs.get('rand_distortion_scheduling')
         with tf.variable_scope('rand_saturation'):
-            lower, upper = kwargs.get('rand_saturation', (1.0, 1.0))
+            lower, upper = kwargs.get('rand_saturation', (0.8, 1.25))
             if scheduling > 0:
                 lower = tf.math.pow(lower, self.linear_schedule_multiplier)
                 upper = tf.math.pow(upper, self.linear_schedule_multiplier)
@@ -985,7 +985,7 @@ class ConvNet(object):
         scheduling = kwargs.get('rand_distortion_scheduling')
         with tf.variable_scope('random_contrast'):
             batch_size = tf.shape(x)[0]
-            lower, upper = kwargs.get('rand_contrast', (1.0, 1.0))
+            lower, upper = kwargs.get('rand_contrast', (0.8, 1.25))
             if scheduling > 0:
                 lower = tf.math.pow(lower, self.linear_schedule_multiplier)
                 upper = tf.math.pow(upper, self.linear_schedule_multiplier)
@@ -1009,7 +1009,7 @@ class ConvNet(object):
         scheduling = kwargs.get('rand_distortion_scheduling')
         with tf.variable_scope('random_brightness'):
             batch_size = tf.shape(x)[0]
-            max_delta = kwargs.get('rand_brightness', 0.0)
+            max_delta = kwargs.get('rand_brightness', 0.2)
             if scheduling > 0:
                 max_delta *= self.linear_schedule_multiplier
             elif scheduling < 0:
