@@ -11,6 +11,8 @@ class ResNetDilated(ConvNet):  # Dilated ResNet-50
         self.dilations = [None, 1, 1, 1, 2]
         self.multi_grid = [1, 2, 4]
 
+        self.erase_relu = True
+
     def _build_model(self, **kwargs):
         d = dict()
 
@@ -121,12 +123,9 @@ class ResNetDilated(ConvNet):  # Dilated ResNet-50
                 x = self.batch_norm(x, shift=True, scale=True, scope='bn')
                 d[name + '/conv_2' + '/bn'] = x
 
-            x = skip + x
-            d[name + '/skip'] = x
-            x = self.relu(x, name='relu')
-            d[name + '/conv_1' + '/relu'] = x
-
             x = self.stochastic_depth(x, skip, drop_rate=drop_rate)
+            if not self.erase_relu:
+                x = self.relu(x, name='relu')
             d[name] = x
 
         return x
