@@ -9,6 +9,8 @@ class ResNet(ConvNet):  # Base model. ResNet-18 (v1.5: stride = 2 at 3x3 convolu
         self.strides = [2, 1, 2, 2, 2]
         self.res_units = [2, 2, 2, 2]    # Number of residual units starting from the 1st block
 
+        self.erase_relu = True
+
     def _build_model(self, **kwargs):
         d = dict()
 
@@ -103,10 +105,10 @@ class ResNet(ConvNet):  # Base model. ResNet-18 (v1.5: stride = 2 at 3x3 convolu
                 x = self.batch_norm(x, shift=True, scale=True, scope='bn')
                 d[name + '/conv_1' + '/bn'] = x
 
-            x = skip + x
-            d[name + '/skip'] = x
-            x = self.relu(x, name='relu')
-            d[name + '/conv_1' + '/relu'] = x
+            x = self.stochastic_depth(x, skip, drop_rate=drop_rate)
+            if not self.erase_relu:
+                x = self.relu(x, name='relu')
+            d[name] = x
 
             return x
 
@@ -162,12 +164,9 @@ class ResNetBot(ResNet):  # ResNet with bottlenecks. ResNet-50
                 x = self.batch_norm(x, shift=True, scale=True, scope='bn')
                 d[name + '/conv_2' + '/bn'] = x
 
-            x = skip + x
-            d[name + '/skip'] = x
-            x = self.relu(x, name='relu')
-            d[name + '/conv_1' + '/relu'] = x
-
             x = self.stochastic_depth(x, skip, drop_rate=drop_rate)
+            if not self.erase_relu:
+                x = self.relu(x, name='relu')
             d[name] = x
 
         return x
