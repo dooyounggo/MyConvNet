@@ -677,6 +677,7 @@ class ConvNet(object):
         with tf.variable_scope('rand_crop'):
             self._crop_scale = kwargs.get('rand_crop_scale', (1.0, 1.0))  # Size of crop windows
             self._crop_ratio = kwargs.get('rand_crop_ratio', (1.0, 1.0))  # Aspect ratio of crop windows
+            self._min_object_size = kwargs.get('min_object_size', 0.1)
             self._interpolation = kwargs.get('resize_interpolation', 'bilinear')  # Interpolation method
             self._rand_interpolation = kwargs.get('rand_interpolation', False)
             self._crop_scheduling = kwargs.get('rand_crop_scheduling', False)
@@ -722,15 +723,38 @@ class ConvNet(object):
         rand_x_scale = tf.math.sqrt(rand_scale/rand_ratio)
         rand_y_scale = tf.math.sqrt(rand_scale*rand_ratio)
 
-        size_h = tf.cast(tf.math.round(self.input_size[0]*rand_y_scale), dtype=tf.int32)
-        size_h = tf.math.minimum(h, size_h)
-        size_w = tf.cast(tf.math.round(self.input_size[1]*rand_x_scale), dtype=tf.int32)
-        size_w = tf.math.minimum(w, size_w)
+        size_h_full = tf.cast(tf.math.round(self.input_size[0]*rand_y_scale), dtype=tf.int32)
+        size_w_full = tf.cast(tf.math.round(self.input_size[1]*rand_x_scale), dtype=tf.int32)
+        size_h = tf.math.minimum(h, size_h_full)
+        size_w = tf.math.minimum(w, size_w_full)
 
         offset_h = tf.random.uniform([], 0, h - size_h + 1, dtype=tf.int32)
         offset_w = tf.random.uniform([], 0, w - size_w + 1, dtype=tf.int32)
 
-        image = tf.expand_dims(tf.slice(image, [offset_h, offset_w, 0], [size_h, size_w, -1]), axis=0)
+        with tf.variable_scope('full_index_range'):
+            offset_h_full = tf.random.uniform([], 0, h, dtype=tf.int32)
+            offset_w_full = tf.random.uniform([], 0, w, dtype=tf.int32)
+            x_min = offset_w_full - size_w_full//2
+            x_max = tf.math.minimum(x_min + size_w_full, w)
+            x_min = tf.math.maximum(0, x_min)
+            y_min = offset_h_full - size_h_full//2
+            y_max = tf.math.minimum(y_min + size_h_full, h)
+            y_min = tf.math.maximum(0, y_min)
+
+            crop_h = y_max - y_min
+            crop_w = x_max - x_min
+            crop_area = tf.cast(crop_h*crop_w, dtype=tf.float32)
+            crop_ratio = tf.cast(crop_h, dtype=tf.float32)/tf.cast(crop_w, dtype=tf.float32)
+            min_object_area = self._min_object_size*tf.cast(h, dtype=tf.float32)*tf.cast(w, dtype=tf.float32)
+
+            valid_size = tf.math.greater_equal(crop_area, min_object_area)
+            valid_ratio = tf.math.logical_and(tf.math.greater_equal(crop_ratio, self._crop_ratio[0]),
+                                              tf.math.less_equal(crop_ratio, self._crop_ratio[1]))
+            valid = tf.math.logical_and(valid_size, valid_ratio)
+
+        image = tf.cond(valid,  # Cropped image depends on whether the crop in the full index range is valid
+                        lambda: tf.expand_dims(tf.slice(image, [y_min, x_min, 0], [crop_h, crop_w, -1]), axis=0),
+                        lambda: tf.expand_dims(tf.slice(image, [offset_h, offset_w, 0], [size_h, size_w, -1]), axis=0))
         re_size = self.input_size[0:2]
         if self._rand_interpolation:
             num = tf.random.uniform([], 0, 2, dtype=tf.int32)
@@ -786,15 +810,38 @@ class ConvNet(object):
         rand_x_scale = tf.math.sqrt(rand_scale/rand_ratio)
         rand_y_scale = tf.math.sqrt(rand_scale*rand_ratio)
 
-        size_h = tf.cast(tf.math.round(self.input_size[0]*rand_y_scale), dtype=tf.int32)
-        size_h = tf.math.minimum(h, size_h)
-        size_w = tf.cast(tf.math.round(self.input_size[1]*rand_x_scale), dtype=tf.int32)
-        size_w = tf.math.minimum(w, size_w)
+        size_h_full = tf.cast(tf.math.round(self.input_size[0]*rand_y_scale), dtype=tf.int32)
+        size_w_full = tf.cast(tf.math.round(self.input_size[1]*rand_x_scale), dtype=tf.int32)
+        size_h = tf.math.minimum(h, size_h_full)
+        size_w = tf.math.minimum(w, size_w_full)
 
         offset_h = tf.random.uniform([], 0, h - size_h + 1, dtype=tf.int32)
         offset_w = tf.random.uniform([], 0, w - size_w + 1, dtype=tf.int32)
 
-        image = tf.expand_dims(tf.slice(image, [offset_h, offset_w, 0], [size_h, size_w, -1]), axis=0)
+        with tf.variable_scope('full_index_range'):
+            offset_h_full = tf.random.uniform([], 0, h, dtype=tf.int32)
+            offset_w_full = tf.random.uniform([], 0, w, dtype=tf.int32)
+            x_min = offset_w_full - size_w_full//2
+            x_max = tf.math.minimum(x_min + size_w_full, w)
+            x_min = tf.math.maximum(0, x_min)
+            y_min = offset_h_full - size_h_full//2
+            y_max = tf.math.minimum(y_min + size_h_full, h)
+            y_min = tf.math.maximum(0, y_min)
+
+            crop_h = y_max - y_min
+            crop_w = x_max - x_min
+            crop_area = tf.cast(crop_h*crop_w, dtype=tf.float32)
+            crop_ratio = tf.cast(crop_h, dtype=tf.float32)/tf.cast(crop_w, dtype=tf.float32)
+            min_object_area = self._min_object_size*tf.cast(h, dtype=tf.float32)*tf.cast(w, dtype=tf.float32)
+
+            valid_size = tf.math.greater_equal(crop_area, min_object_area)
+            valid_ratio = tf.math.logical_and(tf.math.greater_equal(crop_ratio, self._crop_ratio[0]),
+                                              tf.math.less_equal(crop_ratio, self._crop_ratio[1]))
+            valid = tf.math.logical_and(valid_size, valid_ratio)
+
+        image = tf.cond(valid,  # Cropped image depends on whether the crop in the full index range is valid
+                        lambda: tf.expand_dims(tf.slice(image, [y_min, x_min, 0], [crop_h, crop_w, -1]), axis=0),
+                        lambda: tf.expand_dims(tf.slice(image, [offset_h, offset_w, 0], [size_h, size_w, -1]), axis=0))
         re_size = self.input_size[0:2]
         if self._rand_interpolation:
             num = tf.random.uniform([], 0, 2, dtype=tf.int32)
@@ -813,7 +860,9 @@ class ConvNet(object):
 
         image = tf.reshape(image, self.input_size)
 
-        mask = tf.expand_dims(tf.slice(mask, [offset_h, offset_w, 0], [size_h, size_w, -1]), axis=0)
+        mask = tf.cond(valid,
+                       lambda: tf.expand_dims(tf.slice(mask, [y_min, x_min, 0], [crop_h, crop_w, -1]), axis=0),
+                       lambda: tf.expand_dims(tf.slice(mask, [offset_h, offset_w, 0], [size_h, size_w, -1]), axis=0))
         mask = tf.image.resize_nearest_neighbor(mask, re_size, align_corners=True)
         mask = tf.reshape(mask, list(self.input_size[:-1]) + [1])
 
