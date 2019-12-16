@@ -221,7 +221,7 @@ class DataSet(object):
         elif self.resize_method.lower() == 'resize_fit_expand':
             image = sf.resize_fit_expand(image, image_size, interpolation=interpolation, random=self.resize_randomness)
         elif self.resize_method.lower() == 'padded_resize' or self.resize_method.lower() == 'pad_resize':
-            scale = self._parameters.get('padded_resize_scale', 1.96)
+            scale = self._parameters.get('padded_resize_scale', 2.0)
             image = sf.padded_resize(image, image_size, interpolation=interpolation,
                                      random=self.resize_randomness, scale=scale)
         elif self.resize_method.lower() == 'random_resized_crop' or self.resize_method.lower() == 'random_resize_crop':
