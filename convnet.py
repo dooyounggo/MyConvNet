@@ -67,7 +67,7 @@ class ConvNet(object):
         self.pad_value = kwargs.get('pad_value', 0.5)
 
         self._dropout_weights = kwargs.get('dropout_weights', False)
-        self._dropout_features = kwargs.get('dropout_features', False)
+        self._dropout_features = kwargs.get('dropout_features', True)
 
         self._blocks_to_train = kwargs.get('blocks_to_train', None)
         self._update_batch_norm = kwargs.get('update_batch_norm', True)
