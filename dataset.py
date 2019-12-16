@@ -46,6 +46,7 @@ class DataSet(object):
             self._num_classes = len(class_names)
         self._class_names = class_names
         self._num_shards = kwargs.get('num_gpus', 1)
+        self._device_offset = kwargs.get('gpu_offset', 0)
         self._batch_size = kwargs.get('batch_size', 32)
         self._shuffle = kwargs.get('shuffle', True)
 
@@ -73,8 +74,9 @@ class DataSet(object):
                                                                                         (tf.float32, tf.float32))),
                                           num_parallel_calls=kwargs.get('num_parallel_calls')//self.num_shards)
                     dataset = dataset.batch(batch_size_per_gpu)
-                    dataset = dataset.apply(tf.data.experimental.copy_to_device('/gpu:{}'.format(i)))
-                    with tf.device('/gpu:{}'.format(i)):
+                    dataset = dataset.apply(tf.data.experimental.copy_to_device('/gpu:{}'
+                                                                                .format(i + self.device_offset)))
+                    with tf.device('/gpu:{}'.format(i + self.device_offset)):
                         dataset = dataset.prefetch(buffer_size=1)
                         self._datasets.append(dataset)
                         iterator = dataset.make_initializable_iterator()
@@ -97,6 +99,10 @@ class DataSet(object):
     @property
     def num_shards(self):
         return self._num_shards
+
+    @property
+    def device_offset(self):
+        return self._device_offset
 
     @property
     def batch_size(self):
@@ -214,17 +220,20 @@ class DataSet(object):
             image = sf.resize_expand(image, image_size, interpolation=interpolation, random=self.resize_randomness)
         elif self.resize_method.lower() == 'resize_fit_expand':
             image = sf.resize_fit_expand(image, image_size, interpolation=interpolation, random=self.resize_randomness)
-        elif self.resize_method.lower() == 'random_resized_crop' or self.resize_method.lower() == 'random_resize_crop':
-            scale = self._parameters.get('rand_resized_crop_scale', (0.08, 1.0))
-            ratio = self._parameters.get('rand_resized_crop_ratio', (3/4, 4/3))
-            if scale[1] > 1.0:
-                warnings.warn('The maximum scale ratio {} is greater than 1.0.'.format(scale), UserWarning)
-            image = sf.random_resized_crop(image, image_size, interpolation=interpolation,
-                                           random=self.resize_randomness, scale=scale, ratio=ratio)
         elif self.resize_method.lower() == 'padded_resize' or self.resize_method.lower() == 'pad_resize':
             scale = self._parameters.get('padded_resize_scale', 1.96)
             image = sf.padded_resize(image, image_size, interpolation=interpolation,
                                      random=self.resize_randomness, scale=scale)
+        elif self.resize_method.lower() == 'random_resized_crop' or self.resize_method.lower() == 'random_resize_crop':
+            scale = self._parameters.get('rand_resized_crop_scale', (0.08, 1.0))
+            ratio = self._parameters.get('rand_resized_crop_ratio', (3/4, 4/3))
+            max_attempts = self._parameters.get('max_crop_attempts', 10)
+            min_object_size = self._parameters.get('min_object_size', 0.1)
+            if scale[1] > 1.0:
+                warnings.warn('The maximum scale ratio {} is greater than 1.0.'.format(scale), UserWarning)
+            image = sf.random_resized_crop(image, image_size, interpolation=interpolation,
+                                           random=self.resize_randomness, scale=scale, ratio=ratio,
+                                           max_attempts=max_attempts, min_object_size=min_object_size)
         else:
             raise(ValueError, 'Resize type of {} is not supported.'.format(self.resize_method))
         return image
