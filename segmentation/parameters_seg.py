@@ -124,7 +124,7 @@ class Parameters(object):
     d['rand_ratio'] = (1.0, 1.0)  # Minimum and maximum pixel aspect ratios (x/y)
     d['rand_x_trans'] = 0.0  # Range in proportion (0.2 means +-10%)
     d['rand_y_trans'] = 0.0  # Range in proportion
-    d['rand_rotation'] = 20  # Range in degrees
+    d['rand_rotation'] = 0  # Range in degrees
     d['rand_shear'] = 0  # Range in degrees
     d['rand_x_reflect'] = True  # Bool
     d['rand_y_reflect'] = False  # Bool
