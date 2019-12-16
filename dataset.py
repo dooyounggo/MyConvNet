@@ -72,7 +72,7 @@ class DataSet(object):
                     dataset = dataset.map(lambda image_dir, label_dir: tuple(tf.py_func(self._load_function,
                                                                                         (image_dir, label_dir),
                                                                                         (tf.float32, tf.float32))),
-                                          num_parallel_calls=kwargs.get('num_parallel_calls')//self.num_shards)
+                                          num_parallel_calls=kwargs.get('num_parallel_calls', 4)//self.num_shards)
                     dataset = dataset.batch(batch_size_per_gpu)
                     dataset = dataset.apply(tf.data.experimental.copy_to_device('/gpu:{}'
                                                                                 .format(i + self.device_offset)))
