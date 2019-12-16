@@ -899,7 +899,7 @@ class ConvNet(object):
         return x
 
     def rand_hue(self, x, **kwargs):
-        scheduling = kwargs.get('rand_distortion_scheduling')
+        scheduling = kwargs.get('rand_distortion_scheduling', False)
         with tf.variable_scope('rand_hue'):
             max_delta = kwargs.get('rand_hue', 0.2)
             if scheduling > 0:
@@ -916,7 +916,7 @@ class ConvNet(object):
         return x
 
     def rand_saturation(self, x, **kwargs):
-        scheduling = kwargs.get('rand_distortion_scheduling')
+        scheduling = kwargs.get('rand_distortion_scheduling', False)
         with tf.variable_scope('rand_saturation'):
             lower, upper = kwargs.get('rand_saturation', (0.8, 1.25))
             if scheduling > 0:
@@ -937,7 +937,7 @@ class ConvNet(object):
         return x
 
     def rand_color_balance(self, x, **kwargs):
-        scheduling = kwargs.get('rand_distortion_scheduling')
+        scheduling = kwargs.get('rand_distortion_scheduling', False)
         with tf.variable_scope('random_color_balance'):
             batch_size = tf.shape(x)[0]
             lower, upper = kwargs.get('rand_color_balance', (1.0, 1.0))
@@ -961,7 +961,7 @@ class ConvNet(object):
         return x
 
     def rand_equalization(self, x, **kwargs):
-        scheduling = kwargs.get('rand_distortion_scheduling')
+        scheduling = kwargs.get('rand_distortion_scheduling', False)
         with tf.variable_scope('random_equalization'):
             batch_size = tf.shape(x)[0]
             prob = kwargs.get('rand_equalization', 0.0)
@@ -982,7 +982,7 @@ class ConvNet(object):
         return x
 
     def rand_contrast(self, x, **kwargs):
-        scheduling = kwargs.get('rand_distortion_scheduling')
+        scheduling = kwargs.get('rand_distortion_scheduling', False)
         with tf.variable_scope('random_contrast'):
             batch_size = tf.shape(x)[0]
             lower, upper = kwargs.get('rand_contrast', (0.8, 1.25))
@@ -1006,7 +1006,7 @@ class ConvNet(object):
         return x
 
     def rand_brightness(self, x, **kwargs):
-        scheduling = kwargs.get('rand_distortion_scheduling')
+        scheduling = kwargs.get('rand_distortion_scheduling', False)
         with tf.variable_scope('random_brightness'):
             batch_size = tf.shape(x)[0]
             max_delta = kwargs.get('rand_brightness', 0.2)
@@ -1022,7 +1022,7 @@ class ConvNet(object):
         return x
 
     def rand_noise(self, x, **kwargs):
-        scheduling = kwargs.get('rand_distortion_scheduling')
+        scheduling = kwargs.get('rand_distortion_scheduling', False)
         with tf.variable_scope('rand_noise'):
             shape_tensor = tf.shape(x)
             batch_size = shape_tensor[0]
@@ -1040,7 +1040,7 @@ class ConvNet(object):
         return x
 
     def rand_solarization(self, x, **kwargs):
-        scheduling = kwargs.get('rand_distortion_scheduling')
+        scheduling = kwargs.get('rand_distortion_scheduling', False)
         with tf.variable_scope('rand_solarization'):
             shape_tensor = tf.shape(x)
             batch_size = shape_tensor[0]
@@ -1067,7 +1067,7 @@ class ConvNet(object):
         return x
 
     def rand_posterization(self, x, **kwargs):
-        scheduling = kwargs.get('rand_distortion_scheduling')
+        scheduling = kwargs.get('rand_distortion_scheduling', False)
         with tf.variable_scope('rand_posterization'):
             batch_size = tf.shape(x)[0]
             lower, upper = kwargs.get('rand_posterization', (8, 8))
