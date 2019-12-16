@@ -286,6 +286,5 @@ def resnet_v2_50_101(ckpt_dir, load_moving_average=True, verbose=True):
     print(ckpt_dir)
     print('The following variables in the checkpoint were not used:')
     print(var_names)
-    print(
-        'The following variables do not exist in the checkpoints, so they were initialized randomly:')
+    print('The following variables do not exist in the checkpoints, so they were initialized randomly:')
     print(variables_not_loaded)
