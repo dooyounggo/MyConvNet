@@ -156,7 +156,7 @@ class Optimizer(object):
             model_to_load = kwargs.get('model_to_load', None)
             blocks_to_load = kwargs.get('blocks_to_load', None)
             load_logits = kwargs.get('load_logits', False)
-            load_moving_average = kwargs.get('load_moving_average', True)
+            load_moving_average = kwargs.get('load_moving_average', False)
             start_epoch = kwargs.get('start_epoch', 0)
             with tf.Graph().as_default():   # Find variables to be transferred
                 tf.train.import_meta_graph(os.path.join(transfer_dir, 'model.ckpt.meta'))
