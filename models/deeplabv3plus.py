@@ -1,6 +1,6 @@
 import tensorflow as tf
 from segnet import SegNet
-from models.resnet_v2_d_cbam_dilated_gn import ResNetCBAM50OS16 as ResNet
+from models.resnet_v1_5_dilated import ResNet50OS16 as ResNet
 
 
 class DeepLabV3PlusResNet(SegNet, ResNet):
