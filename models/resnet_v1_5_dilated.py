@@ -11,7 +11,7 @@ class ResNetDilated(ConvNet):  # Dilated ResNet-50
         self.dilations = [None, 1, 1, 1, 2]
         self.multi_grid = [1, 2, 4]
 
-        self.erase_relu = True
+        self.erase_relu = False
 
     def _build_model(self, **kwargs):
         d = dict()
@@ -69,6 +69,8 @@ class ResNetDilated(ConvNet):  # Dilated ResNet-50
             self._curr_block = None
             with tf.variable_scope('block_{}'.format(self._curr_block)):
                 with tf.variable_scope('logits'):
+                    if self.erase_relu:
+                        x = self.relu(x, name='relu')
                     axis = [2, 3] if self.channel_first else [1, 2]
                     x = tf.reduce_mean(x, axis=axis)
                     d['logits' + '/avgpool'] = x
@@ -132,8 +134,7 @@ class ResNetDilated(ConvNet):  # Dilated ResNet-50
 
 
 class ResNet50OS16(ResNetDilated):
-    def _init_params(self):
-        pass
+    pass
 
 
 class ResNet50OS8(ResNetDilated):
