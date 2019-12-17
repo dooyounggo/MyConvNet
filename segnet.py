@@ -1,7 +1,5 @@
 """
 Build segmentation networks using TensorFlow low-level APIs.
-==================== Reference Pages ====================
-GCN: https://arxiv.org/abs/1703.02719
 """
 
 import time
@@ -17,6 +15,7 @@ class SegNet(ConvNet):
                          None)
         with tf.variable_scope(tf.get_variable_scope()):
             for i in range(self.gpu_offset, self.num_gpus + self.gpu_offset):
+                self._curr_device = i
                 self._curr_block = 0
                 self._num_blocks = 0
                 with tf.device('/gpu:' + str(i)):
