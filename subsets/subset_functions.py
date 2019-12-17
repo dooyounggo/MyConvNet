@@ -92,7 +92,7 @@ def read_subset_seg(subset_dir, shuffle=False, sample_size=None):
 
 
 def random_resized_crop(image, out_size, interpolation=cv2.INTER_LINEAR, random=True,
-                        scale=(1.0, 1.0), ratio=(1.0, 1.0), max_attempts=10, min_object_size=0.1):
+                        scale=(1.0, 1.0), ratio=(1.0, 1.0), max_attempts=10, min_object_size=None):
 
     out_ratio = out_size[1]/out_size[0]
     in_size = image.shape
@@ -126,6 +126,8 @@ def random_resized_crop(image, out_size, interpolation=cv2.INTER_LINEAR, random=
         size_w = np.around(size_w*rand_x_scale).astype(int)
 
         success = False
+        if min_object_size is None:
+            min_object_size = scale[0]
         min_object_area = min_object_size*h*w
         i = 0
         while i < max_attempts and rand_scale > min_object_size:
