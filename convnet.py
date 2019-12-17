@@ -677,10 +677,10 @@ class ConvNet(object):
         with tf.variable_scope('rand_crop'):
             self._crop_scale = kwargs.get('rand_crop_scale', (1.0, 1.0))  # Size of crop windows
             self._crop_ratio = kwargs.get('rand_crop_ratio', (1.0, 1.0))  # Aspect ratio of crop windows
-            self._extend_bbox_index_range = kwargs.get('extend_bbox_index_range', True)
-            self._min_object_size = kwargs.get('min_object_size', 0.1)
+            self._extend_bbox_index_range = kwargs.get('extend_bbox_index_range', False)
+            self._min_object_size = kwargs.get('min_object_size', None)
             self._interpolation = kwargs.get('resize_interpolation', 'bilinear')  # Interpolation method
-            self._rand_interpolation = kwargs.get('rand_interpolation', False)
+            self._rand_interpolation = kwargs.get('rand_interpolation', True)
             self._crop_scheduling = kwargs.get('rand_crop_scheduling', False)
             if mask is None:
                 x = tf.map_fn(self.rand_crop_image, x, parallel_iterations=32, back_prop=False)
@@ -704,6 +704,7 @@ class ConvNet(object):
         elif self._crop_scheduling < 0:
             lower = 1.0 - (1.0 - lower)*(1.0 - self.linear_schedule_multiplier)
             upper = 1.0 - (1.0 - upper)*(1.0 - self.linear_schedule_multiplier)
+        scale_lower = lower
         # a = upper**2 - lower**2
         # b = lower**2
         # randval = tf.random.uniform([], dtype=tf.float32)
@@ -745,7 +746,11 @@ class ConvNet(object):
     
                 crop_h = y_max - y_min
                 crop_w = x_max - x_min
-                min_object_area = self._min_object_size*tf.cast(h, dtype=tf.float32)*tf.cast(w, dtype=tf.float32)
+                if self._min_object_size is None:
+                    min_object_size = scale_lower
+                else:
+                    min_object_size = self._min_object_size
+                min_object_area = min_object_size*tf.cast(h, dtype=tf.float32)*tf.cast(w, dtype=tf.float32)
                 output_ratio = self.input_size[1]/self.input_size[0]
                 crop_area = tf.cast(crop_h*crop_w, dtype=tf.float32)
                 crop_ratio = tf.cast(crop_h, dtype=tf.float32)/tf.cast(crop_w, dtype=tf.float32)*output_ratio
@@ -797,6 +802,7 @@ class ConvNet(object):
         elif self._crop_scheduling < 0:
             lower = 1.0 - (1.0 - lower)*(1.0 - self.linear_schedule_multiplier)
             upper = 1.0 - (1.0 - upper)*(1.0 - self.linear_schedule_multiplier)
+        scale_lower = lower
         # a = upper**2 - lower**2
         # b = lower**2
         # randval = tf.random.uniform([], dtype=tf.float32)
@@ -838,7 +844,11 @@ class ConvNet(object):
 
                 crop_h = y_max - y_min
                 crop_w = x_max - x_min
-                min_object_area = self._min_object_size*tf.cast(h, dtype=tf.float32)*tf.cast(w, dtype=tf.float32)
+                if self._min_object_size is None:
+                    min_object_size = scale_lower
+                else:
+                    min_object_size = self._min_object_size
+                min_object_area = min_object_size * tf.cast(h, dtype=tf.float32) * tf.cast(w, dtype=tf.float32)
                 output_ratio = self.input_size[1]/self.input_size[0]
                 crop_area = tf.cast(crop_h*crop_w, dtype=tf.float32)
                 crop_ratio = tf.cast(crop_h, dtype=tf.float32)/tf.cast(crop_w, dtype=tf.float32)*output_ratio
@@ -900,187 +910,196 @@ class ConvNet(object):
 
     def rand_hue(self, x, **kwargs):
         scheduling = kwargs.get('rand_distortion_scheduling', False)
-        with tf.variable_scope('rand_hue'):
-            max_delta = kwargs.get('rand_hue', 0.2)
-            if scheduling > 0:
-                max_delta *= self.linear_schedule_multiplier
-            elif scheduling < 0:
-                max_delta *= 1.0 - self.linear_schedule_multiplier
+        max_delta = kwargs.get('rand_hue', 0.2)
+        if max_delta > 0.0:
+            with tf.variable_scope('rand_hue'):
+                if scheduling > 0:
+                    max_delta *= self.linear_schedule_multiplier
+                elif scheduling < 0:
+                    max_delta *= 1.0 - self.linear_schedule_multiplier
 
-            delta = tf.random.uniform([], minval=-max_delta/2, maxval=max_delta/2, dtype=tf.float32)
+                delta = tf.random.uniform([], minval=-max_delta/2, maxval=max_delta/2, dtype=tf.float32)
 
-            x = x + self.image_mean
-            x = tf.image.adjust_hue(x, delta)
-            x = x - self.image_mean
+                x = x + self.image_mean
+                x = tf.image.adjust_hue(x, delta)
+                x = x - self.image_mean
 
         return x
 
     def rand_saturation(self, x, **kwargs):
         scheduling = kwargs.get('rand_distortion_scheduling', False)
-        with tf.variable_scope('rand_saturation'):
-            lower, upper = kwargs.get('rand_saturation', (0.8, 1.25))
-            if scheduling > 0:
-                lower = tf.math.pow(lower, self.linear_schedule_multiplier)
-                upper = tf.math.pow(upper, self.linear_schedule_multiplier)
-            elif scheduling < 0:
-                lower = tf.math.pow(lower, 1.0 - self.linear_schedule_multiplier)
-                upper = tf.math.pow(upper, 1.0 - self.linear_schedule_multiplier)
+        lower, upper = kwargs.get('rand_saturation', (0.8, 1.25))
+        if upper > lower:
+            with tf.variable_scope('rand_saturation'):
+                if scheduling > 0:
+                    lower = tf.math.pow(lower, self.linear_schedule_multiplier)
+                    upper = tf.math.pow(upper, self.linear_schedule_multiplier)
+                elif scheduling < 0:
+                    lower = tf.math.pow(lower, 1.0 - self.linear_schedule_multiplier)
+                    upper = tf.math.pow(upper, 1.0 - self.linear_schedule_multiplier)
 
-            base = upper/lower
-            randval = tf.random.uniform([], dtype=tf.float32)
-            randval = lower*tf.math.pow(base, randval)
+                base = upper/lower
+                randval = tf.random.uniform([], dtype=tf.float32)
+                randval = lower*tf.math.pow(base, randval)
 
-            x = x + self.image_mean
-            x = tf.image.adjust_saturation(x, randval)
-            x = x - self.image_mean
+                x = x + self.image_mean
+                x = tf.image.adjust_saturation(x, randval)
+                x = x - self.image_mean
 
         return x
 
     def rand_color_balance(self, x, **kwargs):
         scheduling = kwargs.get('rand_distortion_scheduling', False)
-        with tf.variable_scope('random_color_balance'):
-            batch_size = tf.shape(x)[0]
-            lower, upper = kwargs.get('rand_color_balance', (1.0, 1.0))
-            if scheduling > 0:
-                lower = tf.math.pow(lower, self.linear_schedule_multiplier)
-                upper = tf.math.pow(upper, self.linear_schedule_multiplier)
-            elif scheduling < 0:
-                lower = tf.math.pow(lower, 1.0 - self.linear_schedule_multiplier)
-                upper = tf.math.pow(upper, 1.0 - self.linear_schedule_multiplier)
+        lower, upper = kwargs.get('rand_color_balance', (1.0, 1.0))
+        if upper > lower:
+            with tf.variable_scope('random_color_balance'):
+                batch_size = tf.shape(x)[0]
+                if scheduling > 0:
+                    lower = tf.math.pow(lower, self.linear_schedule_multiplier)
+                    upper = tf.math.pow(upper, self.linear_schedule_multiplier)
+                elif scheduling < 0:
+                    lower = tf.math.pow(lower, 1.0 - self.linear_schedule_multiplier)
+                    upper = tf.math.pow(upper, 1.0 - self.linear_schedule_multiplier)
 
-            base = upper/lower
-            randvals = tf.random.uniform([batch_size, 1, 1, 3], dtype=tf.float32)
-            randvals = lower*tf.math.pow(base, randvals)
+                base = upper/lower
+                randvals = tf.random.uniform([batch_size, 1, 1, 3], dtype=tf.float32)
+                randvals = lower*tf.math.pow(base, randvals)
 
-            image_mean = tf.reduce_mean(x, axis=[1, 2], keepdims=True)
+                image_mean = tf.reduce_mean(x, axis=[1, 2], keepdims=True)
 
-            x = x - image_mean
-            x = x*randvals
-            x = x + image_mean
+                x = x - image_mean
+                x = x*randvals
+                x = x + image_mean
 
         return x
 
     def rand_equalization(self, x, **kwargs):
         scheduling = kwargs.get('rand_distortion_scheduling', False)
-        with tf.variable_scope('random_equalization'):
-            batch_size = tf.shape(x)[0]
-            prob = kwargs.get('rand_equalization', 0.0)
-            if scheduling > 0:
-                prob *= self.linear_schedule_multiplier
-            elif scheduling < 0:
-                prob *= 1.0 - self.linear_schedule_multiplier
+        prob = kwargs.get('rand_equalization', 0.0)
+        if prob > 0.0:
+            with tf.variable_scope('random_equalization'):
+                batch_size = tf.shape(x)[0]
+                if scheduling > 0:
+                    prob *= self.linear_schedule_multiplier
+                elif scheduling < 0:
+                    prob *= 1.0 - self.linear_schedule_multiplier
 
-            normal = tf.cast(tf.greater(tf.random.uniform([batch_size, 1, 1, 1]), prob), dtype=tf.float32)
-            maxvals = tf.reduce_max(tf.math.abs(x), axis=[1, 2], keepdims=True)
+                normal = tf.cast(tf.greater(tf.random.uniform([batch_size, 1, 1, 1]), prob), dtype=tf.float32)
+                maxvals = tf.reduce_max(tf.math.abs(x), axis=[1, 2], keepdims=True)
 
-            image_mean = tf.reduce_mean(x, axis=[1, 2], keepdims=True)
+                image_mean = tf.reduce_mean(x, axis=[1, 2], keepdims=True)
 
-            x = x - image_mean
-            x = normal*x + (1.0 - normal)*x/maxvals*0.5
-            x = x + image_mean
+                x = x - image_mean
+                x = normal*x + (1.0 - normal)*x/maxvals*0.5
+                x = x + image_mean
 
         return x
 
     def rand_contrast(self, x, **kwargs):
         scheduling = kwargs.get('rand_distortion_scheduling', False)
-        with tf.variable_scope('random_contrast'):
-            batch_size = tf.shape(x)[0]
-            lower, upper = kwargs.get('rand_contrast', (0.8, 1.25))
-            if scheduling > 0:
-                lower = tf.math.pow(lower, self.linear_schedule_multiplier)
-                upper = tf.math.pow(upper, self.linear_schedule_multiplier)
-            elif scheduling < 0:
-                lower = tf.math.pow(lower, 1.0 - self.linear_schedule_multiplier)
-                upper = tf.math.pow(upper, 1.0 - self.linear_schedule_multiplier)
+        lower, upper = kwargs.get('rand_contrast', (0.8, 1.25))
+        if upper > lower:
+            with tf.variable_scope('random_contrast'):
+                batch_size = tf.shape(x)[0]
+                if scheduling > 0:
+                    lower = tf.math.pow(lower, self.linear_schedule_multiplier)
+                    upper = tf.math.pow(upper, self.linear_schedule_multiplier)
+                elif scheduling < 0:
+                    lower = tf.math.pow(lower, 1.0 - self.linear_schedule_multiplier)
+                    upper = tf.math.pow(upper, 1.0 - self.linear_schedule_multiplier)
 
-            base = upper/lower
-            randvals = tf.random.uniform([batch_size, 1, 1, 1], dtype=tf.float32)
-            randvals = lower*tf.math.pow(base, randvals)
+                base = upper/lower
+                randvals = tf.random.uniform([batch_size, 1, 1, 1], dtype=tf.float32)
+                randvals = lower*tf.math.pow(base, randvals)
 
-            image_mean = tf.reduce_mean(x, axis=[1, 2], keepdims=True)
+                image_mean = tf.reduce_mean(x, axis=[1, 2], keepdims=True)
 
-            x = x - image_mean
-            x = x*randvals
-            x = x + image_mean
+                x = x - image_mean
+                x = x*randvals
+                x = x + image_mean
 
         return x
 
     def rand_brightness(self, x, **kwargs):
         scheduling = kwargs.get('rand_distortion_scheduling', False)
-        with tf.variable_scope('random_brightness'):
-            batch_size = tf.shape(x)[0]
-            max_delta = kwargs.get('rand_brightness', 0.2)
-            if scheduling > 0:
-                max_delta *= self.linear_schedule_multiplier
-            elif scheduling < 0:
-                max_delta *= 1.0 - self.linear_schedule_multiplier
+        max_delta = kwargs.get('rand_brightness', 0.2)
+        if max_delta > 0.0:
+            with tf.variable_scope('random_brightness'):
+                batch_size = tf.shape(x)[0]
+                if scheduling > 0:
+                    max_delta *= self.linear_schedule_multiplier
+                elif scheduling < 0:
+                    max_delta *= 1.0 - self.linear_schedule_multiplier
 
-            randval = tf.random.uniform([batch_size, 1, 1, 1], minval=-max_delta/2, maxval=max_delta/2,
-                                        dtype=tf.float32)
-            x = x + randval
+                randval = tf.random.uniform([batch_size, 1, 1, 1], minval=-max_delta/2, maxval=max_delta/2,
+                                            dtype=tf.float32)
+                x = x + randval
 
         return x
 
     def rand_noise(self, x, **kwargs):
         scheduling = kwargs.get('rand_distortion_scheduling', False)
-        with tf.variable_scope('rand_noise'):
-            shape_tensor = tf.shape(x)
-            batch_size = shape_tensor[0]
-            noise_mean = kwargs.get('rand_noise_mean', 0.0)
-            noise_stddev = kwargs.get('rand_noise_stddev', 0.0)
+        noise_mean = kwargs.get('rand_noise_mean', 0.0)
+        noise_stddev = kwargs.get('rand_noise_stddev', 0.0)
+        if noise_mean > 0.0 or noise_stddev > 0.0:
+            with tf.variable_scope('rand_noise'):
+                shape_tensor = tf.shape(x)
+                batch_size = shape_tensor[0]
 
-            noise = tf.random.normal(shape_tensor, mean=noise_mean, stddev=noise_stddev, dtype=tf.float32)
-            noise_mask = tf.random.uniform([batch_size, 1, 1, 1], dtype=tf.float32)
-            if scheduling > 0:
-                noise_mask *= self.linear_schedule_multiplier
-            elif scheduling < 0:
-                noise_mask *= 1.0 - self.linear_schedule_multiplier
-            x = x + noise_mask*noise
+                noise = tf.random.normal(shape_tensor, mean=noise_mean, stddev=noise_stddev, dtype=tf.float32)
+                noise_mask = tf.random.uniform([batch_size, 1, 1, 1], dtype=tf.float32)
+                if scheduling > 0:
+                    noise_mask *= self.linear_schedule_multiplier
+                elif scheduling < 0:
+                    noise_mask *= 1.0 - self.linear_schedule_multiplier
+                x = x + noise_mask*noise
 
         return x
 
     def rand_solarization(self, x, **kwargs):
         scheduling = kwargs.get('rand_distortion_scheduling', False)
-        with tf.variable_scope('rand_solarization'):
-            shape_tensor = tf.shape(x)
-            batch_size = shape_tensor[0]
-            lower, upper = kwargs.get('rand_solarization', (0.0, 1.0))
-            if scheduling > 0:
-                lower = lower*self.linear_schedule_multiplier
-                upper = 1.0 - (1.0 - upper)*self.linear_schedule_multiplier
-            elif scheduling < 0:
-                lower = lower*(1.0 - self.linear_schedule_multiplier)
-                upper = 1.0 - (1.0 - upper)*(1.0 - self.linear_schedule_multiplier)
+        lower, upper = kwargs.get('rand_solarization', (0.0, 1.0))
+        if lower > 0.0 or upper < 1.0:
+            with tf.variable_scope('rand_solarization'):
+                shape_tensor = tf.shape(x)
+                batch_size = shape_tensor[0]
+                if scheduling > 0:
+                    lower = lower*self.linear_schedule_multiplier
+                    upper = 1.0 - (1.0 - upper)*self.linear_schedule_multiplier
+                elif scheduling < 0:
+                    lower = lower*(1.0 - self.linear_schedule_multiplier)
+                    upper = 1.0 - (1.0 - upper)*(1.0 - self.linear_schedule_multiplier)
 
-            thres_lower = tf.random.uniform([batch_size, 1, 1, 1], -0.5, lower - 0.5, dtype=tf.float32)
-            thres_lower = tf.broadcast_to(thres_lower, shape_tensor)
-            lower_pixels = tf.less(x, thres_lower)
+                thres_lower = tf.random.uniform([batch_size, 1, 1, 1], -0.5, lower - 0.5, dtype=tf.float32)
+                thres_lower = tf.broadcast_to(thres_lower, shape_tensor)
+                lower_pixels = tf.less(x, thres_lower)
 
-            thres_upper = tf.random.uniform([batch_size, 1, 1, 1], upper - 0.5, 0.5, dtype=tf.float32)
-            thres_upper = tf.broadcast_to(thres_upper, shape_tensor)
-            upper_pixels = tf.greater(x, thres_upper)
+                thres_upper = tf.random.uniform([batch_size, 1, 1, 1], upper - 0.5, 0.5, dtype=tf.float32)
+                thres_upper = tf.broadcast_to(thres_upper, shape_tensor)
+                upper_pixels = tf.greater(x, thres_upper)
 
-            invert = tf.cast(tf.logical_or(lower_pixels, upper_pixels), dtype=tf.float32)
+                invert = tf.cast(tf.logical_or(lower_pixels, upper_pixels), dtype=tf.float32)
 
-            x = invert*(-x) + (1.0 - invert)*x
+                x = invert*(-x) + (1.0 - invert)*x
 
         return x
 
     def rand_posterization(self, x, **kwargs):
         scheduling = kwargs.get('rand_distortion_scheduling', False)
-        with tf.variable_scope('rand_posterization'):
-            batch_size = tf.shape(x)[0]
-            lower, upper = kwargs.get('rand_posterization', (8, 8))
-            if scheduling > 0:
-                lower = upper - (upper - lower)*self.linear_schedule_multiplier
-            elif scheduling < 0:
-                lower = upper - (upper - lower)*(1.0 - self.linear_schedule_multiplier)
+        lower, upper = kwargs.get('rand_posterization', (8, 8))
+        if lower < upper or upper < 8:
+            with tf.variable_scope('rand_posterization'):
+                batch_size = tf.shape(x)[0]
+                if scheduling > 0:
+                    lower = upper - (upper - lower)*self.linear_schedule_multiplier
+                elif scheduling < 0:
+                    lower = upper - (upper - lower)*(1.0 - self.linear_schedule_multiplier)
 
-            factors = tf.math.round(tf.random.uniform([batch_size, 1, 1, 1],
-                                                      lower - 0.5, upper + 0.5, dtype=tf.float32))
-            maxvals = tf.pow(2.0, factors)
-            x = tf.math.round(x*maxvals)
-            x = x/maxvals
+                factors = tf.math.round(tf.random.uniform([batch_size, 1, 1, 1],
+                                                          lower - 0.5, upper + 0.5, dtype=tf.float32))
+                maxvals = tf.pow(2.0, factors)
+                x = tf.math.round(x*maxvals)
+                x = x/maxvals
 
         return x
 
