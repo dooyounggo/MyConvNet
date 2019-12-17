@@ -70,7 +70,7 @@ class Optimizer(object):
         gradient_threshold = kwargs.get('gradient_threshold', 5.0)
         loss_scaling_factor = kwargs.get('loss_scaling_factor', 1.0)
         weight_decay = kwargs.get('base_weight_decay', 0.0)*self.batch_size/256
-        weight_decay_scheduling = kwargs.get('weight_decay_scheduling', False)
+        weight_decay_scheduling = kwargs.get('weight_decay_scheduling', True)
         l1_weight_decay = kwargs.get('l1_weight_decay', False)
         huber_decay_delta = kwargs.get('huber_decay_delta', None)
 
@@ -217,12 +217,14 @@ class Optimizer(object):
 
             saver_transfer.restore(self.model.session, ckpt_to_load)
 
+            print('')
             print('Variables have been initialized using the following checkpoint:')
             print(ckpt_to_load)
             print('The following variables in the checkpoint were not used:')
             print(var_names)
-            print('The following variables do not exist in the checkpoints, so they were initialized randomly:')
+            print('The following variables do not exist in the checkpoint, so they were initialized randomly:')
             print(variables_not_loaded)
+            print('')
         else:
             start_epoch = 0
             self.model.session.run(tf.global_variables_initializer())
