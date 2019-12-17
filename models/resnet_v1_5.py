@@ -9,7 +9,7 @@ class ResNet(ConvNet):  # Base model. ResNet-18 (v1.5: stride = 2 at 3x3 convolu
         self.strides = [2, 1, 2, 2, 2]
         self.res_units = [2, 2, 2, 2]    # Number of residual units starting from the 1st block
 
-        self.erase_relu = True
+        self.erase_relu = False
 
     def _build_model(self, **kwargs):
         d = dict()
@@ -59,6 +59,8 @@ class ResNet(ConvNet):  # Base model. ResNet-18 (v1.5: stride = 2 at 3x3 convolu
             self._curr_block = None
             with tf.variable_scope('block_{}'.format(self._curr_block)):
                 with tf.variable_scope('logits'):
+                    if self.erase_relu:
+                        x = self.relu(x, name='relu')
                     axis = [2, 3] if self.channel_first else [1, 2]
                     x = tf.reduce_mean(x, axis=axis)
                     d['logits' + '/avgpool'] = x
@@ -119,6 +121,8 @@ class ResNetBot(ResNet):  # ResNet with bottlenecks. ResNet-50
         self.kernels = [7, 3, 3, 3, 3]
         self.strides = [2, 1, 2, 2, 2]
         self.res_units = [3, 4, 6, 3]
+
+        self.erase_relu = False
 
     def _res_unit(self, x, kernel, stride, out_channels, d, drop_rate=0.0, name='res_unit'):
         in_channels = x.get_shape()[1] if self.channel_first else x.get_shape()[-1]
