@@ -97,6 +97,7 @@ class Optimizer(object):
 
         if self.model.num_gpus == 1:
             avg_grads_and_vars = tower_grads[0]
+            self.avg_grads = grads
         else:
             with tf.device(self.model.param_device):
                 with tf.variable_scope('calc/mean_gradients'):
@@ -124,6 +125,7 @@ class Optimizer(object):
                     #     avg_grads, _ = tf.clip_by_global_norm(avg_grads, gradient_threshold)
 
                     avg_grads_and_vars = [gv for gv in zip(avg_grads, avg_vars)]
+                    self.avg_grads = avg_grads
 
         if weight_decay > 0.0:
             variables = tf.get_collection('weight_variables')
@@ -283,6 +285,9 @@ class Optimizer(object):
                     tail_score_1 = tf.math.accumulate_n(tail_scores_1)/len(tail_scores_1)
                     tf.summary.scalar('Weights Tail Score 5p', tail_score_5)
                     tf.summary.scalar('Weights Tail Score 1p', tail_score_1)
+                with tf.variable_scope('gradients_l2'):
+                    gradients_l2 = tf.math.accumulate_n([tf.nn.l2_loss(g) for g in self.avg_grads])
+                    tf.summary.scalar('Gradients L2', gradients_l2)
                 merged = tf.summary.merge_all()
                 writer = tf.summary.FileWriter(os.path.join(save_dir, 'logs'), self.model.session.graph)
 
