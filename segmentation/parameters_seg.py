@@ -19,12 +19,12 @@ class Parameters(object):
     # FIXME: Directories
     _root_dir = os.path.dirname(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))  # FIXME
     _train_dir = os.path.join(_root_dir, 'tfdatasets/cityscapes/train')
-    _train_sample_size = None   # Data size. None for all files in train_dir
+    _train_sample_size = None  # Data size. None for all files in train_dir
     _val_dir = os.path.join(_root_dir, 'tfdatasets/cityscapes/validation')  # Can be None
     _val_sample_size = None
     _test_dir = os.path.join(_root_dir, 'tfdatasets/cityscapes/validation')
     _test_sample_size = None
-    _save_dir = 'D:/trained_models/DeepLab-V3p-ResNet-V1_5-OS16_Cityscapes'
+    _save_dir = 'D:/trained_models/DeepLab-V3P-ResNet-V1_5-OS16_Cityscapes'
 
     _transfer_dir = None
     _checkpoint_dir = os.path.join(_root_dir, 'pretrained_models', 'resnet_v1_50', 'resnet_v1_50.ckpt')
@@ -41,7 +41,7 @@ class Parameters(object):
     d['rand_resized_crop_scale'] = (0.08, 1.0)  # Scale for 'random_resized_crop' method
     d['rand_resized_crop_ratio'] = (3/4, 4/3)  # Aspect ratio for 'random_resized_crop' method
     d['max_crop_attempts'] = 0  # Maximum number of 'random_resized_crop' attempts to crop a image with a proper size
-    d['min_object_size'] = 0.1  # Minimum object area (proportion) of 'random_resized_crop'
+    d['min_object_size'] = None  # Minimum object area (proportion) of 'random_resized_crop'
     d['padded_resize_scale'] = 2.0  # Scale for 'padded_resize' method. (scale - 1)*num_pixels zeros are padded
 
     d['input_size'] = (768, 768, 3)  # Network input size after augmentation
@@ -72,9 +72,9 @@ class Parameters(object):
     d['num_gpus'] = 1
     d['batch_size'] = 2  # Total batch size (= batch_size_per_gpu*num_gpus)
     d['num_epochs'] = 500
-    d['base_learning_rate'] = 0.01  # Learning rate = base_learning_rate*batch_size/256
+    d['base_learning_rate'] = 0.02  # Learning rate = base_learning_rate*batch_size/256
     d['momentum'] = 0.9  # Momentum of optimizers
-    d['moving_average_decay'] = 0.999  # Decay rate of exponential moving average
+    d['moving_average_decay'] = 0.99  # Decay rate of exponential moving average
     d['batch_norm_decay'] = 0.99  # Decay rate of batch statistics
     d['gradient_threshold'] = 5.0  # Gradient thresholding using global norm. None for no thresholding
     d['loss_weighting'] = None  # None, 'balanced', [class0_weight, class1_weight, ...]. Loss = -w_c*log(y_c)
