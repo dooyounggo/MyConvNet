@@ -7,7 +7,7 @@ class ResNetDilated(ConvNet):  # Dilated ResNet-50
         self.channels = [64, 256, 512, 1024, 2048]
         self.kernels = [7, 3, 3, 3, 3]
         self.strides = [2, 1, 2, 2, 2]
-        self.res_units = [3, 4, 6, 3]
+        self.res_units = [None, 3, 4, 6, 3]
         self.dilations = [None, 1, 1, 1, 2]
         self.multi_grid = [1, 2, 4]
 
@@ -51,7 +51,7 @@ class ResNetDilated(ConvNet):  # Dilated ResNet-50
             self._curr_block = i
             dr = initial_drop_rate + (final_drop_rate - initial_drop_rate)*i/(self.num_blocks - 1)
             print('block {} drop rate = {:.3f}'.format(i, dr))
-            for j in range(res_units[i-1]):
+            for j in range(res_units[i]):
                 if j > 0:
                     s = 1
                 else:
@@ -142,4 +142,20 @@ class ResNet50OS8(ResNetDilated):
         super()._init_params()
         self.strides = [2, 1, 2, 1, 1]
         self.res_units = [None, 3, 4, 6, 3]
+        self.dilations = [None, 1, 1, 2, 4]
+
+
+class ResNet101OS16(ResNetDilated):
+    def _init_params(self):
+        super()._init_params()
+        self.strides = [2, 1, 2, 2, 1]
+        self.res_units = [None, 3, 4, 23, 3]
+        self.dilations = [None, 1, 1, 1, 2]
+
+
+class ResNet101OS8(ResNetDilated):
+    def _init_params(self):
+        super()._init_params()
+        self.strides = [2, 1, 2, 1, 1]
+        self.res_units = [None, 3, 4, 23, 3]
         self.dilations = [None, 1, 1, 2, 4]
