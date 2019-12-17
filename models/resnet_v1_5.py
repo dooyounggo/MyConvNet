@@ -7,7 +7,7 @@ class ResNet(ConvNet):  # Base model. ResNet-18 (v1.5: stride = 2 at 3x3 convolu
         self.channels = [64, 64, 128, 256, 512]
         self.kernels = [7, 3, 3, 3, 3]
         self.strides = [2, 1, 2, 2, 2]
-        self.res_units = [2, 2, 2, 2]    # Number of residual units starting from the 1st block
+        self.res_units = [None, 2, 2, 2, 2]    # Number of residual units starting from the 1st block
 
         self.erase_relu = False
 
@@ -47,7 +47,7 @@ class ResNet(ConvNet):  # Base model. ResNet-18 (v1.5: stride = 2 at 3x3 convolu
             self._curr_block = i
             dr = initial_drop_rate + (final_drop_rate - initial_drop_rate)*i/(self.num_blocks - 1)
             print('block {} drop rate = {:.3f}'.format(i, dr))
-            for j in range(res_units[i-1]):
+            for j in range(res_units[i]):
                 if j > 0:
                     s = 1
                 else:
@@ -120,7 +120,7 @@ class ResNetBot(ResNet):  # ResNet with bottlenecks. ResNet-50
         self.channels = [64, 256, 512, 1024, 2048]
         self.kernels = [7, 3, 3, 3, 3]
         self.strides = [2, 1, 2, 2, 2]
-        self.res_units = [3, 4, 6, 3]
+        self.res_units = [None, 3, 4, 6, 3]
 
         self.erase_relu = False
 
@@ -183,7 +183,7 @@ class ResNet18(ResNet):
 class ResNet34(ResNet):
     def _init_params(self):
         super()._init_params()
-        self.res_units = [3, 4, 6, 3]
+        self.res_units = [None, 3, 4, 6, 3]
 
 
 class ResNet50(ResNetBot):
@@ -193,4 +193,4 @@ class ResNet50(ResNetBot):
 class ResNet101(ResNetBot):
     def _init_params(self):
         super()._init_params()
-        self.res_units = [3, 4, 23, 3]
+        self.res_units = [None, 3, 4, 23, 3]
