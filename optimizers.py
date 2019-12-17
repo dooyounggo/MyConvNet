@@ -67,7 +67,7 @@ class Optimizer(object):
         pass
 
     def _optimize_and_update(self, optimizer, **kwargs):
-        gradient_threshold = kwargs.get('gradient_threshold', 5.0)
+        gradient_threshold = kwargs.get('gradient_threshold', 10.0)
         loss_scaling_factor = kwargs.get('loss_scaling_factor', 1.0)
         weight_decay = kwargs.get('base_weight_decay', 0.0)*self.batch_size/256
         weight_decay_scheduling = kwargs.get('weight_decay_scheduling', True)
@@ -262,10 +262,10 @@ class Optimizer(object):
                 weights = tf.get_collection('weight_variables')
                 with tf.variable_scope('weights_l1'):
                     weights_l1 = tf.math.accumulate_n([tf.reduce_sum(tf.math.abs(w)) for w in weights])
-                    tf.summary.scalar('Weights L1', weights_l1)
+                    tf.summary.scalar('Weights L1 Norm', weights_l1)
                 with tf.variable_scope('weights_l2'):
-                    weights_l2 = tf.math.accumulate_n([tf.nn.l2_loss(w) for w in weights])
-                    tf.summary.scalar('Weights L2', weights_l2)
+                    weights_l2 = tf.math.accumulate_n([tf.math.sqrt(2*tf.nn.l2_loss(w)) for w in weights])
+                    tf.summary.scalar('Weights L2 Norm', weights_l2)
                 tail_scores_5 = []
                 tail_scores_1 = []
                 with tf.variable_scope('weights_tail_score'):
@@ -286,8 +286,8 @@ class Optimizer(object):
                     tf.summary.scalar('Weights Tail Score 5p', tail_score_5)
                     tf.summary.scalar('Weights Tail Score 1p', tail_score_1)
                 with tf.variable_scope('gradients_l2'):
-                    gradients_l2 = tf.math.accumulate_n([tf.nn.l2_loss(g) for g in self.avg_grads])
-                    tf.summary.scalar('Gradients L2', gradients_l2)
+                    gradients_l2 = tf.math.accumulate_n([tf.math.sqrt(2*tf.nn.l2_loss(g)) for g in self.avg_grads])
+                    tf.summary.scalar('Gradients L2 Norm', gradients_l2)
                 merged = tf.summary.merge_all()
                 writer = tf.summary.FileWriter(os.path.join(save_dir, 'logs'), self.model.session.graph)
 
@@ -553,7 +553,7 @@ class MomentumOptimizer(Optimizer):
 
     def _optimizer(self, **kwargs):
         momentum = kwargs.get('momentum', 0.9)
-        gradient_threshold = kwargs.get('gradient_threshold', 5.0)
+        gradient_threshold = kwargs.get('gradient_threshold', 10.0)
         print('Optimizer: SGD with momentum. Initial learning rate: {:.6f}. Gradient threshold: {}'
               .format(self.init_learning_rate, gradient_threshold))
 
@@ -568,7 +568,7 @@ class RMSPropOptimizer(Optimizer):
         momentum = kwargs.get('momentum', 0.9)
         decay = 0.9
         eps = 0.001
-        gradient_threshold = kwargs.get('gradient_threshold', 5.0)
+        gradient_threshold = kwargs.get('gradient_threshold', 10.0)
         print('Optimizer: RMSProp. Initial learning rate: {:.6f}. Gradient threshold: {}'
               .format(self.init_learning_rate, gradient_threshold))
 
