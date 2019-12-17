@@ -504,7 +504,7 @@ class Optimizer(object):
                     self.curr_multiplier = (1 - (self.curr_step - warmup_steps)/total_steps)**power
                 else:  # 'cosine', param: num_restarts (annealing)
                     anneal = self.decay_params[0] if isinstance(self.decay_params, (list, tuple)) else self.decay_params
-                    anneal = int(anneal)
+                    anneal = 0 if anneal is None else int(anneal)
                     total_steps = self.steps_per_epoch*self.num_epochs - warmup_steps
                     curr_prog = ((anneal + 1)*(self.curr_step - warmup_steps)/total_steps) % 1.0
                     self.curr_multiplier = 0.5*(1 + np.cos(curr_prog*np.pi))
