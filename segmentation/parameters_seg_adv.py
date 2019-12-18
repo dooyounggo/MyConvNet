@@ -24,8 +24,8 @@ class Parameters(object):
     _val_sample_size = None
     _test_dir = os.path.join(_root_dir, 'tfdatasets/cityscapes/validation')
     _test_sample_size = None
-    _save_dir = 'D:/trained_models/DeepLab-V3P-ResNet-50-V1_5-OS16_Cityscapes'
 
+    _save_dir = 'D:/trained_models/DeepLab-V3P-ResNet-50-V1_5-OS16_Cityscapes'
     _transfer_dir = None
     _checkpoint_dir = os.path.join(_root_dir, 'pretrained_models', 'resnet_v1_50', 'resnet_v1_50.ckpt')
 
@@ -56,7 +56,7 @@ class Parameters(object):
     d['load_logits'] = False  # Whether to load variables related to logits
     d['load_moving_average'] = True  # Whether to load exponential moving averages of variables onto variables
     d['start_epoch'] = 0  # Start epoch to continue training from
-    d['model_to_load'] = 0  # The (n+1)-th best model is loaded for transfer learning and test
+    d['model_to_load'] = 0  # The (n+1)-th best model is loaded. Can be the name of the checkpoint file
 
     d['blocks_to_train'] = None  # Blocks to train. None for all blocks and [None] for logits only
     d['update_batch_norm'] = False  # Whether to update batch statistics. None to follow blocks_to_train
