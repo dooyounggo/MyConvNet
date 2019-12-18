@@ -60,12 +60,12 @@ class Parameters(object):
 
     d['num_gpus'] = 1
     d['batch_size'] = 8  # Total batch size (= batch_size_per_gpu*num_gpus)
-    d['num_epochs'] = 180
+    d['num_epochs'] = 300
     d['base_learning_rate'] = 0.25  # Learning rate = base_learning_rate*batch_size/256 (linear scaling rule)
     d['momentum'] = 0.9  # Momentum of optimizers
 
     d['learning_rate_decay_method'] = 'step'  # None, 'step', 'exponential', 'polynomial', 'cosine' (default)
-    d['learning_rate_decay_params'] = (0.1, 90, 150)
+    d['learning_rate_decay_params'] = (0.1, 150, 250)
 
     d['max_to_keep'] = 5  # Maximum number of models to save
     d['score_threshold'] = 0.0  # Model is saved if its score is better by this threshold
