@@ -1,5 +1,5 @@
 # MyConvNet
-  Deep learning using TensorFlow low-level APIs
+  Deep learning using TensorFlow low-level APIs.
 
   Build your own convolutional neural networks using TensorFlow.
   
@@ -28,4 +28,4 @@
 
 ### TODO
 - Speedup: Training is slower than tf_cnn_benchmark.
-- Include detection task
+- Include detection task.
