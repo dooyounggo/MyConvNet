@@ -45,12 +45,11 @@ class Parameters(object):
 
     # FIXME: Transfer learning parameters
     d['init_from_public_checkpoint'] = False  # Whether to use pre-trained model in checkpoint_dir
-    d['blocks_to_load'] = None  # Blocks to load variables on. None for all blocks
-    d['load_logits'] = False  # Whether to load variables related to logits
+
     d['start_epoch'] = 0  # Start epoch to continue training from
     d['model_to_load'] = 0  # The (n+1)-th best model is loaded. Can be the name of the checkpoint file
 
-    d['blocks_to_train'] = None  # Blocks to train. None for all blocks and [None] for logits only
+    d['blocks_to_train'] = None  # List of blocks to train. None for all blocks and [None] for logits only
     d['update_batch_norm'] = True  # Whether to update batch norm statistics. None to follow blocks_to_train
 
     # FIXME: Training hyperparameters
@@ -61,7 +60,7 @@ class Parameters(object):
     d['num_gpus'] = 1
     d['batch_size'] = 8  # Total batch size (= batch_size_per_gpu*num_gpus)
     d['num_epochs'] = 300
-    d['base_learning_rate'] = 0.25  # Learning rate = base_learning_rate*batch_size/256 (linear scaling rule)
+    d['base_learning_rate'] = 0.025  # Learning rate = base_learning_rate*batch_size/256 (linear scaling rule)
     d['momentum'] = 0.9  # Momentum of optimizers
 
     d['learning_rate_decay_method'] = 'step'  # None, 'step', 'exponential', 'polynomial', 'cosine' (default)
