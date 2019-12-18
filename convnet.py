@@ -1884,7 +1884,7 @@ class ConvNet(object):
 
         return x
 
-    def activation(self, x, activation_type='ReLU'):
+    def activation(self, x, activation_type='relu'):
         if activation_type.lower() == 'relu':
             return self.relu(x, name=activation_type)
         elif activation_type.lower() == 'swish':
