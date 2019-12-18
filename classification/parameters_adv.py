@@ -71,8 +71,8 @@ class Parameters(object):
 
     d['num_gpus'] = 1
     d['batch_size'] = 8  # Total batch size (= batch_size_per_gpu*num_gpus)
-    d['num_epochs'] = 180
-    d['base_learning_rate'] = 0.25  # Learning rate = base_learning_rate*batch_size/256
+    d['num_epochs'] = 300
+    d['base_learning_rate'] = 0.25  # Learning rate = base_learning_rate*batch_size/256 (linear scaling rule)
     d['momentum'] = 0.9  # Momentum of optimizers
     d['moving_average_decay'] = 0.99  # Decay rate of exponential moving average
     d['batch_norm_decay'] = 0.99  # Decay rate of batch statistics
@@ -83,7 +83,7 @@ class Parameters(object):
     d['loss_scaling_factor'] = 1  # Loss scaling factor for half precision training
 
     d['learning_rate_decay_method'] = 'step'  # None, 'step', 'exponential', 'polynomial', 'cosine' (default)
-    d['learning_rate_decay_params'] = (0.1, 90, 150)
+    d['learning_rate_decay_params'] = (0.1, 150, 250)
     d['learning_warmup_epoch'] = 5.0  # Linear warmup epoch
 
     d['max_to_keep'] = 5  # Maximum number of models to save
