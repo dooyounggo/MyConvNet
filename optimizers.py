@@ -264,7 +264,7 @@ class Optimizer(object):
                     weights_l1 = tf.math.accumulate_n([tf.reduce_sum(tf.math.abs(w)) for w in weights])
                     tf.summary.scalar('Weights L1 Norm', weights_l1)
                 with tf.variable_scope('weights_l2'):
-                    weights_l2 = tf.math.sqrt(tf.math.accumulate_n([tf.reduce_sum(w**2) for w in weights]))
+                    weights_l2 = tf.global_norm(weights)
                     tf.summary.scalar('Weights L2 Norm', weights_l2)
                 tail_scores_5 = []
                 tail_scores_1 = []
@@ -286,7 +286,7 @@ class Optimizer(object):
                     tf.summary.scalar('Weights Tail Score 5p', tail_score_5)
                     tf.summary.scalar('Weights Tail Score 1p', tail_score_1)
                 with tf.variable_scope('gradients_l2'):
-                    gradients_l2 = tf.math.sqrt(tf.math.accumulate_n([tf.reduce_sum(g**2) for g in self.avg_grads]))
+                    gradients_l2 = tf.global_norm(self.avg_grads)
                     tf.summary.scalar('Gradients L2 Norm', gradients_l2)
                 merged = tf.summary.merge_all()
                 writer = tf.summary.FileWriter(os.path.join(save_dir, 'logs'), self.model.session.graph)
