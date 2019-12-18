@@ -11,6 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from utils import plot_learning_curve
 from tensorflow.python.client import timeline
+from tensorflow.python import pywrap_tensorflow
 
 
 class Optimizer(object):
@@ -157,57 +158,12 @@ class Optimizer(object):
         if transfer_dir is not None:  # Transfer learning setup
             model_to_load = kwargs.get('model_to_load', None)
             blocks_to_load = kwargs.get('blocks_to_load', None)
-            load_logits = kwargs.get('load_logits', False)
             load_moving_average = kwargs.get('load_moving_average', False)
             start_epoch = kwargs.get('start_epoch', 0)
-            with tf.Graph().as_default():   # Find variables to be transferred
-                tf.train.import_meta_graph(os.path.join(transfer_dir, 'model.ckpt.meta'))
-                transfer_variables = tf.global_variables()
-                var_names = []
-                for var in transfer_variables:
-                    if var.name not in var_names:
-                        var_names.append(var.name)
 
-            var_list = []
-            if blocks_to_load is None:
-                for i in range(self.model.num_blocks):
-                    var_list += tf.get_collection('block_{}_variables'.format(i))
-                    var_list += tf.get_collection('block_{}_ema_variables'.format(i))
-            else:
-                for i in blocks_to_load:
-                    var_list += tf.get_collection('block_{}_variables'.format(i))
-                    var_list += tf.get_collection('block_{}_ema_variables'.format(i))
-            if load_logits:
-                var_list += tf.get_collection('block_{}_variables'.format(None))
-                var_list += tf.get_collection('block_{}_ema_variables'.format(None))
-
-            variables_not_loaded = []
-            if load_moving_average:
-                variables = {}
-                for var in var_list:
-                    target_ema = var.name.rstrip(':0') + '/ExponentialMovingAverage'
-                    if target_ema in var_names:
-                        variables[target_ema] = var
-                        var_names.remove(target_ema)
-                    elif var.name in var_names:
-                        variables[var.name.rstrip(':0')] = var
-                        var_names.remove(var.name)
-                    else:
-                        variables_not_loaded.append(var.name)
-            else:
-                variables = []
-                for var in var_list:
-                    if var.name in var_names:
-                        variables.append(var)
-                        var_names.remove(var.name)
-                    else:
-                        variables_not_loaded.append(var.name)
-
-            saver_transfer = tf.train.Saver(variables)
-
-            self.model.session.run(tf.global_variables_initializer())
-
-            if model_to_load is None:       # Find a model to be transferred
+            if not os.path.isdir(transfer_dir):
+                ckpt_to_load = transfer_dir
+            elif model_to_load is None:  # Find a model to be transferred
                 ckpt_to_load = tf.train.latest_checkpoint(transfer_dir)
             elif isinstance(model_to_load, str):
                 ckpt_to_load = os.path.join(transfer_dir, model_to_load)
@@ -217,6 +173,63 @@ class Optimizer(object):
                 fp.close()
                 ckpt_to_load = os.path.join(transfer_dir, ckpt_list[model_to_load].rstrip())
 
+            reader = pywrap_tensorflow.NewCheckpointReader(ckpt_to_load)  # Find variables to be transferred
+            var_to_shape_map = reader.get_variable_to_shape_map()
+            var_names = [var for var in var_to_shape_map.keys()]
+
+            var_list = []
+            if blocks_to_load is None:
+                for i in range(self.model.num_blocks):
+                    var_list += tf.get_collection('block_{}_variables'.format(i))
+                    var_list += tf.get_collection('block_{}_ema_variables'.format(i))
+                var_list += tf.get_collection('block_{}_variables'.format(None))
+                var_list += tf.get_collection('block_{}_ema_variables'.format(None))
+            else:
+                for i in blocks_to_load:
+                    var_list += tf.get_collection('block_{}_variables'.format(i))
+                    var_list += tf.get_collection('block_{}_ema_variables'.format(i))
+
+            variables_not_loaded = []
+            if load_moving_average:
+                variables = {}
+                for var in var_list:
+                    var_name = var.name.rstrip(':0')
+                    ema_name = var.name.rstrip(':0') + '/ExponentialMovingAverage'
+                    if ema_name in var_to_shape_map:
+                        if var.get_shape() == var_to_shape_map[ema_name]:
+                            variables[ema_name] = var
+                            if var_name in var_names:
+                                var_names.remove(ema_name)
+                        else:
+                            print('<{}> was not loaded due to shape mismatch'.format(var_name))
+                            variables_not_loaded.append(var_name)
+                    elif var_name in var_to_shape_map:
+                        if var.get_shape() == var_to_shape_map[var_name]:
+                            variables[var_name] = var
+                            if var_name in var_names:
+                                var_names.remove(var_name)
+                        else:
+                            print('<{}> was not loaded due to shape mismatch'.format(var_name))
+                            variables_not_loaded.append(var_name)
+                    else:
+                        variables_not_loaded.append(var_name)
+            else:
+                variables = []
+                for var in var_list:
+                    var_name = var.name.rstrip(':0')
+                    if var_name in var_to_shape_map:
+                        if var.get_shape() == var_to_shape_map[var_name]:
+                            variables.append(var)
+                            var_names.remove(var_name)
+                        else:
+                            print('<{}> was not loaded due to shape mismatch'.format(var_name))
+                            variables_not_loaded.append(var_name)
+                    else:
+                        variables_not_loaded.append(var_name)
+
+            saver_transfer = tf.train.Saver(variables)
+
+            self.model.session.run(tf.global_variables_initializer())
             saver_transfer.restore(self.model.session, ckpt_to_load)
 
             print('')
