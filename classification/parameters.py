@@ -24,8 +24,8 @@ class Parameters(object):
     _val_sample_size = 500
     _test_dir = os.path.join(_root_dir, 'tfdatasets/cub-200-2011/test')
     _test_sample_size = None
-    _save_dir = 'D:/trained_models/ResNet-50_CUB-200'
 
+    _save_dir = 'D:/trained_models/ResNet-50_CUB-200'
     _transfer_dir = None
     _checkpoint_dir = os.path.join(_root_dir, 'pretrained_models', 'resnet_v1_50', 'resnet_v1_50.ckpt')
 
@@ -48,7 +48,7 @@ class Parameters(object):
     d['blocks_to_load'] = None  # Blocks to load variables on. None for all blocks
     d['load_logits'] = False  # Whether to load variables related to logits
     d['start_epoch'] = 0  # Start epoch to continue training from
-    d['model_to_load'] = 0  # The (n+1)-th best model is loaded for transfer learning and test
+    d['model_to_load'] = 0  # The (n+1)-th best model is loaded. Can be the name of the checkpoint file
 
     d['blocks_to_train'] = None  # Blocks to train. None for all blocks and [None] for logits only
     d['update_batch_norm'] = True  # Whether to update batch norm statistics. None to follow blocks_to_train
