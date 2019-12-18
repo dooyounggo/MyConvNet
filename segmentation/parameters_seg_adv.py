@@ -131,7 +131,7 @@ class Parameters(object):
 
     d['rand_crop'] = True  # Bool
     d['rand_crop_scheduling'] = False  # Augmentation scheduling (experimental)
-    d['rand_crop_scale'] = (0.5, 1.5)  # Scale*input_size patch crop from an image
+    d['rand_crop_scale'] = (0.5, 1.5)  # Scale*input_size patch is cropped from an image
     d['rand_crop_ratio'] = (4/5, 5/4)
     d['extend_bbox_index_range'] = False  # If True, bounding boxes can be snipped, resulting in smaller crop sizes.
     d['rand_interpolation'] = True  # If true, interpolation method is randomly selected from nearest and bilinear
