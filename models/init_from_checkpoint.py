@@ -112,40 +112,46 @@ def resnet_v1_50_101(ckpt_dir, load_moving_average=True, verbose=True):
                 if var_name + '/ExponentialMovingAverage' in var_to_shape_map:
                     if var.get_shape() == var_to_shape_map[var_name + '/ExponentialMovingAverage']:
                         assign_dict[var_name] = var
-                        var_names.remove(var_name + '/ExponentialMovingAverage')
+                        if var_name + '/ExponentialMovingAverage' in var_names:
+                            var_names.remove(var_name + '/ExponentialMovingAverage')
                         variables_not_loaded.remove(var.name)
                         if verbose:
                             print('Init. {} <===== {}'.format(var.name, var_name + '/ExponentialMovingAverage'))
                     elif verbose:
-                        print('Init. {} <==/== {} variable shapes do not match'
+                        print('Init. {} <==/== {} (variable shapes do not match)'
                               .format(var.name, var_name + '/ExponentialMovingAverage'))
                 elif var_name in var_to_shape_map:
                     if var.get_shape() == var_to_shape_map[var_name]:
                         assign_dict[var_name] = var
-                        var_names.remove(var_name)
+                        if var_name in var_names:
+                            var_names.remove(var_name)
                         variables_not_loaded.remove(var.name)
                         if verbose:
                             print('Init. {} <===== {}'.format(var.name, var_name))
                     elif verbose:
-                        print('Init. {} <==/== {} variable shapes do not match'.format(var.name, var_name))
+                        print('Init. {} <==/== {} (variable shapes do not match)'.format(var.name, var_name))
             else:
                 if var_name in var_to_shape_map:
                     if var.get_shape() == var_to_shape_map[var_name]:
                         assign_dict[var_name] = var
-                        var_names.remove(var_name)
+                        if var_name in var_names:
+                            var_names.remove(var_name)
                         variables_not_loaded.remove(var.name)
                         if verbose:
                             print('Init. {} <===== {}'.format(var.name, var_name))
                     elif verbose:
-                        print('Init. {} <==/== {} variable shapes do not match'.format(var.name, var_name))
+                        print('Init. {} <==/== {} (variable shapes do not match)'.format(var.name, var_name))
 
     tf.train.init_from_checkpoint(ckpt_dir, assign_dict)
+
+    print('')
     print('Variables have been initialized using the following checkpoint:')
     print(ckpt_dir)
     print('The following variables in the checkpoint were not used:')
     print(var_names)
-    print('The following variables do not exist in the checkpoints, so they were initialized randomly:')
+    print('The following variables do not exist in the checkpoint, so they were initialized randomly:')
     print(variables_not_loaded)
+    print('')
 
 
 def resnet_v2_50_101(ckpt_dir, load_moving_average=True, verbose=True):
@@ -254,37 +260,43 @@ def resnet_v2_50_101(ckpt_dir, load_moving_average=True, verbose=True):
                 if var_name + '/ExponentialMovingAverage' in var_to_shape_map:
                     if var.get_shape() == var_to_shape_map[var_name + '/ExponentialMovingAverage']:
                         assign_dict[var_name] = var
-                        var_names.remove(var_name + '/ExponentialMovingAverage')
+                        if var_name + '/ExponentialMovingAverage' in var_names:
+                            var_names.remove(var_name + '/ExponentialMovingAverage')
                         variables_not_loaded.remove(var.name)
                         if verbose:
                             print('Init. {} <===== {}'.format(var.name, var_name + '/ExponentialMovingAverage'))
                     elif verbose:
-                        print('Init. {} <==/== {} variable shapes do not match'
+                        print('Init. {} <==/== {} (variable shapes do not match)'
                               .format(var.name, var_name + '/ExponentialMovingAverage'))
                 elif var_name in var_to_shape_map:
                     if var.get_shape() == var_to_shape_map[var_name]:
                         assign_dict[var_name] = var
-                        var_names.remove(var_name)
+                        if var_name in var_names:
+                            var_names.remove(var_name)
                         variables_not_loaded.remove(var.name)
                         if verbose:
                             print('Init. {} <===== {}'.format(var.name, var_name))
                     elif verbose:
-                        print('Init. {} <==/== {} variable shapes do not match'.format(var.name, var_name))
+                        print('Init. {} <==/== {} (variable shapes do not match)'.format(var.name, var_name))
             else:
                 if var_name in var_to_shape_map:
                     if var.get_shape() == var_to_shape_map[var_name]:
                         assign_dict[var_name] = var
-                        var_names.remove(var_name)
+                        if var_name in var_names:
+                            var_names.remove(var_name)
                         variables_not_loaded.remove(var.name)
                         if verbose:
                             print('Init. {} <===== {}'.format(var.name, var_name))
                     elif verbose:
-                        print('Init. {} <==/== {} variable shapes do not match'.format(var.name, var_name))
+                        print('Init. {} <==/== {} (variable shapes do not match)'.format(var.name, var_name))
 
     tf.train.init_from_checkpoint(ckpt_dir, assign_dict)
+
+    print('')
     print('Variables have been initialized using the following checkpoint:')
     print(ckpt_dir)
     print('The following variables in the checkpoint were not used:')
     print(var_names)
-    print('The following variables do not exist in the checkpoints, so they were initialized randomly:')
+    print('The following variables do not exist in the checkpoint, so they were initialized randomly:')
     print(variables_not_loaded)
+    print('')
