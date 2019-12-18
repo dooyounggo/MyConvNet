@@ -93,7 +93,7 @@ class Parameters(object):
     d['rand_y_reflect'] = False  # Bool
 
     d['rand_crop'] = True  # Bool
-    d['rand_crop_scale'] = (0.25, 1.0)  # Scale*input_size patch crop from an image
+    d['rand_crop_scale'] = (0.25, 1.0)  # Scale*input_size patch is cropped from an image
     d['rand_crop_ratio'] = (4/5, 5/4)
 
     d['rand_distortion'] = True  # Bool
