@@ -134,8 +134,7 @@ def resnet_v1_50_101(ckpt_dir, load_moving_average=True, verbose=True):
                 if var_name in var_to_shape_map:
                     if var.get_shape() == var_to_shape_map[var_name]:
                         assign_dict[var_name] = var
-                        if var_name in var_names:
-                            var_names.remove(var_name)
+                        var_names.remove(var_name)
                         variables_not_loaded.remove(var.name)
                         if verbose:
                             print('Init. {} <===== {}'.format(var.name, var_name))
@@ -282,8 +281,7 @@ def resnet_v2_50_101(ckpt_dir, load_moving_average=True, verbose=True):
                 if var_name in var_to_shape_map:
                     if var.get_shape() == var_to_shape_map[var_name]:
                         assign_dict[var_name] = var
-                        if var_name in var_names:
-                            var_names.remove(var_name)
+                        var_names.remove(var_name)
                         variables_not_loaded.remove(var.name)
                         if verbose:
                             print('Init. {} <===== {}'.format(var.name, var_name))
