@@ -153,7 +153,7 @@ class Optimizer(object):
                 opt_op = tf.group(self.update_ops)
         return opt_op
 
-    def train(self, save_dir='./tmp', transfer_dir=None, details=False, verbose=True, show_each_step=True, **kwargs):
+    def train(self, save_dir='./tmp', transfer_dir=None, details=False, verbose=True, show_each_step=False, **kwargs):
         if transfer_dir is not None:  # Transfer learning setup
             model_to_load = kwargs.get('model_to_load', None)
             blocks_to_load = kwargs.get('blocks_to_load', None)
