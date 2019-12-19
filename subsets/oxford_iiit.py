@@ -23,8 +23,10 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True):
     class_names = tuple(class_names)
     print(class_names)
 
-    set_size = len(filenames)
+    if not os.path.exists(destination_dir):
+        os.makedirs(destination_dir)
 
+    set_size = len(filenames)
     for i in range(set_size):
         if i % 200 == 0:
             print('Saving subset data: {:6d}/{}...'.format(i, set_size))
