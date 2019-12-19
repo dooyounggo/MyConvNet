@@ -36,6 +36,11 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True):
         split.append(int(line.rstrip().split(' ')[-1]))
     f.close()
 
+    if not os.path.exists(os.path.join(destination_dir, 'train')):
+        os.makedirs(os.path.join(destination_dir, 'train'))
+    if not os.path.exists(os.path.join(destination_dir, 'test')):
+        os.makedirs(os.path.join(destination_dir, 'test'))
+
     i = 0
     i_train = 0
     i_test = 0
@@ -76,8 +81,8 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True):
 
 
 if __name__ == '__main__':
-    subset_dir = "D:/Dropbox/Project/Python/datasets/CUB_200_2011"
-    destination_dir = "D:/Dropbox/Project/Python/tfdatasets/CUB_200_2011"
+    subset_dir = "D:/Dropbox/Project/Python/datasets/CUB-200-2011"
+    destination_dir = "D:/Dropbox/Project/Python/tfdatasets/CUB-200-2011"
     save_as_tfdata(subset_dir, destination_dir, copy=True)
 
 
