@@ -72,6 +72,9 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True):
             if file.split('_')[-1].lower() == 'labelids.png':
                 test_labels.append(os.path.join(curr_dir, file))
 
+    if not os.path.exists(os.path.join(destination_dir, 'train')):
+        os.makedirs(os.path.join(destination_dir, 'train'))
+
     for i, (image_dir, label_dir) in enumerate(zip(train_images, train_labels)):
         if i % 200 == 0:
             print('Saving training data: {:6d}/{}...'.format(i, len(train_images)))
@@ -89,6 +92,9 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True):
         if not copy:
             os.remove(label_dir)
 
+    if not os.path.exists(os.path.join(destination_dir, 'validation')):
+        os.makedirs(os.path.join(destination_dir, 'validation'))
+
     for i, (image_dir, label_dir) in enumerate(zip(val_images, val_labels)):
         if i % 200 == 0:
             print('Saving validation data: {:6d}/{}...'.format(i, len(val_images)))
@@ -105,6 +111,9 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True):
         imsave(os.path.join(destination_dir, 'validation', '{:010d}.{}'.format(i, label_ext)), label)
         if not copy:
             os.remove(label_dir)
+
+    if not os.path.exists(os.path.join(destination_dir, 'test')):
+        os.makedirs(os.path.join(destination_dir, 'test'))
 
     for i, (image_dir, label_dir) in enumerate(zip(test_images, test_labels)):
         if i % 200 == 0:
