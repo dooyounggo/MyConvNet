@@ -17,6 +17,9 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True):
     val_images = os.listdir(os.path.join(subset_dir, 'val2017'))
     val_labels = os.listdir(os.path.join(subset_dir, 'stuffthingmaps_trainval2017', 'val2017'))
 
+    if not os.path.exists(os.path.join(destination_dir, 'train')):
+        os.makedirs(os.path.join(destination_dir, 'train'))
+
     i = 0
     for image, label in zip(train_images, train_labels):
         if i % 200 == 0:
@@ -40,6 +43,9 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True):
             os.remove(label_dir)
 
         i += 1
+
+    if not os.path.exists(os.path.join(destination_dir, 'validation')):
+        os.makedirs(os.path.join(destination_dir, 'validation'))
 
     i = 0
     for image, label in zip(val_images, val_labels):
