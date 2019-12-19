@@ -1032,6 +1032,10 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True):
     num_examples = len(full_filenames)
     idx = np.arange(num_examples)
     np.random.shuffle(idx)  # Shuffle the files in advance since there are too many images in the dataset
+
+    if not os.path.exists(os.path.join(destination_dir, 'train')):
+        os.makedirs(os.path.join(destination_dir, 'train'))
+
     full_filenames = list(np.array(full_filenames)[idx])
     labels = list(np.array(labels)[idx])
     for i, (img_dir, label) in enumerate(zip(full_filenames, labels)):
@@ -1050,6 +1054,9 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True):
         wrt.writerow([str(label)])
         f.close()
         i += 1
+
+    if not os.path.exists(os.path.join(destination_dir, 'validation')):
+        os.makedirs(os.path.join(destination_dir, 'validation'))
 
     val_fnames = os.listdir(val_dir)
     val_infos = os.listdir(val_info_dir)
