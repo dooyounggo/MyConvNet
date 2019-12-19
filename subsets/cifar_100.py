@@ -16,6 +16,10 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True):
     test_folders = os.listdir(os.path.join(subset_dir, 'test'))
 
     class_names = []
+
+    if not os.path.exists(os.path.join(destination_dir, 'train')):
+        os.makedirs(os.path.join(destination_dir, 'train'))
+
     i = 0
     i_class = 0
     for folder in train_folders:
@@ -41,6 +45,9 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True):
                 i += 1
 
             i_class += 1
+
+    if not os.path.exists(os.path.join(destination_dir, 'test')):
+        os.makedirs(os.path.join(destination_dir, 'test'))
 
     i = 0
     i_class = 0
