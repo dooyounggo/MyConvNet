@@ -25,6 +25,10 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True):
     set_size = len(train_images) + len(test_images)
 
     class_names = []
+
+    if not os.path.exists(os.path.join(destination_dir, 'train')):
+        os.makedirs(os.path.join(destination_dir, 'train'))
+
     i = 0
     for i_train, (fname, label) in enumerate(zip(train_images, train_labels)):
         if i % 500 == 0:
@@ -49,6 +53,9 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True):
         wrt.writerow([str(label)])
         f.close()
         i += 1
+
+    if not os.path.exists(os.path.join(destination_dir, 'test')):
+        os.makedirs(os.path.join(destination_dir, 'test'))
 
     for i_test, (fname, label) in enumerate(zip(test_images, test_labels)):
         if i % 500 == 0:
