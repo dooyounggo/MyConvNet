@@ -72,7 +72,7 @@ class Parameters(object):
     d['num_gpus'] = 1
     d['batch_size'] = 8  # Total batch size (= batch_size_per_gpu*num_gpus)
     d['num_epochs'] = 300
-    d['base_learning_rate'] = 0.25  # Learning rate = base_learning_rate*batch_size/256 (linear scaling rule)
+    d['base_learning_rate'] = 0.25*(256/8)  # Learning rate = base_learning_rate*batch_size/256 (linear scaling rule)
     d['momentum'] = 0.9  # Momentum of optimizers
     d['moving_average_decay'] = 0.99  # Decay rate of exponential moving average
     d['batch_norm_decay'] = 0.99  # Decay rate of batch statistics
@@ -114,6 +114,8 @@ class Parameters(object):
     d['augment_test'] = False  # Online augmentation for validation and test data
 
     d['zero_pad_ratio'] = 0.0  # Zero padding ratio = (zero_padded_image_size - nn_input_size)/nn_input_size
+    
+    d['sync_augment_scheduling'] = False  # If True, the augmentation scheduling is synced with the learning rate
 
     d['rand_blur_stddev'] = 0.0  # Maximum sigma for Gaussian blur
     d['rand_blur_scheduling'] = False  # Augmentation scheduling (experimental)
