@@ -5,7 +5,7 @@
   
   Supports image classification and semantic segmentation tasks.
   
-  The code was verified using PyCharm on Windows.
+  The code was verified on Windows 10 and Ubuntu 18.04 using PyCharm with Anaconda.
 
 ## How To Run
 - Download all the files.
@@ -20,12 +20,12 @@
 
 ### Packages
 - Python: 3.7
-- tensorflow-gpu: 1.14.0
-- numpy: 1.16.4
-- matplotlib: 3.1.0
+- tensorflow-gpu: 1.15.0 (cudatoolkit: 10.0, cudnn: 7.6.5)
+- numpy: 1.17.4
+- matplotlib: 3.1.1
 - scikit-image: 0.15.0
-- scikit-learn: 0.21.2
-- opencv-python: 4.1.0.25
+- scikit-learn: 0.22
+- opencv-python: 4.1.2.30
 
 ### TODO
 - Speedup: Training is slower than tf_cnn_benchmark.
