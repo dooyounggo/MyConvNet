@@ -114,6 +114,8 @@ class Parameters(object):
     d['augment_test'] = False  # Online augmentation for validation and test data
 
     d['zero_pad_ratio'] = 0.0  # Zero padding ratio = (zero_padded_image_size - nn_input_size)/nn_input_size
+    
+    d['sync_augment_scheduling'] = False  # If True, the augmentation scheduling is synced with the learning rate
 
     d['rand_blur_stddev'] = 0.0  # Maximum sigma for Gaussian blur
     d['rand_blur_scheduling'] = False  # Augmentation scheduling (experimental)
