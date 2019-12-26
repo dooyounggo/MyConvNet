@@ -13,6 +13,7 @@ FLOAT_TYPES = ['float16', 'float32', 'float64']
 
 def read_subset_cls(subset_dir, shuffle=False, sample_size=None):
     filenames = os.listdir(subset_dir)
+    filenames.sort()
     image_dirs = []
     label_dirs = []
     for fname in filenames:
@@ -53,6 +54,7 @@ def read_subset_cls(subset_dir, shuffle=False, sample_size=None):
 
 def read_subset_seg(subset_dir, shuffle=False, sample_size=None):
     filenames = os.listdir(subset_dir)
+    filenames.sort()
     image_dirs = []
     label_dirs = []
     for fname in filenames:
