@@ -1856,31 +1856,17 @@ class ConvNet(object):
             return convs
 
     def stochastic_depth(self, x, skip, drop_rate=0.0, name='drop'):
-        with tf.variable_scope(name):
-            batch_size = tf.shape(x)[0]
-            drop_rate = tf.cond(self.is_train, lambda: drop_rate, lambda: 0.0)
-
-            s = tf.math.greater_equal(tf.random.uniform([batch_size, 1, 1, 1], dtype=tf.float32), drop_rate)
-            survived = tf.cast(tf.cast(s, dtype=tf.float32)/(1.0 - drop_rate), dtype=self.dtype)
-
-            x = x*survived + skip
-
-        return x
-
-    def drop_connections(self, x, skip, drop_rate=0.0, name='drop'):
-        with tf.variable_scope(name):
-            batch_size = tf.shape(x)[0]
-            main_drop_rate = tf.cond(self.is_train, lambda: drop_rate, lambda: 0.0)
-            skip_drop_rate = tf.cond(self.is_train, lambda: drop_rate, lambda: 0.0)*self.linear_schedule_multiplier
-            eff_skip_drop_rate = (1.0 - main_drop_rate)*skip_drop_rate
-
-            main_s = tf.math.greater_equal(tf.random.uniform([batch_size, 1, 1, 1], dtype=tf.float32), main_drop_rate)
-            skip_s = tf.math.greater_equal(tf.random.uniform([batch_size, 1, 1, 1], dtype=tf.float32), skip_drop_rate)
-            skip_s = tf.logical_or(skip_s, tf.logical_not(main_s))
-            main_survived = tf.cast(tf.cast(main_s, dtype=tf.float32)/(1.0 - main_drop_rate), dtype=self.dtype)
-            skip_survived = tf.cast(tf.cast(skip_s, dtype=tf.float32)/(1.0 - eff_skip_drop_rate), dtype=self.dtype)
-
-            x = x*main_survived + skip*skip_survived
+        if drop_rate > 0.0:
+            with tf.variable_scope(name):
+                batch_size = tf.shape(x)[0]
+                drop_rate = tf.cond(self.is_train, lambda: drop_rate, lambda: 0.0)
+    
+                s = tf.math.greater_equal(tf.random.uniform([batch_size, 1, 1, 1], dtype=tf.float32), drop_rate)
+                survived = tf.cast(tf.cast(s, dtype=tf.float32)/(1.0 - drop_rate), dtype=self.dtype)
+    
+                x = x*survived + skip
+        else:
+            x = x + skip
 
         return x
 
