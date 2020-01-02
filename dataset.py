@@ -68,7 +68,7 @@ class DataSet(object):
                                                                   label_dirs[i::self.num_shards]))
                     if self.shuffle:
                         dataset = dataset.shuffle(buffer_size=min([np.ceil(self.num_examples/self.num_shards),
-                                                                   np.ceil(256*batch_size_per_gpu/32)]))
+                                                                   np.ceil(1024*batch_size_per_gpu/32)]))
                     dataset = dataset.map(lambda image_dir, label_dir: tuple(tf.py_func(self._load_function,
                                                                                         (image_dir, label_dir),
                                                                                         (tf.float32, tf.float32))),
