@@ -36,4 +36,4 @@
 
 ### TODO
 - Speedup: Training is slower than tf_cnn_benchmark.
-- Include detection task.
+- Include the detection task, GAN, etc..
