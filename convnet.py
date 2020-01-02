@@ -1618,7 +1618,7 @@ class ConvNet(object):
         return x
 
     def group_renorm(self, x, num_groups=8, scale=True, shift=True, zero_scale_init=False, epsilon=1e-3, scope='gn'):
-        if self.update_batch_norm is not None:
+        if self.update_batch_norm is not None:  # Experimental renormalization
             update = self.update_batch_norm
         else:
             if self.blocks_to_train is None:
