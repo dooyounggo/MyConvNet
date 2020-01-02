@@ -265,6 +265,8 @@ class ConvNet(object):
                                                      name='cutmix')
                         self.Xs.append(self.X)
                         self.Ys.append(self.Y)
+                        
+                        self.X *= 2  # Set input range in [-1 1]
 
                         if self.channel_first:
                             self.X = tf.transpose(self.X, perm=[0, 3, 1, 2])
