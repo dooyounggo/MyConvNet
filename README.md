@@ -5,7 +5,7 @@
   
   Supports image classification and semantic segmentation tasks.
   
-  The code was verified on Windows 10 and Ubuntu 18.04 using PyCharm with Anaconda.
+  Verified on Windows 10 and Ubuntu 18.04 using PyCharm with Anaconda.
   
   Use Linux for faster training.
   
