@@ -30,9 +30,9 @@
 - opencv-python: 4.1.2.30
 
 ### Checkpoints (ImageNet)
-| Model | Top-1 Acc. | Details |
-|---|---|---|
-| ResNet-v1.5-50 |   | [parameters.py](https://www.dropbox.com/s/lhmnshgfs9jvrfd/imagenet_res50.py?dl=0) |
+| Model | Top-1 Acc. | Details | ckpt |
+|---|---|---|---|
+| ResNet-v1.5-50 |  | [parameters.py](https://www.dropbox.com/s/lhmnshgfs9jvrfd/imagenet_res50.py?dl=0) |  |
 
 ### TODO
 - Speedup: Training is slower than tf_cnn_benchmark.
