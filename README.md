@@ -29,7 +29,7 @@
 - opencv-python: 4.1.2.30
 
 ### Checkpoints (ImageNet)
-| Model | Top-1 Acc. | Top-5 Acc. | Details | Params | ckpt |
+| Model | Top-1 Acc | Top-5 Acc | Details | Params | Ckpt |
 |:---:|:---:|:---:|:---:|:---:|:---:|
 | ResNet-v1.5-50 |  |  | Inception preprocessing | [#.py](https://www.dropbox.com/s/lhmnshgfs9jvrfd/imagenet_res50.py?dl=0) |  |
 
