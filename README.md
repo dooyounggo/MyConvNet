@@ -18,7 +18,7 @@
 - Run test.py to test the trained model.
 
 ### Instruction
-- Download the basic [instruction](https://www.dropbox.com/s/64wtb6kvn9ms5o3/MyConvNet.pptx?dl=0).
+- Check out the basic [instruction](https://www.dropbox.com/s/64wtb6kvn9ms5o3/MyConvNet.pptx?dl=0).
 
 ### Packages
 - Python: 3.7
