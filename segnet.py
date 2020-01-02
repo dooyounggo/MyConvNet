@@ -52,6 +52,8 @@ class SegNet(ConvNet):
                         self.Y = tf.one_hot(self.Y, depth=self.num_classes, dtype=tf.float32)  # one-hot encoding
                         self.Xs.append(self.X)
                         self.Ys.append(self.Y)
+                        
+                        self.X *= 2  # Set input range in [-1 1]
 
                         if self.channel_first:
                             self.X = tf.transpose(self.X, perm=[0, 3, 1, 2])
