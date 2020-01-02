@@ -29,6 +29,11 @@
 - scikit-learn: 0.22
 - opencv-python: 4.1.2.30
 
+### Checkpoints (ImageNet)
+| Model | Top-1 Acc. | Details |
+|---|---|---|
+|   |   |   |
+
 ### TODO
 - Speedup: Training is slower than tf_cnn_benchmark.
 - Include detection task.
