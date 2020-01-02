@@ -32,7 +32,7 @@
 ### Checkpoints (ImageNet)
 | Model | Top-1 Acc. | Details |
 |---|---|---|
-|   |   |   |
+| ResNet-50-v1.5 |   |   |
 
 ### TODO
 - Speedup: Training is slower than tf_cnn_benchmark.
