@@ -1865,7 +1865,7 @@ class ConvNet(object):
             return convs
 
     def stochastic_depth(self, x, skip, drop_rate=0.0, name='drop'):
-                if drop_rate > 0.0:
+        if drop_rate > 0.0:
             with tf.variable_scope(name):
                 batch_size = tf.shape(x)[0]
                 drop_rate = tf.cond(self.is_train, lambda: drop_rate, lambda: 0.0)
