@@ -345,7 +345,7 @@ class Optimizer(object):
                     gradients_l2 = tf.global_norm(self.avg_grads)
                     tf.summary.scalar('Gradients L2 Norm', gradients_l2)
                 merged = tf.summary.merge_all()
-                writer = tf.summary.FileWriter(os.path.join(save_dir, 'logs'), self.model.session.graph)
+                train_writer = tf.summary.FileWriter(os.path.join(save_dir, 'logs'), self.model.session.graph)
 
         train_results = dict()
 
@@ -380,8 +380,8 @@ class Optimizer(object):
             self._update_learning_rate()
 
             try:
-                step_loss, step_Y_true, step_Y_pred = self._step(handles, merged=merged, writer=writer,
-                                                                 summarize=(i + 1) % summary_frequency == 0)
+                step_loss, step_Y_true, step_Y_pred = self._step(handles, merged=merged, writer=train_writer,
+                                                                 summary=(i + 1) % summary_frequency == 0)
                 step_score = self.evaluator.score(step_Y_true, step_Y_pred)
             except tf.errors.OutOfRangeError:
                 if verbose:
@@ -504,7 +504,7 @@ class Optimizer(object):
 
             return train_results
 
-    def _step(self, handles, merged=None, writer=None, summarize=False):  # Optimization step
+    def _step(self, handles, merged=None, writer=None, summary=False):  # Optimization step
         feed_dict = {self.model.is_train: True,
                      self.model.monte_carlo: self.monte_carlo,
                      self.model.augmentation: self.augment_train,
@@ -513,14 +513,20 @@ class Optimizer(object):
         for h_t, h in zip(self.model.handles, handles):
             feed_dict.update({h_t: h})
 
-        if summarize:       # Write summaries on TensorBoard
+        if summary:       # Write summaries on TensorBoard
             assert merged is not None, 'No merged summary exists.'
             assert writer is not None, 'No summary writer exists.'
-            _, loss, Y_true, Y_pred, summary = self.model.session.run([self.optimization_operation, self.model.loss,
-                                                                       self.model.Y_all, self.model.pred, merged],
-                                                                      feed_dict=feed_dict)
-            writer.add_summary(summary, self.curr_step + 1)
-            # writer.add_run_metadata(run_metadata, 'step{}'.format(self.curr_step + 1))
+            cupti = True if os.name == 'posix' else False
+            run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE) if cupti else None
+            run_metadata = tf.RunMetadata() if cupti else None
+            _, loss, Y_true, Y_pred, summaries = self.model.session.run([self.optimization_operation, self.model.loss,
+                                                                         self.model.Y_all, self.model.pred, merged],
+                                                                        feed_dict=feed_dict,
+                                                                        options=run_options,
+                                                                        run_metadata=run_metadata)
+            writer.add_summary(summaries, self.curr_step + 1)
+            if cupti:
+                writer.add_run_metadata(run_metadata, 'step_{}'.format(self.curr_step + 1))
         else:
             _, loss, Y_true, Y_pred, = self.model.session.run([self.optimization_operation, self.model.loss,
                                                                self.model.Y_all, self.model.pred],
@@ -576,8 +582,7 @@ class Optimizer(object):
                                         self.model.Y_all, self.model.pred],
                                        feed_dict=feed_dict,
                                        options=options,
-                                       run_metadata=run_metadata
-                                       )
+                                       run_metadata=run_metadata)
                 fetched_timeline = timeline.Timeline(run_metadata.step_stats)
                 chrome_trace = fetched_timeline.generate_chrome_trace_format(show_memory=False)
                 with open(os.path.join(save_dir, 'logs', 'timeline_{:03}.json'.format(i)), 'w') as f:
