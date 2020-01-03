@@ -9,6 +9,7 @@ from abc import abstractmethod
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
+import pickle as pkl
 from utils import plot_learning_curve
 from tensorflow.python.client import timeline
 from tensorflow.python import pywrap_tensorflow
@@ -155,11 +156,28 @@ class Optimizer(object):
         return opt_op
 
     def train(self, save_dir='./tmp', transfer_dir=None, details=False, verbose=True, show_each_step=False, **kwargs):
+        train_size = self.train_set.num_examples
+        num_steps_per_epoch = np.ceil(train_size/self.batch_size).astype(int)
+        self.steps_per_epoch = num_steps_per_epoch
+        num_steps = num_steps_per_epoch*self.num_epochs
+        self.total_steps = num_steps
+
+        validation_frequency = kwargs.get('validation_frequency', None)
+        summary_frequency = kwargs.get('summary_frequency', None)
+        if validation_frequency is None:
+            validation_frequency = num_steps_per_epoch
+        if summary_frequency is None:
+            summary_frequency = num_steps_per_epoch
+
+        num_validations = num_steps//validation_frequency
+        last_val_iter = num_validations*validation_frequency
+
         if transfer_dir is not None:  # Transfer learning setup
             model_to_load = kwargs.get('model_to_load', None)
             blocks_to_load = kwargs.get('blocks_to_load', None)
             load_moving_average = kwargs.get('load_moving_average', False)
             start_epoch = kwargs.get('start_epoch', 0)
+            start_step = num_steps_per_epoch*start_epoch
 
             if not os.path.isdir(transfer_dir):
                 ckpt_to_load = transfer_dir
@@ -240,9 +258,34 @@ class Optimizer(object):
             print('The following variables do not exist in the checkpoint, so they were initialized randomly:')
             print(variables_not_loaded)
             print('')
+
+            pkl_file = os.path.join(transfer_dir, 'learning_curve-result-1.pkl')
+            pkl_loaded = False
+            if os.path.exists(pkl_file):
+                with open(pkl_file, 'rb') as fo:
+                    prev_results = pkl.load(fo)
+                train_len = len(prev_results[0])
+                eval_len = len(prev_results[2])
+                if show_each_step:
+                    if train_len == start_step and eval_len == start_step//validation_frequency:
+                        train_losses, train_scores, eval_losses, eval_scores = prev_results
+                        pkl_loaded = True
+                    else:
+                        train_losses, train_scores, eval_losses, eval_scores = [], [], [], []
+                else:
+                    if train_len == eval_len == start_step//validation_frequency:
+                        train_losses, train_scores, eval_losses, eval_scores = prev_results
+                        pkl_loaded = True
+                    else:
+                        train_losses, train_scores, eval_losses, eval_scores = [], [], [], []
+            else:
+                train_losses, train_scores, eval_losses, eval_scores = [], [], [], []
         else:
             start_epoch = 0
+            start_step = 0
             self.model.session.run(tf.global_variables_initializer())
+            train_losses, train_scores, eval_losses, eval_scores = [], [], [], []
+            pkl_loaded = False
 
         max_to_keep = kwargs.get('max_to_keep', 5)
         saver = tf.train.Saver(max_to_keep=max_to_keep)
@@ -305,29 +348,12 @@ class Optimizer(object):
                 writer = tf.summary.FileWriter(os.path.join(save_dir, 'logs'), self.model.session.graph)
 
         train_results = dict()
-        train_size = self.train_set.num_examples
-        num_steps_per_epoch = np.ceil(train_size/self.batch_size).astype(int)
-        self.steps_per_epoch = num_steps_per_epoch
-        num_steps = num_steps_per_epoch*self.num_epochs
-        self.total_steps = num_steps
-        start_step = num_steps_per_epoch*start_epoch
-
-        validation_frequency = kwargs.get('validation_frequency', None)
-        summary_frequency = kwargs.get('summary_frequency', None)
-        if validation_frequency is None:
-            validation_frequency = num_steps_per_epoch
-        if summary_frequency is None:
-            summary_frequency = num_steps_per_epoch
-
-        num_validations = num_steps//validation_frequency
-        last_val_iter = num_validations*validation_frequency
 
         if verbose:
             print('Running training loop...')
             print('Number of training iterations: {}'.format(num_steps))
             print('Number of iterations per epoch: {}'.format(num_steps_per_epoch))
 
-        train_losses, train_scores, eval_losses, eval_scores = [], [], [], []
         if show_each_step:
             step_losses, step_scores = [], []
         else:
@@ -425,6 +451,12 @@ class Optimizer(object):
 
             if (i + 1) % num_steps_per_epoch == 0:  # Print and plot results every epoch
                 self.train_set.initialize(self.model.session)  # Initialize training iterator every epoch
+                if show_each_step:
+                    val_freq = validation_frequency
+                    start = 0 if pkl_loaded else start_step
+                else:
+                    val_freq = 1
+                    start = 0 if pkl_loaded else start_epoch
                 if self.val_set is not None:
                     if verbose:
                         print('[epoch {}/{}]\tTrain loss: {:.6f}  |Train score: {:2.2%}  '
@@ -434,12 +466,6 @@ class Optimizer(object):
                                       eval_loss, eval_score, self.init_learning_rate*self.curr_multiplier,
                                       time.time() - start_time))
                     if len(eval_losses) > 0:
-                        if show_each_step:
-                            val_freq = validation_frequency
-                            start = start_step
-                        else:
-                            val_freq = 1
-                            start = start_epoch
                         plot_learning_curve(train_losses, train_scores,
                                             eval_losses=eval_losses, eval_scores=eval_scores,
                                             name=self.evaluator.name,
@@ -456,7 +482,8 @@ class Optimizer(object):
                     plot_learning_curve(step_losses, step_scores, eval_losses=None, eval_scores=None,
                                         name=self.evaluator.name,
                                         loss_threshold=max([self.evaluator.loss_threshold, min(step_losses)*2]),
-                                        mode=self.evaluator.mode, img_dir=save_dir, annotations=annotations)
+                                        mode=self.evaluator.mode, img_dir=save_dir, annotations=annotations,
+                                        start_step=start, validation_frequency=val_freq)
 
                 self.curr_epoch += 1
                 plt.close()
