@@ -67,7 +67,7 @@ class Parameters(object):
     d['argmax_output'] = True  # If True, the network's output will be argmaxed (output shape=(N, H, W, 1))
     d['cpu_offset'] = 0  # CPU device offset
     d['gpu_offset'] = 0  # GPU device offset
-    d['param_on_cpu'] = None  # None: param_device is GPU if num_gpus == 1 else CPU. T/F: param_device is CPU/GPU
+    d['param_device'] = None  # None: param_device is GPU if num_gpus == 1 else CPU. 'cpu0', 'gpu0', ....
 
     d['num_gpus'] = 1
     d['batch_size'] = 2  # Total batch size (= batch_size_per_gpu*num_gpus)
