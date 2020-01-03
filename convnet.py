@@ -272,7 +272,7 @@ class ConvNet(object):
                                                      name='cutmix')
                         self.Xs.append(self.X)
                         self.Ys.append(self.Y)
-                        
+
                         self.X *= 2  # Set input range in [-1 1]
 
                         if self.channel_first:
@@ -752,7 +752,7 @@ class ConvNet(object):
                 y_min = offset_h_full - size_h_full//2
                 y_max = tf.math.minimum(y_min + size_h_full, h)
                 y_min = tf.math.maximum(0, y_min)
-    
+
                 crop_h = y_max - y_min
                 crop_w = x_max - x_min
                 if self._min_object_size is None:
@@ -763,7 +763,7 @@ class ConvNet(object):
                 output_ratio = self.input_size[1]/self.input_size[0]
                 crop_area = tf.cast(crop_h*crop_w, dtype=tf.float32)
                 crop_ratio = tf.cast(crop_h, dtype=tf.float32)/tf.cast(crop_w, dtype=tf.float32)*output_ratio
-    
+
                 valid_size = tf.math.greater_equal(crop_area, min_object_area)
                 valid_ratio = tf.math.logical_and(tf.math.greater_equal(crop_ratio, self._crop_ratio[0]),
                                                   tf.math.less_equal(crop_ratio, self._crop_ratio[1]))
@@ -1885,23 +1885,6 @@ class ConvNet(object):
             survived = tf.cast(tf.cast(s, dtype=tf.float32)/(1.0 - drop_rate), dtype=self.dtype)
 
             x = x*survived + skip
-
-        return x
-
-    def drop_connections(self, x, skip, drop_rate=0.0, name='drop'):
-        with tf.variable_scope(name):
-            batch_size = tf.shape(x)[0]
-            main_drop_rate = tf.cond(self.is_train, lambda: drop_rate, lambda: 0.0)
-            skip_drop_rate = tf.cond(self.is_train, lambda: drop_rate, lambda: 0.0)*self.linear_schedule_multiplier
-            eff_skip_drop_rate = (1.0 - main_drop_rate)*skip_drop_rate
-
-            main_s = tf.math.greater_equal(tf.random.uniform([batch_size, 1, 1, 1], dtype=tf.float32), main_drop_rate)
-            skip_s = tf.math.greater_equal(tf.random.uniform([batch_size, 1, 1, 1], dtype=tf.float32), skip_drop_rate)
-            skip_s = tf.logical_or(skip_s, tf.logical_not(main_s))
-            main_survived = tf.cast(tf.cast(main_s, dtype=tf.float32)/(1.0 - main_drop_rate), dtype=self.dtype)
-            skip_survived = tf.cast(tf.cast(skip_s, dtype=tf.float32)/(1.0 - eff_skip_drop_rate), dtype=self.dtype)
-
-            x = x*main_survived + skip*skip_survived
 
         return x
 
