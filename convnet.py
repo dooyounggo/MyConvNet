@@ -1865,6 +1865,18 @@ class ConvNet(object):
             return convs
 
     def stochastic_depth(self, x, skip, drop_rate=0.0, name='drop'):
+                if drop_rate > 0.0:
+            with tf.variable_scope(name):
+                batch_size = tf.shape(x)[0]
+                drop_rate = tf.cond(self.is_train, lambda: drop_rate, lambda: 0.0)
+
+                s = tf.math.greater_equal(tf.random.uniform([batch_size, 1, 1, 1], dtype=tf.float32), drop_rate)
+                survived = tf.cast(tf.cast(s, dtype=tf.float32)/(1.0 - drop_rate), dtype=self.dtype)
+
+                x = x*survived + skip
+        else:
+            x = x + skip
+
         with tf.variable_scope(name):
             batch_size = tf.shape(x)[0]
             drop_rate = tf.cond(self.is_train, lambda: drop_rate, lambda: 0.0)
