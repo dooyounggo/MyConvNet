@@ -54,14 +54,21 @@ class ConvNet(object):
         self._cpu_offset = kwargs.get('cpu_offset', 0)
         self._gpu_offset = kwargs.get('gpu_offset', 0)
 
-        param_on_cpu = kwargs.get('param_on_cpu', None)
-        if param_on_cpu is None:
+        param_device = kwargs.get('param_device', None)
+        if param_device is None:
             self._param_device = '/gpu:{}'.format(self.gpu_offset) if self.num_gpus == 1\
                 else '/cpu:{}'.format(self.cpu_offset)
-        elif param_on_cpu:
-            self._param_device = '/cpu:{}'.format(self.cpu_offset)
         else:
-            self._param_device = '/gpu:{}'.format(self.gpu_offset)
+            if 'gpu' in param_device.lower():
+                dev = '/gpu:'
+                dev_offset = self.gpu_offset
+            else:
+                dev = '/cpu:'
+                dev_offset = self.cpu_offset
+            if param_device[-1] in '0123456789':
+                self._param_device = dev + param_device[-1]
+            else:
+                self._param_device = dev + str(dev_offset)
 
         self._padded_size = np.round(np.array(self.input_size[0:2])*(1.0 + kwargs.get('zero_pad_ratio', 0.0)))
         self.pad_value = kwargs.get('pad_value', 0.5)
@@ -265,8 +272,6 @@ class ConvNet(object):
                                                      name='cutmix')
                         self.Xs.append(self.X)
                         self.Ys.append(self.Y)
-                        
-                        self.X *= 2  # Set input range in [-1 1]
 
                         if self.channel_first:
                             self.X = tf.transpose(self.X, perm=[0, 3, 1, 2])
@@ -1620,7 +1625,7 @@ class ConvNet(object):
         return x
 
     def group_renorm(self, x, num_groups=8, scale=True, shift=True, zero_scale_init=False, epsilon=1e-3, scope='gn'):
-        if self.update_batch_norm is not None:  # Experimental renormalization
+        if self.update_batch_norm is not None:
             update = self.update_batch_norm
         else:
             if self.blocks_to_train is None:
@@ -1858,17 +1863,31 @@ class ConvNet(object):
             return convs
 
     def stochastic_depth(self, x, skip, drop_rate=0.0, name='drop'):
-        if drop_rate > 0.0:
-            with tf.variable_scope(name):
-                batch_size = tf.shape(x)[0]
-                drop_rate = tf.cond(self.is_train, lambda: drop_rate, lambda: 0.0)
-    
-                s = tf.math.greater_equal(tf.random.uniform([batch_size, 1, 1, 1], dtype=tf.float32), drop_rate)
-                survived = tf.cast(tf.cast(s, dtype=tf.float32)/(1.0 - drop_rate), dtype=self.dtype)
-    
-                x = x*survived + skip
-        else:
-            x = x + skip
+        with tf.variable_scope(name):
+            batch_size = tf.shape(x)[0]
+            drop_rate = tf.cond(self.is_train, lambda: drop_rate, lambda: 0.0)
+
+            s = tf.math.greater_equal(tf.random.uniform([batch_size, 1, 1, 1], dtype=tf.float32), drop_rate)
+            survived = tf.cast(tf.cast(s, dtype=tf.float32)/(1.0 - drop_rate), dtype=self.dtype)
+
+            x = x*survived + skip
+
+        return x
+
+    def drop_connections(self, x, skip, drop_rate=0.0, name='drop'):
+        with tf.variable_scope(name):
+            batch_size = tf.shape(x)[0]
+            main_drop_rate = tf.cond(self.is_train, lambda: drop_rate, lambda: 0.0)
+            skip_drop_rate = tf.cond(self.is_train, lambda: drop_rate, lambda: 0.0)*self.linear_schedule_multiplier
+            eff_skip_drop_rate = (1.0 - main_drop_rate)*skip_drop_rate
+
+            main_s = tf.math.greater_equal(tf.random.uniform([batch_size, 1, 1, 1], dtype=tf.float32), main_drop_rate)
+            skip_s = tf.math.greater_equal(tf.random.uniform([batch_size, 1, 1, 1], dtype=tf.float32), skip_drop_rate)
+            skip_s = tf.logical_or(skip_s, tf.logical_not(main_s))
+            main_survived = tf.cast(tf.cast(main_s, dtype=tf.float32)/(1.0 - main_drop_rate), dtype=self.dtype)
+            skip_survived = tf.cast(tf.cast(skip_s, dtype=tf.float32)/(1.0 - eff_skip_drop_rate), dtype=self.dtype)
+
+            x = x*main_survived + skip*skip_survived
 
         return x
 
