@@ -35,8 +35,9 @@ class SegNet(ConvNet):
 
                         self.Y = tf.expand_dims(self.Y, axis=-1)  # Attach the channel dimension for augmentation
 
-                        self.X = self.zero_pad(self.X)
-                        self.Y = self.zero_pad(self.Y)
+                        if self._padded_size[0] > self.input_size[0] or self._padded_size[1] > self.input_size[1]:
+                            self.X = self.zero_pad(self.X)
+                            self.Y = self.zero_pad(self.Y)
                         self.X = tf.math.subtract(self.X, self.image_mean, name='zero_center')
                         self.X, self.Y = tf.cond(self.augmentation,
                                                  lambda: self.augment_images(self.X, mask=self.Y, **kwargs),
@@ -52,7 +53,7 @@ class SegNet(ConvNet):
                         self.Y = tf.one_hot(self.Y, depth=self.num_classes, dtype=tf.float32)  # one-hot encoding
                         self.Xs.append(self.X)
                         self.Ys.append(self.Y)
-                        
+
                         self.X *= 2  # Set input range in [-1 1]
 
                         if self.channel_first:
