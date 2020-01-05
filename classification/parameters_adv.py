@@ -90,6 +90,7 @@ class Parameters(object):
     d['score_threshold'] = 0.0  # Model is saved if its score is better by this threshold
     d['validation_frequency'] = None  # Validate every x iterations. None for every epoch
     d['summary_frequency'] = None  # Tensorboard summary every x iterations. None for every epoch
+    d['log_trace'] = False  # Whether to log timeline traces in Chrome tracing format.
 
     # FIXME: Regularization hyperparameters
     d['l1_reg'] = 0.0  # L1 regularization factor
