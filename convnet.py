@@ -258,7 +258,8 @@ class ConvNet(object):
                         self.Y = tf.cast(self.Y, dtype=tf.int32)
                         self.Y = tf.one_hot(self.Y, depth=self.num_classes, dtype=tf.float32)  # one-hot encoding
 
-                        self.X = self.zero_pad(self.X)
+                        if self._padded_size[0] > self.input_size[0] or self._padded_size[1] > self.input_size[1]:
+                            self.X = self.zero_pad(self.X)
                         self.X = tf.math.subtract(self.X, self.image_mean, name='zero_center')
                         self.X = tf.cond(self.augmentation,
                                          lambda: self.augment_images(self.X, **kwargs),
