@@ -288,6 +288,7 @@ class Optimizer(object):
             pkl_loaded = False
 
         max_to_keep = kwargs.get('max_to_keep', 5)
+        log_trace = kwargs.get('log_trace', False)
         saver = tf.train.Saver(max_to_keep=max_to_keep)
         saver.export_meta_graph(filename=os.path.join(save_dir, 'model.ckpt.meta'))
 
@@ -381,7 +382,8 @@ class Optimizer(object):
 
             try:
                 step_loss, step_Y_true, step_Y_pred = self._step(handles, merged=merged, writer=train_writer,
-                                                                 summary=(i + 1) % summary_frequency == 0)
+                                                                 summary=i % summary_frequency == 0,
+                                                                 log_trace=log_trace and i % summary_frequency == 1)
                 step_score = self.evaluator.score(step_Y_true, step_Y_pred)
             except tf.errors.OutOfRangeError:
                 if verbose:
@@ -504,7 +506,7 @@ class Optimizer(object):
 
             return train_results
 
-    def _step(self, handles, merged=None, writer=None, summary=False):  # Optimization step
+    def _step(self, handles, merged=None, writer=None, summary=False, log_trace=False):  # Optimization step
         feed_dict = {self.model.is_train: True,
                      self.model.monte_carlo: self.monte_carlo,
                      self.model.augmentation: self.augment_train,
@@ -513,24 +515,35 @@ class Optimizer(object):
         for h_t, h in zip(self.model.handles, handles):
             feed_dict.update({h_t: h})
 
-        if summary:       # Write summaries on TensorBoard
+        run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE) if log_trace else None
+        run_metadata = tf.RunMetadata() if log_trace else None
+
+        if summary:  # Write summaries on TensorBoard
             assert merged is not None, 'No merged summary exists.'
             assert writer is not None, 'No summary writer exists.'
-            cupti = True if os.name == 'posix' else False
-            run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE) if cupti else None
-            run_metadata = tf.RunMetadata() if cupti else None
+
             _, loss, Y_true, Y_pred, summaries = self.model.session.run([self.optimization_operation, self.model.loss,
                                                                          self.model.Y_all, self.model.pred, merged],
                                                                         feed_dict=feed_dict,
                                                                         options=run_options,
                                                                         run_metadata=run_metadata)
             writer.add_summary(summaries, self.curr_step + 1)
-            if cupti:
-                writer.add_run_metadata(run_metadata, 'step_{}'.format(self.curr_step + 1))
         else:
             _, loss, Y_true, Y_pred, = self.model.session.run([self.optimization_operation, self.model.loss,
                                                                self.model.Y_all, self.model.pred],
-                                                              feed_dict=feed_dict)
+                                                              feed_dict=feed_dict,
+                                                              options=run_options,
+                                                              run_metadata=run_metadata)
+
+        if log_trace:
+            assert writer is not None, 'TensorFlow FileWriter must be provided for logging.'
+            tracing_dir = os.path.join(writer.get_logdir(), 'tracing')
+            if not os.path.exists(tracing_dir):
+                os.makedirs(tracing_dir)
+            fetched_timeline = timeline.Timeline(run_metadata.step_stats)
+            chrome_trace = fetched_timeline.generate_chrome_trace_format(show_memory=False)
+            with open(os.path.join(tracing_dir, 'step_{}.json'.format(self.curr_step + 1)), 'w') as f:
+                f.write(chrome_trace)
 
         return loss, Y_true, Y_pred
 
