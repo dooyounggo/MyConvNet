@@ -100,10 +100,16 @@ def random_resized_crop(image, out_size, interpolation=cv2.INTER_LINEAR, random=
     in_size = image.shape
     h = in_size[0]
     w = in_size[1]
+    max_scale = np.sqrt(scale[1])
 
     size_h = np.sqrt(h*w/out_ratio)
     size_w = np.sqrt(h*w*out_ratio)
-    image = zero_pad(image, [np.ceil(size_h).astype(int), np.ceil(size_w).astype(int)])
+    padded_h = max(h, np.ceil(size_h*max_scale).astype(int))
+    padded_w = max(w, np.ceil(size_w*max_scale).astype(int))
+    image = zero_pad(image, [padded_h, padded_w])
+
+    offset_x = (padded_w - w)//2
+    offset_y = (padded_h - h)//2
 
     scale_augment = scale[0] != 1.0 or scale[1] != 1.0
     ratio_augment = ratio[0] != 1.0 or ratio[1] != 1.0
@@ -132,14 +138,14 @@ def random_resized_crop(image, out_size, interpolation=cv2.INTER_LINEAR, random=
             min_object_size = scale[0]
         min_object_area = min_object_size*h*w
         i = 0
-        while i < max_attempts and rand_scale > min_object_size:
-            x = np.random.randint(w)
-            y = np.random.randint(h)
+        while i < max_attempts and rand_scale > min_object_size and not success:
+            x = np.random.randint(w) + offset_x
+            y = np.random.randint(h) + offset_y
             x_min = x - size_w//2
-            x_max = np.minimum(x_min + size_w, w)
+            x_max = np.minimum(x_min + size_w, padded_w)
             x_min = np.maximum(0, x_min)
             y_min = y - size_h//2
-            y_max = np.minimum(y_min + size_h, h)
+            y_max = np.minimum(y_min + size_h, padded_h)
             y_min = np.maximum(0, y_min)
 
             crop_h = y_max - y_min
