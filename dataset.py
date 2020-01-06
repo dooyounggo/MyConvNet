@@ -228,9 +228,7 @@ class DataSet(object):
             scale = self._parameters.get('rand_resized_crop_scale', (0.08, 1.0))
             ratio = self._parameters.get('rand_resized_crop_ratio', (3/4, 4/3))
             max_attempts = self._parameters.get('max_crop_attempts', 10)
-            min_object_size = self._parameters.get('min_object_size', 0.1)
-            if scale[1] > 1.0:
-                warnings.warn('The maximum scale ratio {} is greater than 1.0.'.format(scale), UserWarning)
+            min_object_size = self._parameters.get('min_object_size', None)
             image = sf.random_resized_crop(image, image_size, interpolation=interpolation,
                                            random=self.resize_randomness, scale=scale, ratio=ratio,
                                            max_attempts=max_attempts, min_object_size=min_object_size)
