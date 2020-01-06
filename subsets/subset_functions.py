@@ -116,10 +116,6 @@ def random_resized_crop(image, out_size, interpolation=cv2.INTER_LINEAR, random=
     augment = scale_augment or ratio_augment
     if random and augment:
         lower, upper = scale
-        # a = upper**2 - lower**2
-        # b = lower**2
-        # randval = np.random.uniform()
-        # rand_scale = np.sqrt(a*randval + b)
         rand_scale = np.random.uniform(lower, upper)
 
         lower, upper = ratio
