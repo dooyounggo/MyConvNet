@@ -490,6 +490,7 @@ class Optimizer(object):
                 self.curr_epoch += 1
                 plt.close()
 
+        train_writer.close()
         if verbose:
             print('Total training time: {:.2f} sec'.format(time.time() - start_time))
             print('Best {} {}: {:.4f}'.format('evaluation' if self.val_set is not None
@@ -528,6 +529,7 @@ class Optimizer(object):
                                                                         options=run_options,
                                                                         run_metadata=run_metadata)
             writer.add_summary(summaries, self.curr_step + 1)
+            writer.flush()
         else:
             _, loss, Y_true, Y_pred, = self.model.session.run([self.optimization_operation, self.model.loss,
                                                                self.model.Y_all, self.model.pred],
