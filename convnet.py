@@ -40,8 +40,8 @@ class ConvNet(object):
         config.allow_soft_placement = False
         config.gpu_options.allow_growth = True
         # config.gpu_options.per_process_gpu_memory_fraction = 0.7  # FIXME
-        self.session = tf.Session(graph=graph, config=config)  # TF main session
-        self.top_scope = tf.get_variable_scope()
+        self._session = tf.Session(graph=graph, config=config)  # TF main session
+        self._top_scope = tf.get_variable_scope()
 
         self._input_size = input_shape  # Size of the network input (i.e., the first convolution layer).
         self._num_classes = num_classes
@@ -157,6 +157,14 @@ class ConvNet(object):
         print('\n# FLOPs : {:-15,}\n# Params: {:-15,}\n'.format(int(self._flops), int(self._params)))
 
     @property
+    def session(self):
+        return self._session
+
+    @property
+    def top_scope(self):
+        return self._top_scope
+
+    @property
     def input_size(self):
         return self._input_size
 
@@ -231,6 +239,9 @@ class ConvNet(object):
     @property
     def update_ops(self):
         return self._update_ops
+
+    def close(self):
+        self.session.close()
 
     def _init_model(self, **kwargs):
         output_shapes = ([None, None, None, self.input_size[-1]],
