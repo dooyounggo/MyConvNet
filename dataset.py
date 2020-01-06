@@ -6,7 +6,6 @@ import numpy as np
 import tensorflow as tf
 import csv
 import cv2
-import warnings
 import subsets.subset_functions as sf
 
 
