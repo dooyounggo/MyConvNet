@@ -21,7 +21,7 @@
 
 ### Packages
 - Python: 3.7
-- tensorflow-gpu: 1.15.0 (cudatoolkit: 10.0, cudnn: 7.6.5)
+- tensorflow-gpu: 1.14.0 or 1.15.0 (cudatoolkit: 10.0, cudnn: 7.6.5)
 - numpy: 1.17.4
 - matplotlib: 3.1.1
 - scikit-image: 0.15.0
