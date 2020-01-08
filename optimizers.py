@@ -69,7 +69,7 @@ class Optimizer(object):
         pass
 
     def _optimize_and_update(self, optimizer, **kwargs):
-        gradient_threshold = kwargs.get('gradient_threshold', 10.0)
+        gradient_threshold = kwargs.get('gradient_threshold', None)
         loss_scaling_factor = kwargs.get('loss_scaling_factor', 1.0)
         weight_decay = kwargs.get('base_weight_decay', 0.0)*self.batch_size/256
         weight_decay_scheduling = kwargs.get('weight_decay_scheduling', True)
@@ -613,7 +613,7 @@ class MomentumOptimizer(Optimizer):
 
     def _optimizer(self, **kwargs):
         momentum = kwargs.get('momentum', 0.9)
-        gradient_threshold = kwargs.get('gradient_threshold', 10.0)
+        gradient_threshold = kwargs.get('gradient_threshold', None)
         print('Optimizer: SGD with momentum. Initial learning rate: {:.6f}. Gradient threshold: {}'
               .format(self.init_learning_rate, gradient_threshold))
 
@@ -628,7 +628,7 @@ class RMSPropOptimizer(Optimizer):
         momentum = kwargs.get('momentum', 0.9)
         decay = 0.9
         eps = 0.001
-        gradient_threshold = kwargs.get('gradient_threshold', 10.0)
+        gradient_threshold = kwargs.get('gradient_threshold', None)
         print('Optimizer: RMSProp. Initial learning rate: {:.6f}. Gradient threshold: {}'
               .format(self.init_learning_rate, gradient_threshold))
 
