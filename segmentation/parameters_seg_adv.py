@@ -76,7 +76,7 @@ class Parameters(object):
     d['momentum'] = 0.9  # Momentum of optimizers
     d['moving_average_decay'] = 0.99  # Decay rate of exponential moving average
     d['batch_norm_decay'] = 0.99  # Decay rate of batch statistics
-    d['gradient_threshold'] = 10.0  # Gradient thresholding using global norm. None for no thresholding
+    d['gradient_threshold'] = None  # Gradient thresholding using global norm. None for no thresholding
     d['loss_weighting'] = None  # None, 'balanced', [class0_weight, class1_weight, ...]. Loss = -w_c*log(y_c)
     d['focal_loss_factor'] = 0.0  # Focal_loss = -log(y_c)*(1 - y_c)^focal_loss_factor
     d['sigmoid_focal_loss_factor'] = 0.0  # SFL = -log(y_c)*(1 - sigmoid(SFL_factor*(y_c - 0.5)) (experimental)
