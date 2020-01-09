@@ -31,7 +31,7 @@
 ### Checkpoints (ImageNet)
 | Model | Top-1 Acc | Top-5 Acc | Details | Params | Ckpt | Curve |
 |:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| ResNet-v1.5-50 |  |  | Inception preprocessing | [#.py](https://www.dropbox.com/s/lhmnshgfs9jvrfd/imagenet_res50.py?dl=0) |  | [#.svg](https://www.dropbox.com/s/4aoscqqovpdaqwr/ResNet-v1.5-50_ImageNet.svg?dl=0) |
+| ResNet-v1.5-50 | 76.35% |  | Inception preprocessing | [#.py](https://www.dropbox.com/s/lhmnshgfs9jvrfd/imagenet_res50.py?dl=0) |  | [#.svg](https://www.dropbox.com/s/4aoscqqovpdaqwr/ResNet-v1.5-50_ImageNet.svg?dl=0) |
 
 ### TODO
 - Speedup: Training is slower than tf_cnn_benchmark.
