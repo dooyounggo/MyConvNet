@@ -129,6 +129,7 @@ class Optimizer(object):
                     avg_grads_and_vars = [gv for gv in zip(avg_grads, avg_vars)]
                     self.avg_grads = avg_grads
 
+        decay_ops = []
         if weight_decay > 0.0:
             variables = tf.get_collection('weight_variables')
             if kwargs.get('bias_norm_decay', False):
@@ -148,11 +149,12 @@ class Optimizer(object):
                                 decay_op = var.assign_sub(weight_decay*var)
                         else:  # Pseudo-Huber weight decay
                             decay_op = var.assign_sub(weight_decay*var/tf.math.sqrt(1 + (var/delta)**2))
-                        self.update_ops.append(decay_op)
+                        decay_ops.append(decay_op)
         with tf.control_dependencies(self.model.update_ops):
             with tf.control_dependencies([optimizer.apply_gradients(avg_grads_and_vars,
-                                                                    global_step=self.model.global_step)]):
-                opt_op = tf.group(self.update_ops)
+                                                                    global_step=self.model.global_step)]
+                                         + self.update_ops):
+                opt_op = tf.group(decay_ops)
         return opt_op
 
     def train(self, save_dir='./tmp', transfer_dir=None, details=False, verbose=True, show_each_step=False, **kwargs):
@@ -262,22 +264,21 @@ class Optimizer(object):
             pkl_file = os.path.join(transfer_dir, 'learning_curve-result-1.pkl')
             pkl_loaded = False
             if os.path.exists(pkl_file):
+                train_steps = start_step if show_each_step else start_step//validation_frequency
+                eval_steps = start_step//validation_frequency
                 with open(pkl_file, 'rb') as fo:
                     prev_results = pkl.load(fo)
+                prev_results[0] = prev_results[0][:train_steps]
+                prev_results[1] = prev_results[1][:train_steps]
+                prev_results[2] = prev_results[2][:eval_steps]
+                prev_results[3] = prev_results[3][:eval_steps]
                 train_len = len(prev_results[0])
                 eval_len = len(prev_results[2])
-                if show_each_step:
-                    if train_len == start_step and eval_len == start_step//validation_frequency:
-                        train_losses, train_scores, eval_losses, eval_scores = prev_results
-                        pkl_loaded = True
-                    else:
-                        train_losses, train_scores, eval_losses, eval_scores = [], [], [], []
+                if train_len == train_steps and eval_len == eval_steps:
+                    train_losses, train_scores, eval_losses, eval_scores = prev_results
+                    pkl_loaded = True
                 else:
-                    if train_len == eval_len == start_step//validation_frequency:
-                        train_losses, train_scores, eval_losses, eval_scores = prev_results
-                        pkl_loaded = True
-                    else:
-                        train_losses, train_scores, eval_losses, eval_scores = [], [], [], []
+                    train_losses, train_scores, eval_losses, eval_scores = [], [], [], []
             else:
                 train_losses, train_scores, eval_losses, eval_scores = [], [], [], []
         else:
