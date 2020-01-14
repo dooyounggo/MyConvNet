@@ -404,13 +404,13 @@ class Optimizer(object):
 
             if (i + 1) % validation_frequency == 0:  # Validation every validation_frequency iterations
                 if self.val_set is not None:
-                    _, eval_Y_true, eval_Y_pred, eval_loss = self.model.predict(self.val_set, verbose=False,
-                                                                                return_images=False, **kwargs)
+                    _X, eval_Y_true, eval_Y_pred, eval_loss = self.model.predict(self.val_set, verbose=False,
+                                                                                 return_images=False, **kwargs)
                     eval_score = self.evaluator.score(eval_Y_true, eval_Y_pred)
                     eval_scores.append(eval_score)
                     eval_losses.append(eval_loss)
 
-                    del eval_Y_true, eval_Y_pred
+                    del _X, eval_Y_true, eval_Y_pred
 
                     curr_score = eval_score
                 else:
