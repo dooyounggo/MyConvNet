@@ -493,6 +493,7 @@ class Optimizer(object):
 
                 self.curr_epoch += 1
                 plt.close()
+            del step_loss, step_score
 
         train_writer.close()
         if verbose:
