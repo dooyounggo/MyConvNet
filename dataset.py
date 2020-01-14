@@ -74,8 +74,7 @@ class DataSet(object):
                                                                                         (tf.float32, tf.float32))),
                                           num_parallel_calls=kwargs.get('num_parallel_calls', 4)//self.num_shards)
                     dataset = dataset.batch(batch_size_per_gpu)
-                    dataset = dataset.apply(tf.data.experimental.copy_to_device('/gpu:{}'
-                                                                                .format(i + self.gpu_offset)))
+                    dataset = dataset.apply(tf.data.experimental.copy_to_device('/gpu:{}'.format(i + self.gpu_offset)))
                     with tf.device('/gpu:{}'.format(i + self.gpu_offset)):
                         dataset = dataset.prefetch(buffer_size=1)
                         self._datasets.append(dataset)
