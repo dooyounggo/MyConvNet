@@ -153,7 +153,7 @@ class ConvNet(object):
                     self.pred = self.pred[..., tf.newaxis]
 
         print('\nNumber of GPUs : {}'.format(self._num_gpus))
-        print('Total number of units: {}'.format(self._num_blocks))
+        print('Total number of blocks: {}'.format(self._num_blocks))
         print('\n# FLOPs : {:-15,}\n# Params: {:-15,}\n'.format(int(self._flops), int(self._params)))
 
     @property
