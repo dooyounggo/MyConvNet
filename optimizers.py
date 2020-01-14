@@ -386,8 +386,6 @@ class Optimizer(object):
                                                                  summary=i % summary_frequency == 0,
                                                                  log_trace=log_trace and i % summary_frequency == 1)
                 step_score = self.evaluator.score(step_Y_true, step_Y_pred)
-
-                del step_Y_true, step_Y_pred
             except tf.errors.OutOfRangeError:
                 if verbose:
                     remainder_size = train_size - (self.steps_per_epoch - 1)*self.batch_size
@@ -399,18 +397,17 @@ class Optimizer(object):
             else:
                 step_losses += step_loss
                 step_scores += step_score
-
             self.curr_step += 1
 
             if (i + 1) % validation_frequency == 0:  # Validation every validation_frequency iterations
                 if self.val_set is not None:
-                    _X, eval_Y_true, eval_Y_pred, eval_loss = self.model.predict(self.val_set, verbose=False,
-                                                                                 return_images=False, **kwargs)
+                    _, eval_Y_true, eval_Y_pred, eval_loss = self.model.predict(self.val_set, verbose=False,
+                                                                                return_images=False, **kwargs)
                     eval_score = self.evaluator.score(eval_Y_true, eval_Y_pred)
                     eval_scores.append(eval_score)
                     eval_losses.append(eval_loss)
 
-                    del _X, eval_Y_true, eval_Y_pred
+                    del eval_Y_true, eval_Y_pred
 
                     curr_score = eval_score
                 else:
@@ -493,7 +490,6 @@ class Optimizer(object):
 
                 self.curr_epoch += 1
                 plt.close()
-            del step_loss, step_score
 
         train_writer.close()
         if verbose:
