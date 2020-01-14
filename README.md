@@ -28,7 +28,7 @@
 - scikit-learn: 0.22
 - opencv-python: 4.1.2.30
 
-### Checkpoints (ImageNet - subtracted by 0.5 and multiplied by 2 -> range in [-1.0, 1.0])
+### Checkpoints (ImageNet - subtracted by 0.5 and multiplied by 2, ranging in [-1.0, 1.0])
 | Model | Top-1 Acc | Top-5 Acc | Details | Params | Ckpt |
 |:---:|:---:|:---:|:---:|:---:|:---:|
 | ResNet-v1.5-50 | [76.35%](https://www.dropbox.com/s/4aoscqqovpdaqwr/ResNet-v1.5-50_ImageNet.svg?dl=0) | 92.94% | Inception preprocessing | [#.py](https://www.dropbox.com/s/lhmnshgfs9jvrfd/imagenet_res50.py?dl=0) | [#.zip](https://www.dropbox.com/s/ruxx6lhmkzmu7u9/ResNet-v1.5-50_ImageNet.zip?dl=0) |
