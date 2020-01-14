@@ -45,7 +45,8 @@ class DataSet(object):
             self._num_classes = len(class_names)
         self._class_names = class_names
         self._num_shards = kwargs.get('num_gpus', 1)
-        self._device_offset = kwargs.get('gpu_offset', 0)
+        self._cpu_offset = kwargs.get('cpu_offset', 0)
+        self._gpu_offset = kwargs.get('gpu_offset', 0)
         self._batch_size = kwargs.get('batch_size', 32)
         self._shuffle = kwargs.get('shuffle', True)
 
@@ -61,7 +62,7 @@ class DataSet(object):
         self._handles = []
         batch_size_per_gpu = self.batch_size//self.num_shards
         with tf.name_scope('dataset/'):
-            with tf.device('/cpu:0'):
+            with tf.device('/cpu:{}'.format(self.cpu_offset)):
                 for i in range(self.num_shards):
                     dataset = tf.data.Dataset.from_tensor_slices((image_dirs[i::self.num_shards],
                                                                   label_dirs[i::self.num_shards]))
@@ -74,8 +75,8 @@ class DataSet(object):
                                           num_parallel_calls=kwargs.get('num_parallel_calls', 4)//self.num_shards)
                     dataset = dataset.batch(batch_size_per_gpu)
                     dataset = dataset.apply(tf.data.experimental.copy_to_device('/gpu:{}'
-                                                                                .format(i + self.device_offset)))
-                    with tf.device('/gpu:{}'.format(i + self.device_offset)):
+                                                                                .format(i + self.gpu_offset)))
+                    with tf.device('/gpu:{}'.format(i + self.gpu_offset)):
                         dataset = dataset.prefetch(buffer_size=1)
                         self._datasets.append(dataset)
                         iterator = dataset.make_initializable_iterator()
@@ -100,8 +101,12 @@ class DataSet(object):
         return self._num_shards
 
     @property
-    def device_offset(self):
-        return self._device_offset
+    def cpu_offset(self):
+        return self._cpu_offset
+
+    @property
+    def gpu_offset(self):
+        return self._gpu_offset
 
     @property
     def batch_size(self):
