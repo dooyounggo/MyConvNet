@@ -1,8 +1,5 @@
 ## Reference Papers
-- Basic code structure: http://research.sualab.com/practice/2018/01/17/image-classification-deep-learning.html
-- Basic code GitHub: https://github.com/sualab/asirra-dogs-cats-classification
 - ResNet: https://arxiv.org/abs/1512.03385
-- ResNet-18 example code: https://github.com/dalgu90/resnet-18-tensorflow
 - ResNet with Identity Mappings: https://arxiv.org/abs/1603.05027
 - Squeeze-and-Excitation: https://arxiv.org/abs/1709.01507
 - Convolutional Block Attention Module: https://arxiv.org/abs/1807.06521
@@ -11,3 +8,8 @@
 - Stochastic Depth: https://arxiv.org/abs/1603.09382
 - Bag of Tricks: https://arxiv.org/abs/1812.01187
 - CutMix: https://arxiv.org/abs/1905.04899
+
+## Reference Codes
+- Basic code structure: http://research.sualab.com/practice/2018/01/17/image-classification-deep-learning.html
+- Basic code GitHub: https://github.com/sualab/asirra-dogs-cats-classification
+- ResNet-18 example code: https://github.com/dalgu90/resnet-18-tensorflow
