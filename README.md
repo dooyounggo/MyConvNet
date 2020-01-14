@@ -33,7 +33,7 @@
 |:---:|:---:|:---:|:---:|:---:|:---:|
 | ResNet-v1.5-50 | [76.35%](https://www.dropbox.com/s/4aoscqqovpdaqwr/ResNet-v1.5-50_ImageNet.svg?dl=0) | 92.94% | Inception preprocessing | [#.py](https://www.dropbox.com/s/lhmnshgfs9jvrfd/imagenet_res50.py?dl=0) | [#.zip](https://www.dropbox.com/s/ruxx6lhmkzmu7u9/ResNet-v1.5-50_ImageNet.zip?dl=0) |
 | ResNet-v1.5-50 |  |  | 120 epochs |  |  |
-| ResNet-v1.5-50 |  |  | Cosine LR, decoupled WD, DO |  |  |
+| ResNet-v1.5-50 |  |  | Cosine LR, decoupled WD, dropout |  |  |
 
 ### TODO
 - Speedup: Training is slower than tf_cnn_benchmark.
