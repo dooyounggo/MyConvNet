@@ -254,6 +254,7 @@ class ConvNet(object):
                 self._curr_device = i
                 self._curr_block = 0
                 self._num_blocks = 1
+                self._curr_dependent_op = 0
                 with tf.device('/gpu:' + str(i)):
                     with tf.name_scope('gpu{}'.format(i)):
                         handle = tf.placeholder(tf.string, shape=[], name='handle')  # A handle for feedable iterator
@@ -860,7 +861,7 @@ class ConvNet(object):
                     min_object_size = scale_lower
                 else:
                     min_object_size = self._min_object_size
-                min_object_area = min_object_size * tf.cast(h, dtype=tf.float32) * tf.cast(w, dtype=tf.float32)
+                min_object_area = min_object_size*tf.cast(h, dtype=tf.float32)*tf.cast(w, dtype=tf.float32)
                 output_ratio = self.input_size[1]/self.input_size[0]
                 crop_area = tf.cast(crop_h*crop_w, dtype=tf.float32)
                 crop_ratio = tf.cast(crop_h, dtype=tf.float32)/tf.cast(crop_w, dtype=tf.float32)*output_ratio
@@ -1521,10 +1522,21 @@ class ConvNet(object):
                                                                                   is_training=False)
                                                    )
                 update_rate = 1.0 - momentum
-                update_mu = mu.assign(momentum*mu + update_rate*batch_mean)
-                update_sigma = sigma.assign(momentum*sigma + update_rate*batch_var)
-                tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_mu)
-                tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_sigma)
+                if self._curr_device == self.gpu_offset:
+                    update_mu = mu.assign(momentum*mu + update_rate*batch_mean)
+                    update_sigma = sigma.assign(momentum*sigma + update_rate*batch_var)
+                else:
+                    dep_ops = tf.get_collection('dev_{}_update_ops'.format(self._curr_device - 1))
+                    dep_ops = dep_ops[self._curr_dependent_op:self._curr_dependent_op + 2]
+                    with tf.control_dependencies(dep_ops):
+                        update_mu = mu.assign(momentum*mu + update_rate*batch_mean)
+                        update_sigma = sigma.assign(momentum*sigma + update_rate*batch_var)
+                tf.add_to_collection('dev_{}_update_ops'.format(self._curr_device), update_mu)
+                tf.add_to_collection('dev_{}_update_ops'.format(self._curr_device), update_sigma)
+                self._curr_dependent_op += 2
+                if self._curr_device == self.gpu_offset + self.num_gpus - 1:
+                    tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_mu)
+                    tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_sigma)
             else:
                 x, _, _ = tf.nn.fused_batch_norm(x,
                                                  gamma,
@@ -1761,10 +1773,21 @@ class ConvNet(object):
                 batch_mean, batch_var = tf.nn.moments(x, axes=axis)
 
                 update_rate = 1.0 - momentum
-                update_mu = mu.assign(momentum*mu + update_rate*batch_mean)
-                update_sigma = sigma.assign(momentum*sigma + update_rate*batch_var)
-                tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_mu)
-                tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_sigma)
+                if self._curr_device == self.gpu_offset:
+                    update_mu = mu.assign(momentum*mu + update_rate*batch_mean)
+                    update_sigma = sigma.assign(momentum*sigma + update_rate*batch_var)
+                else:
+                    dep_ops = tf.get_collection('dev_{}_update_ops'.format(self._curr_device - 1))
+                    dep_ops = dep_ops[self._curr_dependent_op:self._curr_dependent_op + 2]
+                    with tf.control_dependencies(dep_ops):
+                        update_mu = mu.assign(momentum*mu + update_rate*batch_mean)
+                        update_sigma = sigma.assign(momentum*sigma + update_rate*batch_var)
+                tf.add_to_collection('dev_{}_update_ops'.format(self._curr_device), update_mu)
+                tf.add_to_collection('dev_{}_update_ops'.format(self._curr_device), update_sigma)
+                self._curr_dependent_op += 2
+                if self._curr_device == self.gpu_offset + self.num_gpus - 1:
+                    tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_mu)
+                    tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_sigma)
 
             moving_std = tf.math.sqrt(moving_var + epsilon)
             moving_mean = tf.reshape(moving_mean, shape=var_shape)
