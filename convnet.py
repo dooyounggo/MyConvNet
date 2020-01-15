@@ -118,11 +118,13 @@ class ConvNet(object):
 
                 self.linear_schedule_multiplier = global_step/tf.cast(self.total_steps, dtype=tf.float32)
 
+                self._dummy_image = tf.zeros([4, 8, 8, 3], dtype=tf.float32, name='dummy_image')
+
         self.ema = tf.train.ExponentialMovingAverage(decay=self.moving_average_decay)
 
         self.debug_value = self.linear_schedule_multiplier
-        self.debug_images_0 = np.zeros([4, 8, 8, 3], dtype=np.float32)
-        self.debug_images_1 = np.zeros([4, 8, 8, 3], dtype=np.float32)
+        self.debug_images_0 = self._dummy_image
+        self.debug_images_1 = self._dummy_image
 
         self._init_params()
         self._init_model(**kwargs)
@@ -140,6 +142,22 @@ class ConvNet(object):
         print('\nNumber of GPUs : {}'.format(self._num_gpus))
         print('Total number of blocks: {}'.format(self._num_blocks))
         print('\n# FLOPs : {:-15,}\n# Params: {:-15,}\n'.format(int(self._flops), int(self._params)))
+
+    def _init_params(self):
+        """
+        Parameter initialization.
+        Initialize model parameters.
+        """
+        pass
+
+    @abstractmethod
+    def _build_model(self, **kwargs):
+        """
+        Build model.
+        This should be implemented.
+        :return dict containing tensors. Must include 'logits' and 'pred' tensors.
+        """
+        pass
 
     @property
     def session(self):
@@ -235,7 +253,7 @@ class ConvNet(object):
             for i in range(self.gpu_offset, self.num_gpus + self.gpu_offset):
                 self._curr_device = i
                 self._curr_block = 0
-                self._num_blocks = 0
+                self._num_blocks = 1
                 with tf.device('/gpu:' + str(i)):
                     with tf.name_scope('gpu{}'.format(i)):
                         handle = tf.placeholder(tf.string, shape=[], name='handle')  # A handle for feedable iterator
@@ -287,9 +305,13 @@ class ConvNet(object):
                         tf.get_variable_scope().reuse_variables()
 
                         self.dicts.append(self.d)
-                        self.gcams.append(self.grad_cam(self.d['logits'],
-                                                        self.d['block_{}'.format(self.num_blocks - 1)],
-                                                        y=None))
+
+                        if 'block_{}'.format(self.num_blocks - 1) in self.d:
+                            self.gcams.append(self.grad_cam(self.d['logits'],
+                                                            self.d['block_{}'.format(self.num_blocks - 1)],
+                                                            y=None))
+                        else:
+                            self.gcams.append(self.X)
 
                         self.logits = self.d['logits']
                         self.pred = self.d['pred']
@@ -310,22 +332,6 @@ class ConvNet(object):
                 self.input_images = tf.concat(self.X_in, axis=0, name='x_in')
                 self.debug_images_0 = tf.clip_by_value(self.gcam/2 + self.X_all, 0, 1)
                 self.debug_images_1 = tf.clip_by_value(self.gcam*self.X_all, 0, 1)
-
-    @abstractmethod
-    def _init_params(self):
-        """
-        Parameter initialization.
-        This should be implemented.
-        """
-        pass
-
-    @abstractmethod
-    def _build_model(self, **kwargs):
-        """
-        Build model.
-        This should be implemented.
-        """
-        pass
 
     def _build_loss(self, **kwargs):
         l1_factor = kwargs.get('l1_reg', 0e-8)
