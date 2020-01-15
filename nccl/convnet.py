@@ -1,5 +1,20 @@
 """
 Build convolutional neural networks using TensorFlow low-level APIs.
+
+==================== Reference Pages ====================
+Basic code structure: http://research.sualab.com/practice/2018/01/17/image-classification-deep-learning.html
+Basic code GitHub: https://github.com/sualab/asirra-dogs-cats-classification
+ResNet: https://arxiv.org/abs/1512.03385
+ResNet-18 example code: https://github.com/dalgu90/resnet-18-tensorflow
+ResNet with Identity Mappings: https://arxiv.org/abs/1603.05027
+Squeeze-and-Excitation: https://arxiv.org/abs/1709.01507
+Convolutional Block Attention Module: https://arxiv.org/abs/1807.06521
+ResNet-D: https://arxiv.org/abs/1812.01187
+EfficientNet: https://arxiv.org/abs/1905.11946
+Stochastic Depth: https://arxiv.org/abs/1603.09382
+Monte Carlo Dropout: https://arxiv.org/abs/1506.02142
+Bag of Tricks: https://arxiv.org/abs/1812.01187
+CutMix: https://arxiv.org/abs/1905.04899
 """
 
 import time
@@ -1596,18 +1611,19 @@ class ConvNet(object):
                                                    )
                 update_rate = 1.0 - momentum
                 if self._curr_device == self.gpu_offset:
-                    update_mu = mu.assign(momentum*mu + update_rate*batch_mean)
-                    update_sigma = sigma.assign(momentum*sigma + update_rate*batch_var)
-                else:
+                    update_mu = momentum*mu + update_rate*batch_mean
+                    update_sigma = momentum*sigma + update_rate*batch_var
+                else:  # Chained variable updates
                     dep_ops = tf.get_collection('dev_{}_update_ops'.format(self._curr_device - 1))
-                    dep_ops = dep_ops[self._curr_dependent_op:self._curr_dependent_op + 2]
-                    with tf.control_dependencies(dep_ops):
-                        update_mu = mu.assign(momentum*mu + update_rate*batch_mean)
-                        update_sigma = sigma.assign(momentum*sigma + update_rate*batch_var)
+                    updated_mu, updated_sigma = dep_ops[self._curr_dependent_op:self._curr_dependent_op + 2]
+                    update_mu = momentum*updated_mu + update_rate*batch_mean
+                    update_sigma = momentum*updated_sigma + update_rate*batch_var
                 tf.add_to_collection('dev_{}_update_ops'.format(self._curr_device), update_mu)
                 tf.add_to_collection('dev_{}_update_ops'.format(self._curr_device), update_sigma)
                 self._curr_dependent_op += 2
                 if self._curr_device == self.gpu_offset + self.num_gpus - 1:
+                    update_mu = mu.assign(update_mu)
+                    update_sigma = sigma.assign(update_sigma)
                     tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_mu)
                     tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_sigma)
             else:
@@ -1928,18 +1944,19 @@ class ConvNet(object):
 
                 update_rate = 1.0 - momentum
                 if self._curr_device == self.gpu_offset:
-                    update_mu = mu.assign(momentum*mu + update_rate*batch_mean)
-                    update_sigma = sigma.assign(momentum*sigma + update_rate*batch_var)
-                else:
+                    update_mu = momentum*mu + update_rate*batch_mean
+                    update_sigma = momentum*sigma + update_rate*batch_var
+                else:  # Chained variable updates
                     dep_ops = tf.get_collection('dev_{}_update_ops'.format(self._curr_device - 1))
-                    dep_ops = dep_ops[self._curr_dependent_op:self._curr_dependent_op + 2]
-                    with tf.control_dependencies(dep_ops):
-                        update_mu = mu.assign(momentum*mu + update_rate*batch_mean)
-                        update_sigma = sigma.assign(momentum*sigma + update_rate*batch_var)
+                    updated_mu, updated_sigma = dep_ops[self._curr_dependent_op:self._curr_dependent_op + 2]
+                    update_mu = momentum*updated_mu + update_rate*batch_mean
+                    update_sigma = momentum*updated_sigma + update_rate*batch_var
                 tf.add_to_collection('dev_{}_update_ops'.format(self._curr_device), update_mu)
                 tf.add_to_collection('dev_{}_update_ops'.format(self._curr_device), update_sigma)
                 self._curr_dependent_op += 2
                 if self._curr_device == self.gpu_offset + self.num_gpus - 1:
+                    update_mu = mu.assign(update_mu)
+                    update_sigma = sigma.assign(update_sigma)
                     tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_mu)
                     tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_sigma)
 
