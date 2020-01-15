@@ -19,7 +19,7 @@
 
 ## Notes
 - Use Linux for faster training.
-- Multi-GPU training is available based on the parameter server method.
+- Multi-GPU training is available based on the parameter server strategy.
 - For NCCL-based distributed training, use nccl.convnet.py and nccl.optimizer.py (available only on Linux)
 
 ### Packages
