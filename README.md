@@ -21,7 +21,7 @@
 - Use Linux for faster training.
 - Multi-GPU training is available based on the parameter server strategy.
 - For NCCL-based distributed training, use nccl.convnet.py and nccl.optimizer.py (available only on Linux).
-- Meanwhile, batch statistics from multiple devices are updated successively.
+- Batch statistics of multiple devices are updated successively.
 
 ### Packages
 - Python: 3.7
