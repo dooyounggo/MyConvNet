@@ -129,7 +129,6 @@ class Optimizer(object):
                     avg_grads_and_vars = [gv for gv in zip(avg_grads, avg_vars)]
                     self.avg_grads = avg_grads
 
-        decay_ops = []
         if weight_decay > 0.0:
             variables = tf.get_collection('weight_variables')
             if kwargs.get('bias_norm_decay', False):
@@ -140,21 +139,24 @@ class Optimizer(object):
                     weight_decay = self.learning_rate_multiplier*weight_decay
                 if huber_decay_delta is not None:
                     delta = tf.constant(huber_decay_delta, dtype=tf.float32, name='huber_delta')
-                for var in variables:
-                    if var.trainable:
-                        if huber_decay_delta is None:
-                            if l1_weight_decay:
-                                decay_op = var.assign_sub(weight_decay*tf.math.sign(var))
-                            else:
-                                decay_op = var.assign_sub(weight_decay*var)
-                        else:  # Pseudo-Huber weight decay
-                            decay_op = var.assign_sub(weight_decay*var/tf.math.sqrt(1 + (var/delta)**2))
-                        decay_ops.append(decay_op)
-        with tf.control_dependencies(self.model.update_ops):
-            with tf.control_dependencies([optimizer.apply_gradients(avg_grads_and_vars,
-                                                                    global_step=self.model.global_step)]
-                                         + self.update_ops):
-                opt_op = tf.group(decay_ops)
+                with tf.control_dependencies(self.model.update_ops + self.update_ops):
+                    with tf.control_dependencies([optimizer.apply_gradients(avg_grads_and_vars,
+                                                                            global_step=self.model.global_step)]):
+                        decay_ops = []
+                        for var in variables:
+                            if var.trainable:
+                                if huber_decay_delta is None:
+                                    if l1_weight_decay:
+                                        decay_op = var.assign_sub(weight_decay*tf.math.sign(var))
+                                    else:
+                                        decay_op = var.assign_sub(weight_decay*var)
+                                else:  # Pseudo-Huber weight decay
+                                    decay_op = var.assign_sub(weight_decay*var/tf.math.sqrt(1 + (var/delta)**2))
+                                decay_ops.append(decay_op)
+                        opt_op = tf.group(decay_ops)
+        else:
+            with tf.control_dependencies(self.model.update_ops + self.update_ops):
+                opt_op = optimizer.apply_gradients(avg_grads_and_vars, global_step=self.model.global_step)
         return opt_op
 
     def train(self, save_dir='./tmp', transfer_dir=None, details=False, verbose=True, show_each_step=False, **kwargs):
