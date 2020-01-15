@@ -102,8 +102,10 @@ class Optimizer(object):
         if self.model.num_gpus == 1:
             avg_grads_and_vars = tower_grads[0]
             self.avg_grads = grads
-            with tf.device('/gpu:{}'.format(self.model.gpu_offset)):
-                apply_grads_ops = [optimizer.apply_gradients(avg_grads_and_vars, global_step=self.model.global_step)]
+            with tf.control_dependencies(self.model.update_ops):
+                with tf.device('/gpu:{}'.format(self.model.gpu_offset)):
+                    apply_grads_ops = [optimizer.apply_gradients(avg_grads_and_vars,
+                                                                 global_step=self.model.global_step)]
         else:
             with tf.variable_scope('calc/mean_gradients'):
                 all_avg_grads = []
