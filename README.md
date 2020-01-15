@@ -7,8 +7,6 @@
   
   Verified on Windows 10 and Ubuntu 18.04 using PyCharm with Anaconda.
   
-  Use Linux for faster training.
-  
   Check out the [instruction](https://www.dropbox.com/s/64wtb6kvn9ms5o3/MyConvNet.pptx?dl=0).
 
 ## How To Run
@@ -18,6 +16,11 @@
 - Edit parameters.py to change the dataset, model, directories, etc...
 - Run train.py to train the model.
 - Run test.py to test the trained model.
+
+## Notes
+- Use Linux for faster training.
+- Multi-GPU training is available based on the parameter server method.
+- For NCCL-based distributed training, use nccl.convnet.py and nccl.optimizer.py (available only on Linux)
 
 ### Packages
 - Python: 3.7
