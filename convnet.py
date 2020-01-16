@@ -540,7 +540,7 @@ class ConvNet(object):
             x = self.rand_contrast(x, **kwargs)
             x = self.rand_brightness(x, **kwargs)
             x = self.rand_noise(x, **kwargs)
-            x = tf.clip_by_value(x, -0.5, 0.5)
+            x = tf.clip_by_value(x, 0.0 - self.image_mean, 1.0 - self.image_mean)
             x = self.rand_solarization(x, **kwargs)
             x = self.rand_posterization(x, **kwargs)
 
