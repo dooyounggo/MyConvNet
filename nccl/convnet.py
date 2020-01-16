@@ -922,9 +922,9 @@ class ConvNet(object):
 
                 delta = tf.random.uniform([], minval=-max_delta/2, maxval=max_delta/2, dtype=tf.float32)
 
-                x = x + self.image_mean
+                x += self.image_mean
                 x = tf.image.adjust_hue(x, delta)
-                x = x - self.image_mean
+                x -= self.image_mean
 
         return x
 
@@ -944,9 +944,9 @@ class ConvNet(object):
                 randval = tf.random.uniform([], dtype=tf.float32)
                 randval = lower*tf.math.pow(base, randval)
 
-                x = x + self.image_mean
+                x += self.image_mean
                 x = tf.image.adjust_saturation(x, randval)
-                x = x - self.image_mean
+                x -= self.image_mean
 
         return x
 
@@ -969,9 +969,9 @@ class ConvNet(object):
 
                 image_mean = tf.reduce_mean(x, axis=[1, 2], keepdims=True)
 
-                x = x - image_mean
+                x -= image_mean
                 x = x*randvals
-                x = x + image_mean
+                x += image_mean
 
         return x
 
@@ -991,9 +991,9 @@ class ConvNet(object):
 
                 image_mean = tf.reduce_mean(x, axis=[1, 2], keepdims=True)
 
-                x = x - image_mean
+                x -= image_mean
                 x = normal*x + (1.0 - normal)*x/maxvals*0.5
-                x = x + image_mean
+                x += image_mean
 
         return x
 
@@ -1016,9 +1016,9 @@ class ConvNet(object):
 
                 image_mean = tf.reduce_mean(x, axis=[1, 2], keepdims=True)
 
-                x = x - image_mean
+                x -= image_mean
                 x = x*randvals
-                x = x + image_mean
+                x += image_mean
 
         return x
 
@@ -1072,17 +1072,20 @@ class ConvNet(object):
                     lower = lower*(1.0 - self.linear_schedule_multiplier)
                     upper = 1.0 - (1.0 - upper)*(1.0 - self.linear_schedule_multiplier)
 
-                thres_lower = tf.random.uniform([batch_size, 1, 1, 1], -0.5, lower - 0.5, dtype=tf.float32)
+                x += self.image_mean
+
+                thres_lower = tf.random.uniform([batch_size, 1, 1, 1], 0.0, lower, dtype=tf.float32)
                 thres_lower = tf.broadcast_to(thres_lower, shape_tensor)
                 lower_pixels = tf.less(x, thres_lower)
 
-                thres_upper = tf.random.uniform([batch_size, 1, 1, 1], upper - 0.5, 0.5, dtype=tf.float32)
+                thres_upper = tf.random.uniform([batch_size, 1, 1, 1], upper, 1.0, dtype=tf.float32)
                 thres_upper = tf.broadcast_to(thres_upper, shape_tensor)
                 upper_pixels = tf.greater(x, thres_upper)
 
                 invert = tf.cast(tf.logical_or(lower_pixels, upper_pixels), dtype=tf.float32)
 
-                x = invert*(-x) + (1.0 - invert)*x
+                x = invert*(1.0 - x) + (1.0 - invert)*x
+                x -= self.image_mean
 
         return x
 
