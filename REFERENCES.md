@@ -9,8 +9,6 @@
 - Stochastic Depth: https://arxiv.org/abs/1603.09382
 - CutMix: https://arxiv.org/abs/1905.04899
 - FP16 Training: https://arxiv.org/abs/1710.03740
-
-
 - How Does Batch Normalization Help Optimization?: https://arxiv.org/abs/1805.11604
 - Group Normalization: https://arxiv.org/abs/1803.08494
 - Weight Standardization: https://arxiv.org/abs/1903.10520
