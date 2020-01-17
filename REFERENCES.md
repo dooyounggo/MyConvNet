@@ -12,3 +12,4 @@
 - Basic code structure: http://research.sualab.com/practice/2018/01/17/image-classification-deep-learning.html
 - Basic code GitHub: https://github.com/sualab/asirra-dogs-cats-classification
 - ResNet-18 example code: https://github.com/dalgu90/resnet-18-tensorflow
+- Batch normalization example code: https://github.com/dalgu90/resnet-18-tensorflow/blob/master/utils.py
