@@ -18,6 +18,7 @@
 - Run test.py to test the trained model.
 
 ### Notes
+- In the segmentation task, pixels with a value of 0 are ignored, so assign 1 to the first class.
 - Use Linux for faster training.
 - Multi-GPU training is available based on the parameter server strategy.
 - For NCCL-based distributed training, use nccl/convnet.py and nccl/optimizer.py (experimental, available on Linux).
