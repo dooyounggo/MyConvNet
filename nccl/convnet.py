@@ -504,9 +504,9 @@ class ConvNet(object):
 
     def augment_images(self, x, mask=None, **kwargs):
         rand_blur = kwargs.get('rand_blur_stddev', 0.0) > 0.0
-        rand_affine = kwargs.get('rand_affine', True)
-        rand_crop = kwargs.get('rand_crop', True)
-        rand_distortion = kwargs.get('rand_distortion', True)
+        rand_affine = kwargs.get('rand_affine', False)
+        rand_crop = kwargs.get('rand_crop', False)
+        rand_distortion = kwargs.get('rand_distortion', False)
 
         if rand_blur:
             x = self.gaussian_blur(x, **kwargs)
