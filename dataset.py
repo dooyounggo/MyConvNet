@@ -199,7 +199,7 @@ class DataSet(object):
                     for l in line:
                         label.append(int(l))
                 label = np.array(label, dtype=np.float32)
-            else:   # Segmentation
+            else:   # Segmentation. Pixels with a value of 0 are ignored, so assign 1 to the first class.
                 label = cv2.imread(label_dir, cv2.IMREAD_GRAYSCALE)
                 label = self._resize_function(label, self.image_size, interpolation=cv2.INTER_NEAREST)
                 label = np.round(label[..., 0]*255)
