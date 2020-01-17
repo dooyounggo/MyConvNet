@@ -414,7 +414,7 @@ class ConvNet(object):
         return labels
 
     def predict(self, dataset, verbose=False, return_images=True, **kwargs):
-        batch_size = kwargs.get('batch_size', 32)
+        batch_size = dataset.batch_size
         augment_test = kwargs.get('augment_test', False)
 
         pred_size = dataset.num_examples
@@ -465,7 +465,7 @@ class ConvNet(object):
         return _X, _Y_true, _Y_pred, _loss_pred
 
     def features(self, dataset, tensors, **kwargs):  # Return any deep features
-        batch_size = kwargs.get('batch_size', 32)
+        batch_size = dataset.batch_size
         augment_test = kwargs.get('augment_test', False)
 
         pred_size = dataset.num_examples
