@@ -8,7 +8,7 @@
 - Stochastic Depth: https://arxiv.org/abs/1603.09382
 - CutMix: https://arxiv.org/abs/1905.04899
 
-## Reference Codes
+## Code References
 - Basic code structure: http://research.sualab.com/practice/2018/01/17/image-classification-deep-learning.html
 - Basic code GitHub: https://github.com/sualab/asirra-dogs-cats-classification
 - ResNet-18 example code: https://github.com/dalgu90/resnet-18-tensorflow
