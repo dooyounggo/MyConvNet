@@ -274,7 +274,7 @@ class ConvNet(object):
                         self.Y = tf.one_hot(self.Y, depth=self.num_classes, dtype=tf.float32)  # one-hot encoding
 
                         if self._padded_size[0] > self.input_size[0] or self._padded_size[1] > self.input_size[1]:
-                            self.X = self.zero_pad(self.X)
+                            self.X = self.zero_pad(self.X, pad_value=self.pad_value)
                         self.X = tf.math.subtract(self.X, self.image_mean, name='zero_center')
                         self.X = tf.cond(self.augmentation,
                                          lambda: self.augment_images(self.X, **kwargs),
@@ -494,22 +494,18 @@ class ConvNet(object):
 
         return features
 
-    def zero_pad(self, x):
+    def zero_pad(self, x, pad_value=0.0):
         with tf.variable_scope('zero_pad'):
-            x = tf.map_fn(self.zero_pad_image, x, parallel_iterations=32, back_prop=False)
-
-        return x
-
-    def zero_pad_image(self, x):
-        shape_tensor = tf.cast(tf.shape(x), dtype=tf.float32)
-        h = shape_tensor[0]
-        w = shape_tensor[1]
-        pad_h = tf.maximum(self._padded_size[0] - h, 0.0)
-        pad_w = tf.maximum(self._padded_size[1] - w, 0.0)
-        paddings = [[tf.cast(tf.floor(pad_h/2), dtype=tf.int32), tf.cast(tf.ceil(pad_h/2), dtype=tf.int32)],
-                    [tf.cast(tf.floor(pad_w/2), dtype=tf.int32), tf.cast(tf.ceil(pad_w/2), dtype=tf.int32)],
-                    [0, 0]]
-        x = tf.pad(x, paddings, constant_values=self.pad_value)
+            shape_tensor = tf.cast(tf.shape(x), dtype=tf.float32)
+            h = shape_tensor[1]
+            w = shape_tensor[2]
+            pad_h = tf.maximum(self._padded_size[0] - h, 0.0)
+            pad_w = tf.maximum(self._padded_size[1] - w, 0.0)
+            paddings = [[0, 0],
+                        [tf.cast(tf.floor(pad_h/2), dtype=tf.int32), tf.cast(tf.ceil(pad_h/2), dtype=tf.int32)],
+                        [tf.cast(tf.floor(pad_w/2), dtype=tf.int32), tf.cast(tf.ceil(pad_w/2), dtype=tf.int32)],
+                        [0, 0]]
+            x = tf.pad(x, paddings, constant_values=pad_value)
 
         return x
 
