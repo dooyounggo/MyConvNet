@@ -1308,8 +1308,8 @@ class ConvNet(object):
 
         return tf.nn.avg_pool(x, ksize=ksize, strides=strides, data_format=data_format, padding=padding)
 
-    def conv_layer(self, x, kernel, stride, out_channels, padding='SAME', biased=True, depthwise=False, dilation=(1, 1),
-                   ws=False, kernel_paddings=((0, 0), (0, 0)),
+    def conv_layer(self, x, kernel, stride, out_channels=None, padding='SAME', biased=True, depthwise=False,
+                   dilation=(1, 1), ws=False, kernel_paddings=((0, 0), (0, 0)),
                    weight_initializer=tf.initializers.he_normal(), bias_initializer=tf.initializers.zeros()):
         if not isinstance(kernel, (list, tuple)):
             kernel = [kernel, kernel]
@@ -1340,8 +1340,13 @@ class ConvNet(object):
         else:
             out_size = [np.ceil(float(h - kernel[0] + 1)/stride[0]), np.ceil(float(w - kernel[1] + 1)/stride[1])]
 
+        if out_channels is None:
+            out_channels = in_channels
+
         if depthwise:
             channel_multiplier = out_channels//in_channels
+            if channel_multiplier < 1:
+                channel_multiplier = 1
             weights = self.weight_variable([kernel[0], kernel[1], in_channels, channel_multiplier],
                                            initializer=weight_initializer,
                                            weight_standardization=ws, paddings=kernel_paddings)
