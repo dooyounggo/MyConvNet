@@ -15,10 +15,10 @@ class UNet(SegNet):
         encoder_channels = self.channels
         for i, c in enumerate(encoder_channels):
             with tf.variable_scope('block_{}'.format(self._curr_block)):
+                if i > 0:
+                    x = self.max_pool(x, [2, 2], [2, 2], padding='SAME')
                 x = self.encoder(x, c, is_bn=self.is_bn)
                 d['block_{}'.format(self._curr_block)] = x
-                if i < len(encoder_channels) - 1:
-                    x = self.max_pool(x, [2, 2], [2, 2], padding='SAME')
             self._curr_block += 1
 
         return d
