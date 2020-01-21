@@ -78,7 +78,7 @@ for k, v in Param.d.items():
 fp.close()
 
 # Initialize
-model = ConvNet(Param.d['input_size'], len(class_names), loss_weights=w, **Param.d)
+model = ConvNet(Param.d['input_size'], train_set.num_classes, loss_weights=w, **Param.d)
 if Param.d['init_from_public_checkpoint']:
     init_from_checkpoint(Param.checkpoint_dir, load_moving_average=Param.d.get('load_moving_average', False))
 evaluator = Evaluator()
