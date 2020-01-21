@@ -10,7 +10,7 @@ import subsets.subset_functions as sf
 
 
 class DataSet(object):
-    def __init__(self, image_dirs, label_dirs=None, class_names=None, out_size=None,
+    def __init__(self, image_dirs, label_dirs=None, class_names=None, num_classes=None, out_size=None,
                  resize_method=None, resize_randomness=False, **kwargs):
         """
         :param image_dirs: list or tuple, paths to images
@@ -40,7 +40,7 @@ class DataSet(object):
         self._resize_interpolation = kwargs.get('resize_interpolation', 'bilinear')
 
         if class_names is None:
-            self._num_classes = None
+            self._num_classes = num_classes
         else:
             self._num_classes = len(class_names)
         self._class_names = class_names
