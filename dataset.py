@@ -237,6 +237,8 @@ class DataSet(object):
                                            max_attempts=max_attempts, min_object_size=min_object_size)
         else:
             raise(ValueError, 'Resize type of {} is not supported.'.format(self.resize_method))
+
+        image = image[..., 0:self.image_size[-1]]
         return image
 
     def data_statistics(self, verbose=True, max_data=10000):
