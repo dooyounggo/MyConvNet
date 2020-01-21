@@ -326,6 +326,7 @@ class F1Evaluator(Evaluator):
 class MeanF1Evaluator(Evaluator):
     def check_params(self, **kwargs):
         self.bkgd_idx = kwargs.get('bkgd_idx', None)  # Background class to be ignored
+        self.num_classes = kwargs.get('num_classes', None)
 
     @property
     def name(self):
@@ -343,7 +344,7 @@ class MeanF1Evaluator(Evaluator):
         if y_true.shape[-1] == 1:
             y_t = y_true[..., 0].astype(int)
             valid = np.greater_equal(y_t, 0)
-            num_classes = np.amax(y_t) + 1
+            num_classes = np.amax(y_t) + 1 if self.num_classes is None else self.num_classes
         else:
             y_t = y_true.argmax(axis=-1)
             valid = np.isclose(y_true.sum(axis=-1), 1)
@@ -416,6 +417,7 @@ class IoUEvaluator(Evaluator):
 class MeanIoUEvaluator(Evaluator):
     def check_params(self, **kwargs):
         self.bkgd_idx = kwargs.get('bkgd_idx', None)  # Background class to be ignored
+        self.num_classes = kwargs.get('num_classes', None)
 
     @property
     def name(self):
@@ -433,7 +435,7 @@ class MeanIoUEvaluator(Evaluator):
         if y_true.shape[-1] == 1:
             y_t = y_true[..., 0].astype(int)
             valid = np.greater_equal(y_t, 0)
-            num_classes = np.amax(y_t) + 1
+            num_classes = np.amax(y_t) + 1 if self.num_classes is None else self.num_classes
         else:
             y_t = y_true.argmax(axis=-1)
             valid = np.isclose(y_true.sum(axis=-1), 1)
