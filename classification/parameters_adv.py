@@ -63,7 +63,7 @@ class Parameters(object):
 
     # FIXME: Training hyperparameters
     d['half_precision'] = False  # If True, the float16 data type is used
-    d['channel_first'] = True  # If True, the "NCHW" format is used instead of "NHWC"
+    d['channel_first'] = False  # If True, the "NCHW" format is used instead of "NHWC"
     d['argmax_output'] = False  # If True, the network's output will be argmaxed (output shape=(N, H, W, 1))
     d['cpu_offset'] = 0  # CPU device offset
     d['gpu_offset'] = 0  # GPU device offset
