@@ -23,7 +23,7 @@ Param.d['image_mean'] = image_mean
 Param.d['monte_carlo'] = False
 
 # Initialize
-model = ConvNet(Param.d['input_size'], len(class_names), loss_weights=None, **Param.d)
+model = ConvNet(Param.d['input_size'], test_set.num_classes, loss_weights=None, **Param.d)
 evaluator = Evaluator()
 saver = tf.train.Saver()
 
