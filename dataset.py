@@ -40,6 +40,7 @@ class DataSet(object):
         self._resize_interpolation = kwargs.get('resize_interpolation', 'bilinear')
 
         if class_names is None:
+            assert num_classes is not None, 'Either class_names or num_classes must be provided.'
             self._num_classes = num_classes
         else:
             self._num_classes = len(class_names)
