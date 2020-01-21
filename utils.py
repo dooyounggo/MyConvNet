@@ -28,7 +28,10 @@ def plot_learning_curve(step_losses, step_scores, eval_losses=None, eval_scores=
         axes[0].plot(np.arange(start_step + 1, len(step_losses) + start_step + 1), step_losses,
                      color='y', marker='', label='Training')
         axes[0].set_ylabel('Training Loss')
-        # axes[0].set_xlabel('Number of Iterations')
+        # if validation_frequency == 1:
+        #     axes[1].set_xlabel('Number of Epochs')
+        # else:
+        #     axes[1].set_xlabel('Number of Iterations')
         axes[0].set_ylim(0.0, min(loss_threshold, max(step_losses)))
     else:
         if validation_frequency is None:
@@ -58,12 +61,15 @@ def plot_learning_curve(step_losses, step_scores, eval_losses=None, eval_scores=
             best_score = min(step_scores)
         else:
             best_score = max(step_scores)
-        axes[1].set_title('Final Training {}: {:.4f} (Best: {:.4f})'.format(name, final_score, best_score))
+        axes[1].set_title('Training {}: {:.4f} (Best: {:.4f})'.format(name, final_score, best_score))
 
         axes[1].plot(np.arange(start_step + 1, len(step_scores) + start_step + 1), step_scores,
                      color='y', marker='', label='Training')
         axes[1].set_ylabel('Training ' + name)
-        axes[1].set_xlabel('Number of Iterations')
+        if validation_frequency == 1:
+            axes[1].set_xlabel('Number of Epochs')
+        else:
+            axes[1].set_xlabel('Number of Iterations')
         if annotations is not None:
             if len(annotations) > 0:
                 x, y = zip(*annotations)
@@ -77,7 +83,7 @@ def plot_learning_curve(step_losses, step_scores, eval_losses=None, eval_scores=
             best_score = min(eval_scores)
         else:
             best_score = max(eval_scores)
-        axes[1].set_title('Final Validation {}: {:.4f} (Best: {:.4f})'.format(name, final_score, best_score))
+        axes[1].set_title('Validation {}: {:.4f} (Best: {:.4f})'.format(name, final_score, best_score))
 
         if validation_frequency is None:
             axes[1].plot(np.arange(1, len(eval_scores) + 1), eval_scores, color='r', marker='', label='Validation')
