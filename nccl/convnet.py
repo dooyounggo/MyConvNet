@@ -1336,8 +1336,8 @@ class ConvNet(object):
 
         return tf.nn.avg_pool(x, ksize=ksize, strides=strides, data_format=data_format, padding=padding)
 
-    def conv_layer(self, x, kernel, stride, out_channels, padding='SAME', biased=True, depthwise=False, dilation=(1, 1),
-                   ws=False, kernel_paddings=((0, 0), (0, 0)),
+    def conv_layer(self, x, kernel, stride, out_channels=None, padding='SAME', biased=True, depthwise=False,
+                   dilation=(1, 1), ws=False, kernel_paddings=((0, 0), (0, 0)),
                    weight_initializer=tf.initializers.he_normal(), bias_initializer=tf.initializers.zeros()):
         if not isinstance(kernel, (list, tuple)):
             kernel = [kernel, kernel]
@@ -1364,12 +1364,17 @@ class ConvNet(object):
             data_format = 'NHWC'
 
         if padding.lower() == 'same':
-            out_size = [np.ceil(float(h)/stride[0]), np.ceil(float(w)/stride[1])]
+            out_size = [np.ceil(float(h) / stride[0]), np.ceil(float(w) / stride[1])]
         else:
-            out_size = [np.ceil(float(h - kernel[0] + 1)/stride[0]), np.ceil(float(w - kernel[1] + 1)/stride[1])]
+            out_size = [np.ceil(float(h - kernel[0] + 1) / stride[0]), np.ceil(float(w - kernel[1] + 1) / stride[1])]
+
+        if out_channels is None:
+            out_channels = in_channels
 
         if depthwise:
-            channel_multiplier = out_channels//in_channels
+            channel_multiplier = out_channels // in_channels
+            if channel_multiplier < 1:
+                channel_multiplier = 1
             weights = self.weight_variable([kernel[0], kernel[1], in_channels, channel_multiplier],
                                            initializer=weight_initializer,
                                            weight_standardization=ws, paddings=kernel_paddings)
@@ -1377,9 +1382,9 @@ class ConvNet(object):
                                            data_format=data_format, rate=dilation)
 
             if not tf.get_variable_scope().reuse:
-                self._params += kernel[0]*kernel[1]*in_channels*channel_multiplier
+                self._params += kernel[0] * kernel[1] * in_channels * channel_multiplier
             if self._curr_device == self.gpu_offset:
-                self._flops += out_size[0]*out_size[1]*kernel[0]*kernel[1]*in_channels*channel_multiplier
+                self._flops += out_size[0] * out_size[1] * kernel[0] * kernel[1] * in_channels * channel_multiplier
         else:
             weights = self.weight_variable([kernel[0], kernel[1], in_channels, out_channels],
                                            initializer=weight_initializer,
@@ -1388,9 +1393,9 @@ class ConvNet(object):
                                  data_format=data_format, dilations=conv_dilations)
 
             if not tf.get_variable_scope().reuse:
-                self._params += kernel[0]*kernel[1]*in_channels*out_channels
+                self._params += kernel[0] * kernel[1] * in_channels * out_channels
             if self._curr_device == self.gpu_offset:
-                self._flops += out_size[0]*out_size[1]*kernel[0]*kernel[1]*in_channels*out_channels
+                self._flops += out_size[0] * out_size[1] * kernel[0] * kernel[1] * in_channels * out_channels
 
         if biased:
             biases = self.bias_variable(out_channels, initializer=bias_initializer)
@@ -1398,7 +1403,7 @@ class ConvNet(object):
             if not tf.get_variable_scope().reuse:
                 self._params += out_channels
             if self._curr_device == self.gpu_offset:
-                self._flops += out_size[0]*out_size[1]*out_channels
+                self._flops += out_size[0] * out_size[1] * out_channels
 
             return tf.nn.bias_add(convs, biases, data_format=data_format)
         else:
