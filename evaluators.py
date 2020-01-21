@@ -317,6 +317,8 @@ class F1Evaluator(Evaluator):
 
 
 class MeanF1Evaluator(Evaluator):
+    bkgd_idx = None  # Background class to be ignored
+
     @property
     def name(self):
         return 'Mean F1 Score'
@@ -344,49 +346,10 @@ class MeanF1Evaluator(Evaluator):
             y_p = y_pred.argmax(axis=-1)
 
         score = []
-        for n in range(1, num_classes):    # Ignore backgrounds
-            t = np.equal(y_t, n)
-            p = np.equal(y_p, n)
-            precision, recall = precision_and_recall(t, p, valid=valid)
-            if precision == 0 or recall == 0:
-                val = 0
-            else:
-                val = 2*precision*recall/(precision + recall)
-            score.append(val)
-        score = np.mean(score)
-
-        return score
-
-
-class MeanF1BEvaluator(Evaluator):
-    @property
-    def name(self):
-        return 'Mean F1 Score'
-
-    @property
-    def worst_score(self):
-        return 0.0
-
-    @property
-    def mode(self):
-        return 'max'
-
-    def score(self, y_true, y_pred):
-        if y_true.shape[-1] == 1:
-            y_t = y_true[..., 0].astype(int)
-            valid = np.greater_equal(y_t, 0)
-            num_classes = np.amax(y_t) + 1
-        else:
-            y_t = y_true.argmax(axis=-1)
-            valid = np.isclose(y_true.sum(axis=-1), 1)
-            num_classes = y_true.shape[-1]
-        if y_pred.shape[-1] == 1:
-            y_p = y_pred[..., 0].astype(int)
-        else:
-            y_p = y_pred.argmax(axis=-1)
-
-        score = []
-        for n in range(0, num_classes):    # Include backgrounds
+        bkgd = self.bkgd_idx if isinstance(self.bkgd_idx, (list, tuple)) else [self.bkgd_idx]
+        for n in range(num_classes):
+            if n in bkgd:
+                continue
             t = np.equal(y_t, n)
             p = np.equal(y_p, n)
             precision, recall = precision_and_recall(t, p, valid=valid)
@@ -443,6 +406,8 @@ class IoUEvaluator(Evaluator):
 
 
 class MeanIoUEvaluator(Evaluator):
+    bkgd_idx = None  # Background class to be ignored
+
     @property
     def name(self):
         return 'Mean Intersection over Union'
@@ -470,50 +435,10 @@ class MeanIoUEvaluator(Evaluator):
             y_p = y_pred.argmax(axis=-1)
 
         score = []
-        for n in range(1, num_classes):    # Ignore backgrounds
-            t = np.equal(y_t, n)
-            p = np.equal(y_p, n)
-            tp, fp, _, fn = conditions(t, p, valid=valid)
-            if tp == 0:
-                val = 0
-            else:
-                val = tp/(tp + fp + fn)
-            score.append(val)
-            # print('class {}: {}'.format(n, val))
-        score = np.mean(score)
-
-        return score
-
-
-class MeanIoUBEvaluator(Evaluator):
-    @property
-    def name(self):
-        return 'Mean Intersection over Union'
-
-    @property
-    def worst_score(self):
-        return 0.0
-
-    @property
-    def mode(self):
-        return 'max'
-
-    def score(self, y_true, y_pred):
-        if y_true.shape[-1] == 1:
-            y_t = y_true[..., 0].astype(int)
-            valid = np.greater_equal(y_t, 0)
-            num_classes = np.amax(y_t) + 1
-        else:
-            y_t = y_true.argmax(axis=-1)
-            valid = np.isclose(y_true.sum(axis=-1), 1)
-            num_classes = y_true.shape[-1]
-        if y_pred.shape[-1] == 1:
-            y_p = y_pred[..., 0].astype(int)
-        else:
-            y_p = y_pred.argmax(axis=-1)
-
-        score = []
-        for n in range(0, num_classes):    # Include backgrounds
+        bkgd = self.bkgd_idx if isinstance(self.bkgd_idx, (list, tuple)) else [self.bkgd_idx]
+        for n in range(num_classes):
+            if n in bkgd:
+                continue
             t = np.equal(y_t, n)
             p = np.equal(y_p, n)
             tp, fp, _, fn = conditions(t, p, valid=valid)
