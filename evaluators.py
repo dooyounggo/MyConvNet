@@ -9,7 +9,12 @@ from sklearn.metrics import accuracy_score
 
 
 class Evaluator(object):
-    def __init__(self):
+    def __init__(self, **kwargs):
+        self.check_params(**kwargs)
+        print('Evaluator: ' + self.name)
+        print('')
+
+    def check_params(self, **kwargs):
         pass
 
     @property
@@ -106,7 +111,9 @@ class AccuracyEvaluator(Evaluator):
 
 
 class AccuracyTopNEvaluator(Evaluator):
-    top = 5
+    def check_params(self, **kwargs):
+        if not hasattr(self, 'top'):
+            self.top = kwargs.get('top', 1)
 
     @property
     def name(self):
@@ -317,7 +324,8 @@ class F1Evaluator(Evaluator):
 
 
 class MeanF1Evaluator(Evaluator):
-    bkgd_idx = None  # Background class to be ignored
+    def check_params(self, **kwargs):
+        self.bkgd_idx = kwargs.get('bkgd_idx', None)  # Background class to be ignored
 
     @property
     def name(self):
@@ -406,7 +414,8 @@ class IoUEvaluator(Evaluator):
 
 
 class MeanIoUEvaluator(Evaluator):
-    bkgd_idx = None  # Background class to be ignored
+    def check_params(self, **kwargs):
+        self.bkgd_idx = kwargs.get('bkgd_idx', None)  # Background class to be ignored
 
     @property
     def name(self):
