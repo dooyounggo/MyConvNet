@@ -26,7 +26,7 @@ Param.d['monte_carlo'] = False
 Param.d['channel_first'] = False
 
 # Initialize
-model = ConvNet(Param.d['input_size'], len(class_names), loss_weights=None, **Param.d)
+model = ConvNet(Param.d['input_size'], test_set.num_classes, loss_weights=None, **Param.d)
 saver = tf.train.Saver()
 
 if model_to_load is None:
