@@ -27,6 +27,7 @@ class UNet(SegNet):
         d = dict()
 
         x = d_backbone['block_{}'.format(self._curr_block - 1)]
+
         decoder_channels = self.channels[-2::-1]
         encoder_block = self._curr_block - 2
         for c in decoder_channels:
