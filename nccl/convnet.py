@@ -491,8 +491,8 @@ class ConvNet(object):
             pad_h = tf.maximum(self._padded_size[0] - h, 0.0)
             pad_w = tf.maximum(self._padded_size[1] - w, 0.0)
             paddings = [[0, 0],
-                        [tf.cast(tf.floor(pad_h / 2), dtype=tf.int32), tf.cast(tf.ceil(pad_h / 2), dtype=tf.int32)],
-                        [tf.cast(tf.floor(pad_w / 2), dtype=tf.int32), tf.cast(tf.ceil(pad_w / 2), dtype=tf.int32)],
+                        [tf.cast(tf.floor(pad_h/2), dtype=tf.int32), tf.cast(tf.ceil(pad_h/2), dtype=tf.int32)],
+                        [tf.cast(tf.floor(pad_w/2), dtype=tf.int32), tf.cast(tf.ceil(pad_w/2), dtype=tf.int32)],
                         [0, 0]]
             x = tf.pad(x, paddings, constant_values=pad_value)
 
@@ -1336,9 +1336,10 @@ class ConvNet(object):
 
         return tf.nn.avg_pool(x, ksize=ksize, strides=strides, data_format=data_format, padding=padding)
 
-    def conv_layer(self, x, kernel, stride, out_channels=None, padding='SAME', biased=True, depthwise=False,
+    def conv_layer(self, x, kernel, stride, out_channels=None, padding='SAME', biased=True, depthwise=False, scope='',
                    dilation=(1, 1), ws=False, kernel_paddings=((0, 0), (0, 0)),
-                   weight_initializer=tf.initializers.he_normal(), bias_initializer=tf.initializers.zeros()):
+                   weight_initializer=tf.initializers.he_normal(), bias_initializer=tf.initializers.zeros(),
+                   verbose=False):
         if not isinstance(kernel, (list, tuple)):
             kernel = [kernel, kernel]
         elif len(kernel) == 1:
@@ -1364,73 +1365,87 @@ class ConvNet(object):
             data_format = 'NHWC'
 
         if padding.lower() == 'same':
-            out_size = [np.ceil(float(h) / stride[0]), np.ceil(float(w) / stride[1])]
+            out_size = [np.ceil(float(h)/stride[0]), np.ceil(float(w)/stride[1])]
         else:
-            out_size = [np.ceil(float(h - kernel[0] + 1) / stride[0]), np.ceil(float(w - kernel[1] + 1) / stride[1])]
+            out_size = [np.ceil(float(h - kernel[0] + 1)/stride[0]), np.ceil(float(w - kernel[1] + 1)/stride[1])]
 
         if out_channels is None:
             out_channels = in_channels
 
-        if depthwise:
-            channel_multiplier = out_channels // in_channels
-            if channel_multiplier < 1:
-                channel_multiplier = 1
-            weights = self.weight_variable([kernel[0], kernel[1], in_channels, channel_multiplier],
-                                           initializer=weight_initializer,
-                                           weight_standardization=ws, paddings=kernel_paddings)
-            convs = tf.nn.depthwise_conv2d(x, weights, strides=conv_strides, padding=padding,
-                                           data_format=data_format, rate=dilation)
+        with tf.variable_scope(scope):
+            if depthwise:
+                channel_multiplier = out_channels//in_channels
+                if channel_multiplier < 1:
+                    channel_multiplier = 1
+                weights = self.weight_variable([kernel[0], kernel[1], in_channels, channel_multiplier],
+                                               initializer=weight_initializer,
+                                               weight_standardization=ws, paddings=kernel_paddings)
+                convs = tf.nn.depthwise_conv2d(x, weights, strides=conv_strides, padding=padding,
+                                               data_format=data_format, rate=dilation)
 
-            if not tf.get_variable_scope().reuse:
-                self._params += kernel[0] * kernel[1] * in_channels * channel_multiplier
-            if self._curr_device == self.gpu_offset:
-                self._flops += out_size[0] * out_size[1] * kernel[0] * kernel[1] * in_channels * channel_multiplier
-        else:
-            weights = self.weight_variable([kernel[0], kernel[1], in_channels, out_channels],
-                                           initializer=weight_initializer,
-                                           weight_standardization=ws, paddings=kernel_paddings)
-            convs = tf.nn.conv2d(x, weights, strides=conv_strides, padding=padding,
-                                 data_format=data_format, dilations=conv_dilations)
+                if not tf.get_variable_scope().reuse:
+                    self._params += kernel[0]*kernel[1]*in_channels*channel_multiplier
+                if self._curr_device == self.gpu_offset:
+                    self._flops += out_size[0]*out_size[1]*kernel[0]*kernel[1]*in_channels*channel_multiplier
+            else:
+                weights = self.weight_variable([kernel[0], kernel[1], in_channels, out_channels],
+                                               initializer=weight_initializer,
+                                               weight_standardization=ws, paddings=kernel_paddings)
+                convs = tf.nn.conv2d(x, weights, strides=conv_strides, padding=padding,
+                                     data_format=data_format, dilations=conv_dilations)
 
-            if not tf.get_variable_scope().reuse:
-                self._params += kernel[0] * kernel[1] * in_channels * out_channels
-            if self._curr_device == self.gpu_offset:
-                self._flops += out_size[0] * out_size[1] * kernel[0] * kernel[1] * in_channels * out_channels
+                if not tf.get_variable_scope().reuse:
+                    self._params += kernel[0]*kernel[1]*in_channels*out_channels
+                if self._curr_device == self.gpu_offset:
+                    self._flops += out_size[0]*out_size[1]*kernel[0]*kernel[1]*in_channels*out_channels
 
-        if biased:
-            biases = self.bias_variable(out_channels, initializer=bias_initializer)
+            if verbose:
+                print(tf.get_variable_scope().name + ': [{}, {}, {}], k=({}, {}), s=({}, {}), c={}'
+                      .format(h, w, in_channels, kernel[0], kernel[1], stride[0], stride[1], out_channels), end='')
+                if depthwise:
+                    print(', depthwise.')
+                else:
+                    print('.')
 
-            if not tf.get_variable_scope().reuse:
-                self._params += out_channels
-            if self._curr_device == self.gpu_offset:
-                self._flops += out_size[0] * out_size[1] * out_channels
+            if biased:
+                biases = self.bias_variable(out_channels, initializer=bias_initializer)
 
-            return tf.nn.bias_add(convs, biases, data_format=data_format)
-        else:
-            return convs
+                if not tf.get_variable_scope().reuse:
+                    self._params += out_channels
+                if self._curr_device == self.gpu_offset:
+                    self._flops += out_size[0]*out_size[1]*out_channels
 
-    def fc_layer(self, x, out_dim, biased=True,
-                 weight_initializer=tf.initializers.he_normal(), bias_initializer=tf.initializers.zeros(), ws=False):
+                return tf.nn.bias_add(convs, biases, data_format=data_format)
+            else:
+                return convs
+
+    def fc_layer(self, x, out_dim, biased=True, scope='', ws=False,
+                 weight_initializer=tf.initializers.he_normal(), bias_initializer=tf.initializers.zeros(),
+                 verbose=False):
         in_dim = int(x.get_shape()[-1])
 
-        weights = self.weight_variable([in_dim, out_dim], initializer=weight_initializer, weight_standardization=ws)
-
-        if not tf.get_variable_scope().reuse:
-            self._params += in_dim*out_dim
-        if self._curr_device == self.gpu_offset:
-            self._flops += in_dim*out_dim
-
-        if biased:
-            biases = self.bias_variable(out_dim, initializer=bias_initializer)
+        with tf.variable_scope(scope):
+            weights = self.weight_variable([in_dim, out_dim], initializer=weight_initializer, weight_standardization=ws)
 
             if not tf.get_variable_scope().reuse:
-                self._params += out_dim
+                self._params += in_dim*out_dim
             if self._curr_device == self.gpu_offset:
-                self._flops += out_dim
+                self._flops += in_dim*out_dim
 
-            return tf.matmul(x, weights) + biases
-        else:
-            return tf.matmul(x, weights)
+            if verbose:
+                print(tf.get_variable_scope().name + ': [{}, {}]'.format(in_dim, out_dim))
+
+            if biased:
+                biases = self.bias_variable(out_dim, initializer=bias_initializer)
+
+                if not tf.get_variable_scope().reuse:
+                    self._params += out_dim
+                if self._curr_device == self.gpu_offset:
+                    self._flops += out_dim
+
+                return tf.matmul(x, weights) + biases
+            else:
+                return tf.matmul(x, weights)
 
     def batch_norm(self, x, scale=True, shift=True, zero_scale_init=False, epsilon=1e-3, scope='bn'):
         if self.update_batch_norm is not None:
