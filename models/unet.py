@@ -60,14 +60,14 @@ class UNet(SegNet):
                                 verbose=True)
             if self.is_bn:
                 x = self.batch_norm(x)
-            x = self.relu(x)
+        x = self.relu(x)
 
         with tf.variable_scope('conv_1'):
             x = self.conv_layer(x, [3, 3], [1, 1], out_channels=channels, padding='SAME', biased=not is_bn,
                                 verbose=True)
             if self.is_bn:
                 x = self.batch_norm(x)
-            x = self.relu(x)
+        x = self.relu(x)
 
         return x
 
@@ -78,14 +78,14 @@ class UNet(SegNet):
                                 verbose=True)
             if self.is_bn:
                 x = self.batch_norm(x)
-            x = self.relu(x)
+        x = self.relu(x)
 
         with tf.variable_scope('conv_1'):
             x = self.conv_layer(x, [3, 3], [1, 1], out_channels=channels, padding='SAME', biased=not is_bn,
                                 verbose=True)
             if self.is_bn:
                 x = self.batch_norm(x)
-            x = self.relu(x)
+        x = self.relu(x)
 
         return x
 
@@ -98,19 +98,42 @@ class UNetA(UNet):  # Addition instead of concatenation
                                 verbose=True)
             if self.is_bn:
                 x = self.batch_norm(x)
-            x = self.relu(x)
+        x = self.relu(x)
 
         with tf.variable_scope('conv_1'):
             x = self.conv_layer(x, [3, 3], [1, 1], out_channels=channels, padding='SAME', biased=not is_bn,
                                 verbose=True)
             if self.is_bn:
                 x = self.batch_norm(x)
-            x = self.relu(x)
+        x = self.relu(x)
 
         return x
 
 
-class UNetS(UNet):  # U-Net with depthwise separable convolutions
+class UNetS(UNetA):  # U-Net with depthwise separable convolutions
+    def _build_model(self, **kwargs):
+        d = dict()
+
+        x = self.X
+
+        encoder_channels = self.channels
+        for i, c in enumerate(encoder_channels):
+            with tf.variable_scope('block_{}'.format(self._curr_block)):
+                if i > 0:
+                    x = self.max_pool(x, [2, 2], [2, 2], padding='SAME')
+                else:
+                    with tf.variable_scope('conv_in'):
+                        x = self.conv_layer(x, 3, 1, out_channels=32, padding='SAME', biased=not self.is_bn,
+                                            verbose=True)
+                        if self.is_bn:
+                            x = self.batch_norm(x)
+                    x = self.relu(x)
+                x = self.encoder(x, c, is_bn=self.is_bn)
+                d['block_{}'.format(self._curr_block)] = x
+            self._curr_block += 1
+
+        return d
+
     def encoder(self, x, channels, is_bn=False):
         with tf.variable_scope('conv_0a'):
             x = self.conv_layer(x, 1, 1, out_channels=channels, padding='SAME', biased=not is_bn, depthwise=False,
@@ -122,7 +145,7 @@ class UNetS(UNet):  # U-Net with depthwise separable convolutions
                                 verbose=True)
             if self.is_bn:
                 x = self.batch_norm(x)
-            x = self.relu(x)
+        x = self.relu(x)
 
         with tf.variable_scope('conv_1a'):
             x = self.conv_layer(x, 1, 1, out_channels=channels, padding='SAME', biased=not is_bn, depthwise=False,
@@ -134,7 +157,7 @@ class UNetS(UNet):  # U-Net with depthwise separable convolutions
                                 verbose=True)
             if self.is_bn:
                 x = self.batch_norm(x)
-            x = self.relu(x)
+        x = self.relu(x)
 
         return x
 
@@ -150,7 +173,7 @@ class UNetS(UNet):  # U-Net with depthwise separable convolutions
                                 verbose=True)
             if self.is_bn:
                 x = self.batch_norm(x)
-            x = self.relu(x)
+        x = self.relu(x)
 
         with tf.variable_scope('conv_1a'):
             x = self.conv_layer(x, 1, 1, out_channels=channels, padding='SAME', biased=not is_bn, depthwise=False,
@@ -162,6 +185,6 @@ class UNetS(UNet):  # U-Net with depthwise separable convolutions
                                 verbose=True)
             if self.is_bn:
                 x = self.batch_norm(x)
-            x = self.relu(x)
+        x = self.relu(x)
 
         return x
