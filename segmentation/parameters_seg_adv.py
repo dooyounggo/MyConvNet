@@ -59,7 +59,7 @@ class Parameters(object):
     d['model_to_load'] = 0  # The (n+1)-th best model is loaded. Can be the name of the checkpoint file
 
     d['blocks_to_train'] = None  # List of blocks to train. None for all blocks and [None] for logits only
-    d['update_batch_norm'] = False  # Whether to update batch statistics. None to follow blocks_to_train
+    d['update_batch_norm'] = None  # Whether to update batch statistics. None to follow blocks_to_train
 
     # FIXME: Training hyperparameters
     d['half_precision'] = False  # If True, the float16 data type is used
