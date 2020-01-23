@@ -7,6 +7,7 @@ import warnings
 from abc import abstractmethod
 import tensorflow as tf
 import numpy as np
+from contextlib import nullcontext
 
 
 class ConvNet(object):
@@ -1308,7 +1309,7 @@ class ConvNet(object):
 
         return tf.nn.avg_pool(x, ksize=ksize, strides=strides, data_format=data_format, padding=padding)
 
-    def conv_layer(self, x, kernel, stride, out_channels=None, padding='SAME', biased=True, depthwise=False, scope='',
+    def conv_layer(self, x, kernel, stride, out_channels=None, padding='SAME', biased=True, depthwise=False, scope=None,
                    dilation=(1, 1), ws=False, kernel_paddings=((0, 0), (0, 0)),
                    weight_initializer=tf.initializers.he_normal(), bias_initializer=tf.initializers.zeros(),
                    verbose=False):
@@ -1344,7 +1345,7 @@ class ConvNet(object):
         if out_channels is None:
             out_channels = in_channels
 
-        with tf.variable_scope(scope):
+        with tf.variable_scope(scope) if scope is not None else nullcontext():
             if depthwise:
                 channel_multiplier = out_channels//in_channels
                 if channel_multiplier < 1:
@@ -1391,12 +1392,12 @@ class ConvNet(object):
             else:
                 return convs
 
-    def fc_layer(self, x, out_dim, biased=True, scope='', ws=False,
+    def fc_layer(self, x, out_dim, biased=True, scope=None, ws=False,
                  weight_initializer=tf.initializers.he_normal(), bias_initializer=tf.initializers.zeros(),
                  verbose=False):
         in_dim = int(x.get_shape()[-1])
 
-        with tf.variable_scope(scope):
+        with tf.variable_scope(scope) if scope is not None else nullcontext():
             weights = self.weight_variable([in_dim, out_dim], initializer=weight_initializer, weight_standardization=ws)
 
             if not tf.get_variable_scope().reuse:
@@ -1849,7 +1850,7 @@ class ConvNet(object):
         return x
 
     def transposed_conv_layer(self, x, kernel, stride, out_channels, padding='SAME', biased=True, output_shape=None,
-                              dilation=(1, 1), weight_initializer=tf.initializers.he_normal(),
+                              dilation=(1, 1), scope=None, weight_initializer=tf.initializers.he_normal(),
                               bias_initializer=tf.initializers.zeros(), ws=False):
         if not isinstance(kernel, (list, tuple)):
             kernel = [kernel, kernel]
@@ -1888,28 +1889,29 @@ class ConvNet(object):
                     output_shape = [batch_size, h*stride[0], w*stride[1], out_channels]
             out_size = output_shape[1:3]
 
-        weights = self.weight_variable([kernel[0], kernel[1], in_channels, out_channels],
-                                       initializer=weight_initializer, weight_standardization=ws)
-        weights = tf.transpose(weights, perm=[0, 1, 3, 2])
-        convs = tf.nn.conv2d_transpose(x, weights, output_shape=output_shape, strides=conv_strides,
-                                       padding=padding, data_format=data_format, dilations=conv_dilations)
-
-        if not tf.get_variable_scope().reuse:
-            self._params += kernel[0]*kernel[1]*in_channels*out_channels
-        if self._curr_device == self.gpu_offset:
-            self._flops += out_size[0]*out_size[1]*kernel[0]*kernel[1]*in_channels*out_channels
-
-        if biased:
-            biases = self.bias_variable(out_channels, initializer=bias_initializer)
-
+        with tf.variable_scope(scope) if scope is not None else nullcontext():
+            weights = self.weight_variable([kernel[0], kernel[1], in_channels, out_channels],
+                                           initializer=weight_initializer, weight_standardization=ws)
+            weights = tf.transpose(weights, perm=[0, 1, 3, 2])
+            convs = tf.nn.conv2d_transpose(x, weights, output_shape=output_shape, strides=conv_strides,
+                                           padding=padding, data_format=data_format, dilations=conv_dilations)
+    
             if not tf.get_variable_scope().reuse:
-                self._params += out_channels
+                self._params += kernel[0]*kernel[1]*in_channels*out_channels
             if self._curr_device == self.gpu_offset:
-                self._flops += out_size[0]*out_size[1]*out_channels
-
-            return tf.nn.bias_add(convs, biases, data_format=data_format)
-        else:
-            return convs
+                self._flops += out_size[0]*out_size[1]*kernel[0]*kernel[1]*in_channels*out_channels
+    
+            if biased:
+                biases = self.bias_variable(out_channels, initializer=bias_initializer)
+    
+                if not tf.get_variable_scope().reuse:
+                    self._params += out_channels
+                if self._curr_device == self.gpu_offset:
+                    self._flops += out_size[0]*out_size[1]*out_channels
+    
+                return tf.nn.bias_add(convs, biases, data_format=data_format)
+            else:
+                return convs
 
     def stochastic_depth(self, x, skip, drop_rate=0.0, name='drop'):
         if drop_rate > 0.0:
