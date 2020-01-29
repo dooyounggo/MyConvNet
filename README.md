@@ -35,7 +35,7 @@
 - opencv-python: 4.1.2.30
 
 ### Checkpoints (ImageNet - subtracted by 0.5 and multiplied by 2, ranging in [-1.0, 1.0])
-| Model | Top-1 Acc | Top-5 Acc | Train(test) Crop | Details | Params | Ckpt |
+| Model | Top-1 Acc | Top-5 Acc | Train (Test) Crop | Details | Params | Ckpt |
 |:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 | ResNet-v1.5-50 | [76.35%](https://www.dropbox.com/s/4aoscqqovpdaqwr/ResNet-v1.5-50_ImageNet.svg?dl=0) | 92.94% | 224(256->224) | Inception preprocessing | [#.py](https://www.dropbox.com/s/lhmnshgfs9jvrfd/imagenet_res50.py?dl=0) | [#.zip](https://www.dropbox.com/s/ruxx6lhmkzmu7u9/ResNet-v1.5-50_ImageNet.zip?dl=0) |
 | ResNet-v1.5-50 | [76.50%](https://www.dropbox.com/s/1h8udkqxi97fhg4/learning_curve-result-1.svg?dl=0) | 93.06% | 224(256->224) | + 30 epochs (120 in total) | [#.py](https://www.dropbox.com/s/w197etq5hkl4koy/ResNet-v1.5-50_ImageNet.py?dl=0) | [#.zip](https://www.dropbox.com/s/xl15y6g0n4aaq20/ResNet-v1.5-50_ImageNet_20200110.zip?dl=0) |
