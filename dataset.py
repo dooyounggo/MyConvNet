@@ -209,6 +209,7 @@ class DataSet(object):
 
     def _resize_function(self, image, image_size, **kwargs):
         interpolation = kwargs.get('interpolation', cv2.INTER_LINEAR)
+        pad_value = kwargs.get('pad_value', 0.0)
         if len(image.shape) == 2:
             image = np.expand_dims(image, axis=-1)
         if image.shape[-1] == 4:
@@ -219,15 +220,17 @@ class DataSet(object):
         if self.resize_method.lower() == 'resize':
             image = sf.to_float(cv2.resize(image, dsize=tuple(image_size[1::-1]), interpolation=interpolation))
         elif self.resize_method.lower() == 'resize_fit':
-            image = sf.resize_fit(image, image_size, interpolation=interpolation, random=self.resize_randomness)
+            image = sf.resize_fit(image, image_size, interpolation=interpolation, random=self.resize_randomness,
+                                  pad_value=pad_value)
         elif self.resize_method.lower() == 'resize_expand':
             image = sf.resize_expand(image, image_size, interpolation=interpolation, random=self.resize_randomness)
         elif self.resize_method.lower() == 'resize_fit_expand':
-            image = sf.resize_fit_expand(image, image_size, interpolation=interpolation, random=self.resize_randomness)
+            image = sf.resize_fit_expand(image, image_size, interpolation=interpolation, random=self.resize_randomness,
+                                         pad_value=pad_value)
         elif self.resize_method.lower() == 'padded_resize' or self.resize_method.lower() == 'pad_resize':
             scale = self._parameters.get('padded_resize_scale', 2.0)
             image = sf.padded_resize(image, image_size, interpolation=interpolation,
-                                     random=self.resize_randomness, scale=scale)
+                                     random=self.resize_randomness, scale=scale, pad_value=pad_value)
         elif self.resize_method.lower() == 'random_resized_crop' or self.resize_method.lower() == 'random_resize_crop':
             scale = self._parameters.get('rand_resized_crop_scale', (0.08, 1.0))
             ratio = self._parameters.get('rand_resized_crop_ratio', (3/4, 4/3))
@@ -235,7 +238,8 @@ class DataSet(object):
             min_object_size = self._parameters.get('min_object_size', None)
             image = sf.random_resized_crop(image, image_size, interpolation=interpolation,
                                            random=self.resize_randomness, scale=scale, ratio=ratio,
-                                           max_attempts=max_attempts, min_object_size=min_object_size)
+                                           max_attempts=max_attempts, min_object_size=min_object_size,
+                                           pad_value=pad_value)
         else:
             raise(ValueError, 'Resize type of {} is not supported.'.format(self.resize_method))
 
