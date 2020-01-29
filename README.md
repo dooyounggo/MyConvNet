@@ -44,7 +44,7 @@
 
 The reported accuracies are single-crop validation scores.
 
-Image size refers to the size after preprocessing. If image and input sizes mismatch, center crop is performed.
+Image size refers to the size after preprocessing. If image and input sizes mismatch, center crop or padding is performed.
 
 † Crop method is slightly different, which is center crop of √(HW) by √(HW) region, zero padding, and resize.
 
