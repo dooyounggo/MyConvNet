@@ -37,7 +37,7 @@ class SegNet(ConvNet):
 
                         if self._padded_size[0] > self.input_size[0] or self._padded_size[1] > self.input_size[1]:
                             self.X = self.zero_pad(self.X, pad_value=self.pad_value)
-                            self.Y = self.zero_pad(self.Y, pad_value=0.0)
+                            self.Y = self.zero_pad(self.Y, pad_value=kwargs.get('label_pad_value', 0.0))
                         self.X = tf.math.subtract(self.X, self.image_mean, name='zero_center')
                         self.X, self.Y = tf.cond(self.augmentation,
                                                  lambda: self.augment_images(self.X, mask=self.Y, **kwargs),
