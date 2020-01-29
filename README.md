@@ -18,7 +18,7 @@
 - Run test.py to test the trained model.
 
 ### Notes
-- Our RandomResizedCrop performs zero padding prior to cropping so that (each side of an image) ≥ √(max_scale·H·W).
+- Our RandomResizedCrop performs padding prior to cropping so that (each side of an image) ≥ √(max_scale·H·W).
 - In the segmentation task, pixels with a value of 0 are ignored, so assign 1 to the first class.
 - Use Linux for faster training.
 - Multi-GPU training is available based on the parameter server strategy.
