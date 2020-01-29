@@ -24,7 +24,7 @@
 - Multi-GPU training is available based on the parameter server strategy.
 - For NCCL-based distributed training, use nccl/convnet.py and nccl/optimizer.py (experimental, available on Linux).
 - Batch statistics of multiple devices are updated successively.
-- Check out [REFERENCES.md](https://github.com/dooyounggo/MyConvNet/blob/master/REFERENCES.md) for papers and code examples.
+- Check out [REFERENCES.md](https://github.com/dooyounggo/MyConvNet/blob/master/REFERENCES.md) for papers and code references.
 
 ### Packages
 - Python: 3.7
