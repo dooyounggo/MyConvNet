@@ -44,7 +44,7 @@
 
 The reported accuracies are single-crop validation scores.
 
-* Crop method is slightly different, which is center crop of √(HW) by √(HW) region, zero padding, and resize.
+- * Crop method is slightly different, which is center crop of √(HW) by √(HW) region, zero padding, and resize.
 
 ### TODO
 - Speedup: Training is slower than tf_cnn_benchmark.
