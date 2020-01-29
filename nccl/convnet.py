@@ -2096,7 +2096,9 @@ class ConvNet(object):
         return tf.nn.relu(x, name=name)
 
     def swish(self, x, name='swish'):
-        return tf.nn.swish(x, name=name)
+        with tf.variable_scope(name):
+            x = x*self.sigmoid(x)
+        return x
 
     def sigmoid(self, x, name=None):
         return tf.nn.sigmoid(x, name=name)
