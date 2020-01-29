@@ -555,7 +555,7 @@ class ConvNet(object):
             elif scheduling < 0:
                 max_stddev *= 1.0 - self.linear_schedule_multiplier
 
-            column_base = -0.5*np.array([[7, 6, 5, 4, 3, 2, 1, 0, 1, 2, 3, 4, 5, 6, 7]], dtype=np.float32) ** 2
+            column_base = -0.5*np.array([[7, 6, 5, 4, 3, 2, 1, 0, 1, 2, 3, 4, 5, 6, 7]], dtype=np.float32)**2
             row_base = np.transpose(column_base)
             column_base = tf.tile(tf.constant(column_base[:, :, np.newaxis, np.newaxis], dtype=tf.float32),
                                   multiples=(1, 1, self.input_size[-1], 1))
@@ -563,7 +563,7 @@ class ConvNet(object):
                                multiples=(1, 1, self.input_size[-1], 1))
             pi = tf.constant(np.pi, dtype=tf.float32)
 
-            var = tf.random.uniform([], minval=0.0, maxval=max_stddev, dtype=tf.float32) ** 2
+            var = tf.random.uniform([], minval=0.0, maxval=max_stddev, dtype=tf.float32)**2
             denom = tf.math.sqrt(2*pi*var)
             h_filt = tf.math.exp(column_base/var)/denom
             w_filt = tf.math.exp(row_base/var)/denom
@@ -1895,20 +1895,20 @@ class ConvNet(object):
             weights = tf.transpose(weights, perm=[0, 1, 3, 2])
             convs = tf.nn.conv2d_transpose(x, weights, output_shape=output_shape, strides=conv_strides,
                                            padding=padding, data_format=data_format, dilations=conv_dilations)
-    
+
             if not tf.get_variable_scope().reuse:
                 self._params += kernel[0]*kernel[1]*in_channels*out_channels
             if self._curr_device == self.gpu_offset:
                 self._flops += out_size[0]*out_size[1]*kernel[0]*kernel[1]*in_channels*out_channels
-    
+
             if biased:
                 biases = self.bias_variable(out_channels, initializer=bias_initializer)
-    
+
                 if not tf.get_variable_scope().reuse:
                     self._params += out_channels
                 if self._curr_device == self.gpu_offset:
                     self._flops += out_size[0]*out_size[1]*out_channels
-    
+
                 return tf.nn.bias_add(convs, biases, data_format=data_format)
             else:
                 return convs
@@ -1942,7 +1942,9 @@ class ConvNet(object):
         return tf.nn.relu(x, name=name)
 
     def swish(self, x, name='swish'):
-        return tf.nn.swish(x, name=name)
+        with tf.variable_scope(name):
+            x = x*self.sigmoid(x)
+        return x
 
     def sigmoid(self, x, name=None):
         return tf.nn.sigmoid(x, name=name)
