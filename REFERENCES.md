@@ -18,3 +18,4 @@
 - Basic code GitHub: https://github.com/sualab/asirra-dogs-cats-classification
 - ResNet-18 example code: https://github.com/dalgu90/resnet-18-tensorflow/blob/master/resnet.py
 - Batch normalization example code: https://github.com/dalgu90/resnet-18-tensorflow/blob/master/utils.py
+- EfficientNet details: https://github.com/tensorflow/tpu/blob/master/models/official/efficientnet/efficientnet_builder.py
