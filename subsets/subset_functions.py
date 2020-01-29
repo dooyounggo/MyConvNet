@@ -319,7 +319,7 @@ def zero_pad(image, out_size, random=False, pad_value=0.0):
     out_size_max = [max(out_size[0], in_size[0]), max(out_size[1], in_size[1])]
     image_out = np.zeros(out_size_max + [in_size[-1]], dtype=image.dtype)
     if pad_value != 0.0:
-        image_out += pad_value
+        image_out += np.array(pad_value, dtype=image.dtype)
 
     if h_diff > 0 and w_diff > 0:
         if random:
