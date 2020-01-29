@@ -94,7 +94,7 @@ def read_subset_seg(subset_dir, shuffle=False, sample_size=None):
 
 
 def random_resized_crop(image, out_size, interpolation=cv2.INTER_LINEAR, random=True,
-                        scale=(1.0, 1.0), ratio=(1.0, 1.0), max_attempts=10, min_object_size=None):
+                        scale=(1.0, 1.0), ratio=(1.0, 1.0), max_attempts=10, min_object_size=None, pad_value=0.0):
 
     out_ratio = out_size[1]/out_size[0]
     in_size = image.shape
@@ -106,7 +106,7 @@ def random_resized_crop(image, out_size, interpolation=cv2.INTER_LINEAR, random=
     size_w = np.sqrt(h*w*out_ratio)
     padded_h = max(h, np.ceil(size_h*max_scale).astype(int))
     padded_w = max(w, np.ceil(size_w*max_scale).astype(int))
-    image = zero_pad(image, [padded_h, padded_w])
+    image = zero_pad(image, [padded_h, padded_w], pad_value=pad_value)
 
     offset_x = (padded_w - w)//2
     offset_y = (padded_h - h)//2
@@ -166,7 +166,7 @@ def random_resized_crop(image, out_size, interpolation=cv2.INTER_LINEAR, random=
     return to_float(image)
 
 
-def padded_resize(image, out_size, interpolation=cv2.INTER_LINEAR, random=False, scale=2.0):
+def padded_resize(image, out_size, interpolation=cv2.INTER_LINEAR, random=False, scale=2.0, pad_value=0.0):
     scaled_out_size = [np.around(out_size[0]*np.sqrt(scale)).astype(int),
                        np.around(out_size[1]*np.sqrt(scale)).astype(int)]
     in_size = image.shape
@@ -177,7 +177,7 @@ def padded_resize(image, out_size, interpolation=cv2.INTER_LINEAR, random=False,
     image = cv2.resize(image, dsize=(size_w, size_h), interpolation=interpolation)
     if size_h > scaled_out_size[0] or size_w > scaled_out_size[1]:
         image = crop(image, scaled_out_size, random=random)
-    image = zero_pad(image, scaled_out_size, random=random)
+    image = zero_pad(image, scaled_out_size, random=random, pad_value=pad_value)
 
     return to_float(image)
 
