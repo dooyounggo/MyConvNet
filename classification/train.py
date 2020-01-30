@@ -22,7 +22,6 @@ if os.path.exists(Param.save_dir):  # Check existing data
             print(err)
 else:
     os.makedirs(Param.save_dir)
-print('')
 
 # Load trainval set and split into train/val sets
 image_dirs, label_dirs, class_names = read_subset(Param.train_dir, shuffle=Param.d['shuffle'],
