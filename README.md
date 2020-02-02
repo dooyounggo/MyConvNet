@@ -8,6 +8,8 @@
   Verified on Windows 10 and Ubuntu 18.04 using PyCharm with Anaconda.
   
   Check out the [instruction](https://www.dropbox.com/s/64wtb6kvn9ms5o3/MyConvNet.pptx?dl=0).
+  
+  [Getting started with Linux](https://www.dropbox.com/s/uiz95c6vnlsvcp0/TF_Linux_SSH.pptx?dl=0).
 
 ## How To Run
 - Download all the files.
