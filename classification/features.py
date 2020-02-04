@@ -17,6 +17,7 @@ image_dirs, label_dirs, class_names = read_subset(Param.test_dir, shuffle=True, 
 Param.d['num_gpus'] = 1  # Utilizes only one GPU for convenience
 Param.d['shuffle'] = False
 test_set = DataSet(image_dirs, label_dirs, class_names=class_names, out_size=Param.d['image_size_test'],
+                   task_type=DataSet.IMAGE_CLASSIFICATION,
                    resize_method=Param.d['resize_type_test'], resize_randomness=Param.d['resize_random_test'],
                    **Param.d)
 
