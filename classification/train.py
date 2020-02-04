@@ -1,4 +1,4 @@
-from classification.parameters_adv import *
+from classification.parameters import *
 import shutil
 
 
