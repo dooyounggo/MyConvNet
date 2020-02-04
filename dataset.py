@@ -10,12 +10,13 @@ import subsets.subset_functions as sf
 
 
 class DataSet(object):
+    IMAGE_ONLY = None
     IMAGE_CLASSIFICATION = 'image_classification'
     IMAGE_SEGMENTATION = 'image_segmentation'
-    IMAGE_TO_IMAGE_TRANSLATION = 'image_to_image_translation'
-    OBJECT_DETECTION = 'object_detection'
-    INSTANCE_SEGMENTAION = 'instance_segmentation'
-    MULTI_LABEL_IMAGE_CLASSIFICATION = 'multi-label_image_classification'
+    # IMAGE_TO_IMAGE_TRANSLATION = 'image_to_image_translation'
+    # OBJECT_DETECTION = 'object_detection'
+    # INSTANCE_SEGMENTAION = 'instance_segmentation'
+    # MULTI_LABEL_IMAGE_CLASSIFICATION = 'multi-label_image_classification'
 
     RANDOM_RESIZED_CROP = 'random_resized_crop'
     RESIZE = 'resize'
@@ -30,7 +31,7 @@ class DataSet(object):
     INTERPOLATION_BICUBIC = 'bicubic'
 
     def __init__(self, image_dirs, label_dirs=None, class_names=None, num_classes=None, out_size=None,
-                 task_type=IMAGE_CLASSIFICATION, resize_method=None, resize_randomness=False, **kwargs):
+                 task_type=None, resize_method=None, resize_randomness=False, **kwargs):
         """
         :param image_dirs: list or tuple, paths to images
         :param label_dirs: list or tuple, paths to labels. If None, fake labels are created.
@@ -213,7 +214,10 @@ class DataSet(object):
         if not isinstance(label_dir, str):  # No label
             label = np.array(np.nan, dtype=np.float32)
         else:   # Note that the labels are not one-hot encoded.
-            if self.task_type == DataSet.IMAGE_CLASSIFICATION:
+            if self.task_type == DataSet.IMAGE_ONLY:
+                label = np.array(np.nan, dtype=np.float32)
+
+            elif self.task_type == DataSet.IMAGE_CLASSIFICATION:
                 ext = label_dir.split('.')[-1].lower()
                 if ext == 'csv':
                     with open(label_dir, 'r', encoding='utf-8') as f:
@@ -227,6 +231,7 @@ class DataSet(object):
                 else:
                     raise(ValueError, 'Label file extension of {} is not supported for {}'.format(ext, self.task_type))
                 label = np.array(label, dtype=np.float32)
+
             elif self.task_type == DataSet.IMAGE_SEGMENTATION:
                 ext = label_dir.split('.')[-1].lower()
                 if ext in sf.IMAGE_FORMATS:
@@ -235,6 +240,7 @@ class DataSet(object):
                     label = np.round(label[..., 0]*255)
                 else:
                     raise(ValueError, 'Label file extension of {} is not supported for {}'.format(ext, self.task_type))
+
             else:
                 raise(ValueError, '{} task is not supported'.format(self.task_type))
 
