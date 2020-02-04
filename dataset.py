@@ -13,6 +13,7 @@ class DataSet(object):
     IMAGE_ONLY = None
     IMAGE_CLASSIFICATION = 'image_classification'
     IMAGE_SEGMENTATION = 'image_segmentation'
+    DCGAN = 'deep_convolutional_gan'
     # IMAGE_TO_IMAGE_TRANSLATION = 'image_to_image_translation'
     # OBJECT_DETECTION = 'object_detection'
     # INSTANCE_SEGMENTAION = 'instance_segmentation'
@@ -31,7 +32,7 @@ class DataSet(object):
     INTERPOLATION_BICUBIC = 'bicubic'
 
     def __init__(self, image_dirs, label_dirs=None, class_names=None, num_classes=None, out_size=None,
-                 task_type=None, resize_method=None, resize_randomness=False, **kwargs):
+                 task_type=None, resize_method=None, resize_randomness=False, from_memory=False, **kwargs):
         """
         :param image_dirs: list or tuple, paths to images
         :param label_dirs: list or tuple, paths to labels. If None, fake labels are created.
@@ -40,8 +41,11 @@ class DataSet(object):
         :param task_type: string, type of the task for which the dataset is intended.
         :param resize_method: string, resizing method for image preprocessing.
         :param resize_randomness: Bool, randomness of resize operations such as crop and padding.
+        :param from_memory: Bool, if true, image_dirs and label_dirs must be numpy arrays.
         :param kwargs: dict, extra arguments containing hyperparameters.
         """
+        if image_dirs is None:
+            image_dirs = [np.nan for _ in label_dirs]  # Fake images
         if label_dirs is None:
             label_dirs = [np.nan for _ in image_dirs]  # Fake labels
         assert len(image_dirs) == len(label_dirs), 'Number of examples mismatch, between images and labels'
@@ -61,6 +65,8 @@ class DataSet(object):
             self._resize_method = resize_method
         self._resize_randomness = resize_randomness
         self._resize_interpolation = kwargs.get('resize_interpolation', 'bilinear')
+
+        self._from_memory = from_memory
 
         if class_names is None:
             assert num_classes is not None, 'Either class_names or num_classes must be provided.'
@@ -93,10 +99,11 @@ class DataSet(object):
                     if self.shuffle:
                         dataset = dataset.shuffle(buffer_size=min([np.ceil(self.num_examples/self.num_shards),
                                                                    np.ceil(1024*batch_size_per_gpu/32)]))
-                    dataset = dataset.map(lambda image_dir, label_dir: tuple(tf.py_func(self._load_function,
-                                                                                        (image_dir, label_dir),
-                                                                                        (tf.float32, tf.float32))),
-                                          num_parallel_calls=kwargs.get('num_parallel_calls', 4)//self.num_shards)
+                    if not self.from_memory:
+                        dataset = dataset.map(lambda image_dir, label_dir: tuple(tf.py_func(self._load_function,
+                                                                                            (image_dir, label_dir),
+                                                                                            (tf.float32, tf.float32))),
+                                              num_parallel_calls=kwargs.get('num_parallel_calls', 4)//self.num_shards)
                     dataset = dataset.batch(batch_size_per_gpu)
                     dataset = dataset.apply(tf.data.experimental.copy_to_device('/gpu:{}'.format(i + self.gpu_offset)))
                     with tf.device('/gpu:{}'.format(i + self.gpu_offset)):
@@ -156,6 +163,10 @@ class DataSet(object):
         return self._resize_interpolation
 
     @property
+    def from_memory(self):
+        return self._from_memory
+
+    @property
     def image_mean(self):
         return self._image_mean
 
@@ -200,16 +211,24 @@ class DataSet(object):
             image_dir = image_dir.decode()
         if isinstance(label_dir, bytes):
             label_dir = label_dir.decode()
-        image = cv2.cvtColor(cv2.imread(image_dir), cv2.COLOR_BGR2RGB)
-        if self.resize_interpolation.lower() == 'nearest' or self.resize_interpolation.lower() == 'nearest neighbor':
-            interpolation = cv2.INTER_NEAREST
-        elif self.resize_interpolation.lower() == 'bilinear':
-            interpolation = cv2.INTER_LINEAR
-        elif self.resize_interpolation.lower() == 'bicubic':
-            interpolation = cv2.INTER_CUBIC
+
+        if not isinstance(image_dir, str):  # No image
+            if self.task_type == DataSet.DCGAN:
+                image = np.array(np.nan, dtype=np.float32)
+            else:
+                raise(ValueError, 'image_dir must be provided')
         else:
-            raise(ValueError, 'Interpolation method of {} is not supported.'.format(self.resize_interpolation))
-        image = self._resize_function(image, self.image_size, interpolation=interpolation)
+            image = cv2.cvtColor(cv2.imread(image_dir), cv2.COLOR_BGR2RGB)
+            interpolation_method = self.resize_interpolation.lower()
+            if interpolation_method == 'nearest' or interpolation_method == 'nearest neighbor':
+                interpolation = cv2.INTER_NEAREST
+            elif interpolation_method == 'bilinear':
+                interpolation = cv2.INTER_LINEAR
+            elif interpolation_method == 'bicubic':
+                interpolation = cv2.INTER_CUBIC
+            else:
+                raise(ValueError, 'Interpolation method of {} is not supported.'.format(self.resize_interpolation))
+            image = self._resize_function(image, self.image_size, interpolation=interpolation)
 
         if not isinstance(label_dir, str):  # No label
             label = np.array(np.nan, dtype=np.float32)
@@ -256,23 +275,24 @@ class DataSet(object):
         if image.shape[-1] == 1:
             image = np.tile(image, (1, 1, 3))
 
-        if self.resize_method.lower() == 'resize':
+        resize_method = self.resize_method.lower()
+        if resize_method == 'resize':
             image = sf.to_float(cv2.resize(image, dsize=tuple(image_size[1::-1]), interpolation=interpolation))
-        elif self.resize_method.lower() == 'resize_fit':
+        elif resize_method == 'resize_fit':
             image = sf.resize_fit(image, image_size, interpolation=interpolation, random=self.resize_randomness,
                                   pad_value=pad_value)
-        elif self.resize_method.lower() == 'resize_expand':
+        elif resize_method == 'resize_expand':
             image = sf.resize_expand(image, image_size, interpolation=interpolation, random=self.resize_randomness)
-        elif self.resize_method.lower() == 'resize_fit_expand':
+        elif resize_method == 'resize_fit_expand':
             image = sf.resize_fit_expand(image, image_size, interpolation=interpolation, random=self.resize_randomness,
                                          pad_value=pad_value)
-        elif self.resize_method.lower() == 'resize_with_crop_or_pad':
+        elif resize_method == 'resize_with_crop_or_pad':
             image = sf.resize_with_crop_or_pad(image, image_size, random=self.resize_randomness, pad_value=pad_value)
-        elif self.resize_method.lower() == 'padded_resize' or self.resize_method.lower() == 'pad_resize':
+        elif resize_method == 'padded_resize' or resize_method == 'pad_resize':
             scale = self._parameters.get('padded_resize_scale', 2.0)
             image = sf.padded_resize(image, image_size, interpolation=interpolation,
                                      random=self.resize_randomness, scale=scale, pad_value=pad_value)
-        elif self.resize_method.lower() == 'random_resized_crop' or self.resize_method.lower() == 'random_resize_crop':
+        elif resize_method == 'random_resized_crop' or resize_method == 'random_resize_crop':
             scale = self._parameters.get('rand_resized_crop_scale', (0.08, 1.0))
             ratio = self._parameters.get('rand_resized_crop_ratio', (3/4, 4/3))
             max_attempts = self._parameters.get('max_crop_attempts', 10)
