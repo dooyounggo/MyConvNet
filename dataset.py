@@ -10,13 +10,33 @@ import subsets.subset_functions as sf
 
 
 class DataSet(object):
+    IMAGE_CLASSIFICATION = 'image_classification'
+    IMAGE_SEGMENTATION = 'image_segmentation'
+    IMAGE_TO_IMAGE_TRANSLATION = 'image_to_image_translation'
+    OBJECT_DETECTION = 'object_detection'
+    INSTANCE_SEGMENTAION = 'instance_segmentation'
+    MULTI_LABEL_IMAGE_CLASSIFICATION = 'multi-label_image_classification'
+
+    RANDOM_RESIZED_CROP = 'random_resized_crop'
+    RESIZE = 'resize'
+    RESIZE_FIT = 'resize_fit'
+    RESIZE_EXPAND = 'resize_expand'
+    RESIZE_FIT_EXPAND = 'resize_fit_expand'
+    RESIZE_WITH_CROP_OR_PAD = 'resize_with_crop_or_pad'
+    PADDED_RESIZE = 'padded_resize'
+
+    INTERPOLATION_NEAREST = 'nearest'
+    INTERPOLATION_BILINEAR = 'bilinear'
+    INTERPOLATION_BICUBIC = 'bicubic'
+
     def __init__(self, image_dirs, label_dirs=None, class_names=None, num_classes=None, out_size=None,
-                 resize_method=None, resize_randomness=False, **kwargs):
+                 task_type=IMAGE_CLASSIFICATION, resize_method=None, resize_randomness=False, **kwargs):
         """
         :param image_dirs: list or tuple, paths to images
         :param label_dirs: list or tuple, paths to labels. If None, fake labels are created.
         :param class_names: list or tuple, names of each class. Used to count the number of classes.
         :param out_size: list or tuple, size of images to be used for training.
+        :param task_type: string, type of the task for which the dataset is intended.
         :param resize_method: string, resizing method for image preprocessing.
         :param resize_randomness: Bool, randomness of resize operations such as crop and padding.
         :param kwargs: dict, extra arguments containing hyperparameters.
@@ -31,6 +51,8 @@ class DataSet(object):
             self._image_size = kwargs.get('image_size', (256, 256, 3))
         else:
             self._image_size = out_size
+
+        self._task_type = task_type
 
         if resize_method is None:
             self._resize_method = kwargs.get('resize_type', 'resize')
@@ -95,6 +117,10 @@ class DataSet(object):
     @property
     def image_size(self):
         return self._image_size
+
+    @property
+    def task_type(self):
+        return self._task_type
 
     @property
     def num_shards(self):
@@ -187,23 +213,30 @@ class DataSet(object):
         if not isinstance(label_dir, str):  # No label
             label = np.array(np.nan, dtype=np.float32)
         else:   # Note that the labels are not one-hot encoded.
-            if label_dir.split('.')[-1].lower() == 'csv':   # Classification and detection
-                f = open(label_dir, 'r', encoding='utf-8')
-                rdr = csv.reader(f)
-                line = next(rdr)
-                f.close()
-
-                if len(line) == 1:  # Classification
+            if self.task_type == DataSet.IMAGE_CLASSIFICATION:
+                ext = label_dir.split('.')[-1].lower()
+                if ext == 'csv':
+                    with open(label_dir, 'r', encoding='utf-8') as f:
+                        rdr = csv.reader(f)
+                        line = next(rdr)
                     label = int(line[0])
+                elif ext == 'txt':
+                    with open(label_dir, 'r', encoding='utf-8') as f:
+                        line = f.readline()
+                    label = int(line.rstrip())
                 else:
-                    label = []      # Detection, TBA
-                    for l in line:
-                        label.append(int(l))
+                    raise(ValueError, 'Label file extension of {} is not supported for {}'.format(ext, self.task_type))
                 label = np.array(label, dtype=np.float32)
-            else:   # Segmentation. Pixels with a value of 0 are ignored, so assign 1 to the first class.
-                label = cv2.imread(label_dir, cv2.IMREAD_GRAYSCALE)
-                label = self._resize_function(label, self.image_size, interpolation=cv2.INTER_NEAREST)
-                label = np.round(label[..., 0]*255)
+            elif self.task_type == DataSet.IMAGE_SEGMENTATION:
+                ext = label_dir.split('.')[-1].lower()
+                if ext in sf.IMAGE_FORMATS:
+                    label = cv2.imread(label_dir, cv2.IMREAD_GRAYSCALE)
+                    label = self._resize_function(label, self.image_size, interpolation=cv2.INTER_NEAREST)
+                    label = np.round(label[..., 0]*255)
+                else:
+                    raise(ValueError, 'Label file extension of {} is not supported for {}'.format(ext, self.task_type))
+            else:
+                raise(ValueError, '{} task is not supported'.format(self.task_type))
 
         return image, label
 
@@ -227,6 +260,8 @@ class DataSet(object):
         elif self.resize_method.lower() == 'resize_fit_expand':
             image = sf.resize_fit_expand(image, image_size, interpolation=interpolation, random=self.resize_randomness,
                                          pad_value=pad_value)
+        elif self.resize_method.lower() == 'resize_with_crop_or_pad':
+            image = sf.resize_with_crop_or_pad(image, image_size, random=self.resize_randomness, pad_value=pad_value)
         elif self.resize_method.lower() == 'padded_resize' or self.resize_method.lower() == 'pad_resize':
             scale = self._parameters.get('padded_resize_scale', 2.0)
             image = sf.padded_resize(image, image_size, interpolation=interpolation,
