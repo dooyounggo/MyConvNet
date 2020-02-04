@@ -7,11 +7,12 @@ import os
 import numpy as np
 import cv2
 
-INT_TYPES = ['uint8', 'uint16', 'uint32', 'uint64', 'int8', 'int16', 'int32', 'int64']
-FLOAT_TYPES = ['float16', 'float32', 'float64']
+INT_TYPES = ('uint8', 'uint16', 'uint32', 'uint64', 'int8', 'int16', 'int32', 'int64')
+FLOAT_TYPES = ('float16', 'float32', 'float64')
+IMAGE_FORMATS = ('bmp', 'dib', 'jpeg', 'jpe', 'jp2', 'png', 'webp', 'pbm', 'pgm', 'ppm', 'sr', 'ras', 'tiff', 'tif')
 
 
-def read_subset_cls(subset_dir, shuffle=False, sample_size=None):
+def read_subset_cls(subset_dir, shuffle=False, sample_size=None, image_dir=None, label_dir=None):
     filenames = os.listdir(subset_dir)
     filenames.sort()
     image_dirs = []
@@ -21,16 +22,36 @@ def read_subset_cls(subset_dir, shuffle=False, sample_size=None):
         full_filename = os.path.join(subset_dir, fname)
         if ext == 'csv':
             label_dirs.append(full_filename)
-        elif ext == 'jpg' or ext == 'jpeg' or ext == 'bmp':
+        elif ext in ('jpeg', 'jpg', 'bmp'):
             image_dirs.append(full_filename)
 
-    set_size = len(image_dirs)
+    if image_dir is not None:
+        filenames = os.listdir(os.path.join(subset_dir, image_dir))
+        filenames.sort()
+        image_dirs = []
+        for fname in filenames:
+            ext = fname.split('.')[-1].lower()
+            full_filename = os.path.join(subset_dir, image_dir, fname)
+            if ext in IMAGE_FORMATS:
+                image_dirs.append(full_filename)
+
+    if label_dir is not None:
+        filenames = os.listdir(os.path.join(subset_dir, label_dir))
+        filenames.sort()
+        label_dirs = []
+        for fname in filenames:
+            ext = fname.split('.')[-1].lower()
+            full_filename = os.path.join(subset_dir, label_dir, fname)
+            if ext in ('csv', 'txt'):
+                label_dirs.append(full_filename)
+
     if len(label_dirs) == 0:
         label_dirs = None
     else:
         assert len(image_dirs) == len(label_dirs), \
             'Number of examples mismatch: {} images vs. {} labels'.format(len(image_dirs), len(label_dirs))
 
+    set_size = len(image_dirs)
     if sample_size is not None and sample_size < set_size:
         if shuffle:
             idx = np.random.choice(np.arange(set_size), size=sample_size, replace=False).astype(int)
@@ -52,7 +73,7 @@ def read_subset_cls(subset_dir, shuffle=False, sample_size=None):
     return image_dirs, label_dirs
 
 
-def read_subset_seg(subset_dir, shuffle=False, sample_size=None):
+def read_subset_seg(subset_dir, shuffle=False, sample_size=None, image_dir=None, label_dir=None):
     filenames = os.listdir(subset_dir)
     filenames.sort()
     image_dirs = []
@@ -62,16 +83,36 @@ def read_subset_seg(subset_dir, shuffle=False, sample_size=None):
         full_filename = os.path.join(subset_dir, fname)
         if ext == 'png':
             label_dirs.append(full_filename)
-        elif ext == 'jpg' or ext == 'jpeg' or ext == 'bmp':
+        elif ext in ('jpeg', 'jpg', 'bmp'):
             image_dirs.append(full_filename)
 
-    set_size = len(image_dirs)
+    if image_dir is not None:
+        filenames = os.listdir(os.path.join(subset_dir, image_dir))
+        filenames.sort()
+        image_dirs = []
+        for fname in filenames:
+            ext = fname.split('.')[-1].lower()
+            full_filename = os.path.join(subset_dir, image_dir, fname)
+            if ext in IMAGE_FORMATS:
+                image_dirs.append(full_filename)
+
+    if label_dir is not None:
+        filenames = os.listdir(os.path.join(subset_dir, label_dir))
+        filenames.sort()
+        label_dirs = []
+        for fname in filenames:
+            ext = fname.split('.')[-1].lower()
+            full_filename = os.path.join(subset_dir, label_dir, fname)
+            if ext in IMAGE_FORMATS:
+                label_dirs.append(full_filename)
+
     if len(label_dirs) == 0:
         label_dirs = None
     else:
         assert len(image_dirs) == len(label_dirs), \
             'Number of examples mismatch: {} images vs. {} labels'.format(len(image_dirs), len(label_dirs))
 
+    set_size = len(image_dirs)
     if sample_size is not None and sample_size < set_size:
         if shuffle:
             idx = np.random.choice(np.arange(set_size), size=sample_size, replace=False).astype(int)
