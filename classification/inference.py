@@ -18,7 +18,7 @@ if label_dirs is not None:
     label_dirs = label_dirs[idx_start:min(num_data, idx_end)]
 Param.d['shuffle'] = False
 test_set = DataSet(image_dirs, label_dirs, class_names=class_names, out_size=Param.d['image_size_test'],
-                   task_type=DataSet.IMAGE_CLASSIFICATION,
+                   task_type=DataSet.IMAGE_ONLY,
                    resize_method=Param.d['resize_type_test'], resize_randomness=Param.d['resize_random_test'],
                    **Param.d)
 
