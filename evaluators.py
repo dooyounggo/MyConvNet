@@ -464,6 +464,36 @@ class MeanIoUEvaluator(Evaluator):
         return score
 
 
+class NullEvaluator(Evaluator):
+    Y_TRUE = 'return_y_true'
+    Y_PRED = 'return_y_pred'
+
+    def check_params(self, **kwargs):
+        self.to_return = kwargs.get('to_return', NullEvaluator.Y_TRUE)
+
+    @property
+    def name(self):
+        return 'Mean Intersection over Union'
+
+    @property
+    def worst_score(self):
+        return 0.0
+
+    @property
+    def mode(self):
+        return 'max'
+
+    def score(self, y_true, y_pred):
+        if self.to_return == NullEvaluator.Y_TRUE:
+            score = y_true
+        elif self.to_return == NullEvaluator.Y_PRED:
+            score = y_pred
+        else:
+            score = np.broadcast_to([self.to_return], y_true.shape[0])
+
+        return score
+
+
 def precision_and_recall(y_t, y_p, valid=None):     # Precision and recall.
     tp, fp, _, fn = conditions(y_t, y_p, valid)
     if tp == 0:
