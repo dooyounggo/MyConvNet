@@ -1935,19 +1935,22 @@ class ConvNet(object):
         return x
 
     def activation(self, x, activation_type='relu', params=None):
-        act = activation_type.lower()
-        if act == 'relu':
-            return self.relu(x, name=activation_type)
-        elif act == 'lrelu':
-            return self.lrelu(x, alpha=params, name=activation_type)
-        elif act == 'tanh':
-            return self.tanh(x, name=activation_type)
-        elif act == 'sigmoid':
-            return self.sigmoid(x, name=activation_type)
-        elif act == 'swish':
-            return self.swish(x, name=activation_type)
+        if activation_type is None:
+            return x
         else:
-            raise ValueError('Activation type of {} is not supported'.format(activation_type))
+            act = activation_type.lower()
+            if act == 'relu':
+                return self.relu(x, name=activation_type)
+            elif act == 'lrelu':
+                return self.lrelu(x, alpha=params, name=activation_type)
+            elif act == 'tanh':
+                return self.tanh(x, name=activation_type)
+            elif act == 'sigmoid':
+                return self.sigmoid(x, name=activation_type)
+            elif act == 'swish':
+                return self.swish(x, name=activation_type)
+            else:
+                raise ValueError('Activation type of {} is not supported'.format(activation_type))
 
     def relu(self, x, name='relu'):
         return tf.nn.relu(x, name=name)
