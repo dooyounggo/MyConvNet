@@ -25,13 +25,14 @@ class SegNet(ConvNet):
                         iterator = tf.data.Iterator.from_string_handle(handle, (tf.float32, tf.float32),
                                                                        output_shapes=output_shapes)
                         self.X, self.Y = iterator.get_next()
-                        self.X_in.append(self.X)
-                        self.Y_in.append(self.Y)
 
                         # FIXME: Fake label generation
                         self._broadcast_shape = [tf.shape(self.X)[1], tf.shape(self.X)[2]]
                         self.Y = tf.map_fn(self.broadcast_nans, self.Y)  # Broadcasting for NaNs
                         self.Y = tf.where(tf.is_nan(self.Y), tf.zeros_like(self.Y), self.Y)
+
+                        self.X_in.append(self.X)
+                        self.Y_in.append(self.Y)
 
                         self.Y = tf.expand_dims(self.Y, axis=-1)  # Attach the channel dimension for augmentation
 
