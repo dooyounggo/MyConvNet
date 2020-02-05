@@ -1,5 +1,5 @@
 import tensorflow as tf
-from segnet import SegNet
+from segmentation.segnet import SegNet
 
 
 class UNet(SegNet):
