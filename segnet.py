@@ -100,6 +100,7 @@ class SegNet(ConvNet):
         """
         Build model of segmentation networks.
         This should be implemented.
+        :return dict containing tensors. Must include 'logits' and 'pred' tensors.
         """
         pass
 
