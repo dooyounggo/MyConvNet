@@ -1,5 +1,5 @@
 import tensorflow as tf
-from segnet import SegNet
+from segmentation.segnet import SegNet
 from models.resnet_v1_5_dilated import ResNet50OS16 as ResNet
 
 
