@@ -469,11 +469,13 @@ class NullEvaluator(Evaluator):
     Y_PRED = 'return_y_pred'
 
     def check_params(self, **kwargs):
-        self.to_return = kwargs.get('to_return', NullEvaluator.Y_TRUE)
+        self.to_return = kwargs.get('to_return', 0.0)
+        self.score_name = kwargs.get('score_name', 'Null Score')
+        self.score_mode = kwargs.get('score_mode', 'max')
 
     @property
     def name(self):
-        return 'Mean Intersection over Union'
+        return self.score_name
 
     @property
     def worst_score(self):
@@ -481,7 +483,7 @@ class NullEvaluator(Evaluator):
 
     @property
     def mode(self):
-        return 'max'
+        return self.score_mode
 
     def score(self, y_true, y_pred):
         if self.to_return == NullEvaluator.Y_TRUE:
