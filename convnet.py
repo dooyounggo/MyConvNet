@@ -254,8 +254,8 @@ class ConvNet(object):
             for i in range(self.gpu_offset, self.num_gpus + self.gpu_offset):
                 self._curr_device = i
                 self._curr_block = 0
-                self._num_blocks = 1
-                self._curr_dependent_op = 0
+                self._num_blocks = 1  # Total number of blocks
+                self._curr_dependent_op = 0  # For ops with dependencies between GPUs such as BN
                 with tf.device('/gpu:' + str(i)):
                     with tf.name_scope('gpu{}'.format(i)):
                         handle = tf.placeholder(tf.string, shape=[], name='handle')  # A handle for feedable iterator
