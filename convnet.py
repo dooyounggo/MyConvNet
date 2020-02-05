@@ -258,7 +258,7 @@ class ConvNet(object):
                 self._curr_dependent_op = 0  # For ops with dependencies between GPUs such as BN
                 with tf.device('/gpu:' + str(i)):
                     with tf.name_scope('gpu{}'.format(i)):
-                        handle = tf.placeholder(tf.string, shape=[], name='handle')  # A handle for feedable iterator
+                        handle = tf.placeholder(tf.string, shape=[], name='handle')  # Handle for the feedable iterator
                         self.handles.append(handle)
                         iterator = tf.data.Iterator.from_string_handle(handle, (tf.float32, tf.float32),
                                                                        output_shapes=output_shapes)
@@ -384,7 +384,7 @@ class ConvNet(object):
                 valid_mask = tf.cast(valid_mask, dtype=tf.float32)
 
             if ls_factor > 0.0:
-                labels = self.label_smoothing(ls_factor)
+                labels = self.label_smoothing(self.Y, ls_factor)
             else:
                 labels = self.Y
 
@@ -408,10 +408,10 @@ class ConvNet(object):
 
         return loss
 
-    def label_smoothing(self, ls_factor, name='label_smoothing'):
+    def label_smoothing(self, label, ls_factor, name='label_smoothing'):
         with tf.variable_scope(name):
             ls_factor = tf.constant(ls_factor, dtype=tf.float32, name='label_smoothing_factor')
-            labels = self.Y*(1.0 - ls_factor) + ls_factor/self.num_classes
+            labels = label*(1.0 - ls_factor) + ls_factor/self.num_classes
 
         return labels
 
