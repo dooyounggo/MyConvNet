@@ -613,7 +613,6 @@ class Optimizer(object):
 
 
 class MomentumOptimizer(Optimizer):
-
     def _optimizer(self, **kwargs):
         momentum = kwargs.get('momentum', 0.9)
         gradient_threshold = kwargs.get('gradient_threshold', None)
@@ -626,7 +625,6 @@ class MomentumOptimizer(Optimizer):
 
 
 class RMSPropOptimizer(Optimizer):
-
     def _optimizer(self, **kwargs):
         momentum = kwargs.get('momentum', 0.9)
         decay = 0.9
