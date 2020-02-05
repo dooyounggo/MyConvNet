@@ -263,13 +263,14 @@ class ConvNet(object):
                         iterator = tf.data.Iterator.from_string_handle(handle, (tf.float32, tf.float32),
                                                                        output_shapes=output_shapes)
                         self.X, self.Y = iterator.get_next()
-                        self.X_in.append(self.X)
-                        self.Y_in.append(self.Y)
 
                         # FIXME: Fake label generation
                         self.Y = tf.where(tf.is_nan(self.Y),  # Fake label is created when the label is NaN
                                           0.0 - tf.ones_like(self.Y, dtype=tf.float32),
                                           self.Y)
+
+                        self.X_in.append(self.X)
+                        self.Y_in.append(self.Y)
 
                         self.Y = tf.cast(self.Y, dtype=tf.int32)
                         self.Y = tf.one_hot(self.Y, depth=self.num_classes, dtype=tf.float32)  # one-hot encoding
