@@ -212,11 +212,8 @@ class DataSet(object):
         if isinstance(label_dir, bytes):
             label_dir = label_dir.decode()
 
-        if not isinstance(image_dir, str):  # No image
-            if self.task_type == DataSet.DCGAN:
-                image = np.array(np.nan, dtype=np.float32)
-            else:
-                raise(ValueError, 'image_dir must be provided')
+        if not isinstance(image_dir, str):  # No image. A fake image is generated.
+            image = np.zeros(self.image_size, dtype=np.float32)
         else:
             image = cv2.cvtColor(cv2.imread(image_dir), cv2.COLOR_BGR2RGB)
             interpolation_method = self.resize_interpolation.lower()
