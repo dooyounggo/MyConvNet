@@ -1,5 +1,5 @@
 import tensorflow as tf
-from segnet import SegNet
+from segmentation.segnet import SegNet
 from models.resnet_v2_d_cbam import ResNetCBAM50 as ResNet
 from models.efficientnet import EfficientNetB3 as EffNet
 
