@@ -20,7 +20,7 @@ class SegNet(ConvNet):
                 self._curr_dependent_op = 0  # For ops with dependencies between GPUs such as BN
                 with tf.device('/gpu:' + str(i)):
                     with tf.name_scope('gpu{}'.format(i)):
-                        handle = tf.placeholder(tf.string, shape=[], name='handle')  # A handle for feedable iterator
+                        handle = tf.placeholder(tf.string, shape=[], name='handle')  # Handle for the feedable iterator
                         self.handles.append(handle)
                         iterator = tf.data.Iterator.from_string_handle(handle, (tf.float32, tf.float32),
                                                                        output_shapes=output_shapes)
@@ -104,11 +104,11 @@ class SegNet(ConvNet):
         """
         pass
 
-    def label_smoothing(self, ls_factor, name='label_smoothing'):
+    def label_smoothing(self, label, ls_factor, name='label_smoothing'):
         with tf.variable_scope(name):
             ls_factor = tf.constant(ls_factor, dtype=tf.float32, name='label_smoothing_factor')
-            avg_labels = tf.nn.avg_pool2d(self.Y, (5, 5), (1, 1), padding='SAME')
-            labels = (1.0 - ls_factor)*self.Y + ls_factor*avg_labels
+            avg_labels = tf.nn.avg_pool2d(label, (5, 5), (1, 1), padding='SAME')
+            labels = (1.0 - ls_factor)*label + ls_factor*avg_labels
         return labels
 
     def broadcast_nans(self, y):
