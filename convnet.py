@@ -1852,7 +1852,8 @@ class ConvNet(object):
 
     def transposed_conv_layer(self, x, kernel, stride, out_channels, padding='SAME', biased=True, output_shape=None,
                               dilation=(1, 1), scope=None, weight_initializer=tf.initializers.he_normal(),
-                              bias_initializer=tf.initializers.zeros(), ws=False):
+                              bias_initializer=tf.initializers.zeros(), ws=False,
+                              verbose=False):
         if not isinstance(kernel, (list, tuple)):
             kernel = [kernel, kernel]
         elif len(kernel) == 1:
@@ -1889,6 +1890,10 @@ class ConvNet(object):
                 else:
                     output_shape = [batch_size, h*stride[0], w*stride[1], out_channels]
             out_size = output_shape[1:3]
+
+        if verbose:
+            print(tf.get_variable_scope().name + ': [{}, {}, {}], k=({}, {}), s=({}, {}), c={}'
+                  .format(h, w, in_channels, kernel[0], kernel[1], stride[0], stride[1], out_channels))
 
         with tf.variable_scope(scope) if scope is not None else nullcontext():
             weights = self.weight_variable([kernel[0], kernel[1], in_channels, out_channels],
@@ -1929,26 +1934,37 @@ class ConvNet(object):
 
         return x
 
-    def activation(self, x, activation_type='relu'):
-        if activation_type.lower() == 'relu':
+    def activation(self, x, activation_type='relu', params=None):
+        act = activation_type.lower()
+        if act == 'relu':
             return self.relu(x, name=activation_type)
-        elif activation_type.lower() == 'swish':
-            return self.swish(x, name=activation_type)
-        elif activation_type.lower() == 'sigmoid':
+        elif act == 'lrelu':
+            return self.lrelu(x, alpha=params, name=activation_type)
+        elif act == 'tanh':
+            return self.tanh(x, name=activation_type)
+        elif act == 'sigmoid':
             return self.sigmoid(x, name=activation_type)
+        elif act == 'swish':
+            return self.swish(x, name=activation_type)
         else:
             raise ValueError('Activation type of {} is not supported'.format(activation_type))
 
     def relu(self, x, name='relu'):
         return tf.nn.relu(x, name=name)
 
+    def lrelu(self, x, alpha=0.2, name='lrelu'):
+        return tf.nn.leaky_relu(x, alpha=alpha, name=name)
+
+    def tanh(self, x, name='tanh'):
+        return tf.nn.tanh(x, name=name)
+
+    def sigmoid(self, x, name=None):
+        return tf.nn.sigmoid(x, name=name)
+
     def swish(self, x, name='swish'):
         with tf.variable_scope(name):
             x = x*self.sigmoid(x)
         return x
-
-    def sigmoid(self, x, name=None):
-        return tf.nn.sigmoid(x, name=name)
 
     def grad_cam(self, logits, conv_layer, y=None):
         eps = 1e-4
