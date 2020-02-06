@@ -159,7 +159,8 @@ class Optimizer(object):
                 opt_op = optimizer.apply_gradients(avg_grads_and_vars, global_step=self.model.global_step)
         return opt_op
 
-    def train(self, save_dir='./tmp', transfer_dir=None, details=False, verbose=True, show_each_step=False, **kwargs):
+    def train(self, save_dir='./tmp', transfer_dir=None, details=False, verbose=True,
+              show_each_step=False, show_percentage=True, **kwargs):
         train_size = self.train_set.num_examples
         num_steps_per_epoch = np.ceil(train_size/self.batch_size).astype(int)
         self.steps_per_epoch = num_steps_per_epoch
@@ -464,12 +465,20 @@ class Optimizer(object):
                     start = 0 if pkl_loaded else start_epoch
                 if self.val_set is not None:
                     if verbose:
-                        print('[epoch {}/{}]\tTrain loss: {:.6f}  |Train score: {:2.2%}  '
-                              '|Eval loss: {:.6f}  |Eval score: {:2.2%}  |LR: {:.6f}  '
-                              '|Elapsed time: {:5.0f} sec'
-                              .format(self.curr_epoch, self.num_epochs, step_loss, step_score,
-                                      eval_loss, eval_score, self.init_learning_rate*self.curr_multiplier,
-                                      time.time() - start_time))
+                        if show_percentage:
+                            print('[epoch {}/{}]\tTrain loss: {:.5f}  |Train score: {:2.3%}  '
+                                  '|Eval loss: {:.5f}  |Eval score: {:2.3%}  |LR: {:.7f}  '
+                                  '|Elapsed time: {:5.0f} sec'
+                                  .format(self.curr_epoch, self.num_epochs, step_loss, step_score,
+                                          eval_loss, eval_score, self.init_learning_rate*self.curr_multiplier,
+                                          time.time() - start_time))
+                        else:
+                            print('[epoch {}/{}]\tTrain loss: {:.5f}  |Train score: {:.5f}  '
+                                  '|Eval loss: {:.5f}  |Eval score: {:.5f}  |LR: {:.7f}  '
+                                  '|Elapsed time: {:5.0f} sec'
+                                  .format(self.curr_epoch, self.num_epochs, step_loss, step_score,
+                                          eval_loss, eval_score, self.init_learning_rate*self.curr_multiplier,
+                                          time.time() - start_time))
                     if len(eval_losses) > 0:
                         plot_learning_curve(train_losses, train_scores,
                                             eval_losses=eval_losses, eval_scores=eval_scores,
@@ -480,10 +489,16 @@ class Optimizer(object):
 
                 else:
                     if verbose:
-                        print('[epoch {}/{}]\tTrain loss: {:.6f}  |Train score: {:2.2%}  |LR: {:.6f}  '
-                              '|Elapsed time: {:5.0f} sec'
-                              .format(self.curr_epoch, self.num_epochs, step_loss, step_score,
-                                      self.init_learning_rate*self.curr_multiplier, time.time() - start_time))
+                        if show_percentage:
+                            print('[epoch {}/{}]\tTrain loss: {:.5f}  |Train score: {:2.3%}  |LR: {:.7f}  '
+                                  '|Elapsed time: {:5.0f} sec'
+                                  .format(self.curr_epoch, self.num_epochs, step_loss, step_score,
+                                          self.init_learning_rate*self.curr_multiplier, time.time() - start_time))
+                        else:
+                            print('[epoch {}/{}]\tTrain loss: {:.5f}  |Train score: {:.5f}  |LR: {:.7f}  '
+                                  '|Elapsed time: {:5.0f} sec'
+                                  .format(self.curr_epoch, self.num_epochs, step_loss, step_score,
+                                          self.init_learning_rate*self.curr_multiplier, time.time() - start_time))
                     plot_learning_curve(train_losses, train_scores, eval_losses=None, eval_scores=None,
                                         name=self.evaluator.name,
                                         loss_threshold=max([2*np.log(self.model.num_classes), min(train_losses)*2]),
