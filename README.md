@@ -5,6 +5,8 @@
   
   Supports image classification and semantic segmentation tasks.
   
+  DCGAN is now available.
+  
   Verified on Windows 10 and Ubuntu 18.04 using PyCharm with Anaconda.
   
   Check out the [instruction](https://www.dropbox.com/s/64wtb6kvn9ms5o3/MyConvNet.pptx?dl=0).
