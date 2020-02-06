@@ -487,11 +487,11 @@ class NullEvaluator(Evaluator):
 
     def score(self, y_true, y_pred):
         if self.to_return == NullEvaluator.Y_TRUE:
-            score = y_true
+            score = y_true.mean()
         elif self.to_return == NullEvaluator.Y_PRED:
-            score = y_pred
+            score = y_pred.mean()
         else:
-            score = np.broadcast_to([self.to_return], y_true.shape[0])
+            score = self.to_return
 
         return score
 
