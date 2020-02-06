@@ -26,7 +26,7 @@
 - In the segmentation task, pixels with a value of 0 are ignored, so assign 1 to the first class.
 - Use Linux for faster training.
 - Multi-GPU training is available based on the parameter server strategy.
-- For NCCL-based distributed training, use nccl/convnet.py and nccl/optimizer.py (experimental, available on Linux).
+- NCCL-based distributed training code is curruntly not available (nccl.convnet.py, nccl.optimizer.py).
 - Batch statistics of multiple devices are updated successively.
 - Check out [REFERENCES.md](https://github.com/dooyounggo/MyConvNet/blob/master/REFERENCES.md) for papers and code references.
 
