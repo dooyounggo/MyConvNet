@@ -483,7 +483,7 @@ class Optimizer(object):
                         print('[epoch {}/{}]\tTrain loss: {:.6f}  |Train score: {:2.2%}  |LR: {:.6f}  '
                               '|Elapsed time: {:5.0f} sec'
                               .format(self.curr_epoch, self.num_epochs, step_loss, step_score,
-                                      self.curr_multiplier, time.time() - start_time))
+                                      self.init_learning_rate*self.curr_multiplier, time.time() - start_time))
                     plot_learning_curve(train_losses, train_scores, eval_losses=None, eval_scores=None,
                                         name=self.evaluator.name,
                                         loss_threshold=max([2*np.log(self.model.num_classes), min(train_losses)*2]),
