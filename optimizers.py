@@ -486,7 +486,7 @@ class Optimizer(object):
                                       self.curr_multiplier, time.time() - start_time))
                     plot_learning_curve(step_losses, step_scores, eval_losses=None, eval_scores=None,
                                         name=self.evaluator.name,
-                                        loss_threshold=max([self.evaluator.loss_threshold, min(step_losses)*2]),
+                                        loss_threshold=max([2*np.log(self.model.num_classes), min(eval_losses)*2]),
                                         mode=self.evaluator.mode, img_dir=save_dir, annotations=annotations,
                                         start_step=start, validation_frequency=val_freq)
 
