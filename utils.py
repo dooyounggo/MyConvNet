@@ -108,7 +108,7 @@ def plot_learning_curve(step_losses, step_scores, eval_losses=None, eval_scores=
                     for i, (x, y) in enumerate(annotations):
                         axes[1].annotate('{:.4f}'.format(y), xy=(x, y), xytext=(0, -4 + (-1)**i*9), ha='center',
                                          textcoords='offset points', color='b', weight='bold')
-    axes[1].set_ylim(0.0, 1.0)
+    # axes[1].set_ylim(0.0, 1.0)
     axes[1].legend(loc='upper left')
     axes[1].grid(True)
 
