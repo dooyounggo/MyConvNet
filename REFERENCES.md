@@ -12,6 +12,7 @@
 - How Does Batch Normalization Help Optimization?: https://arxiv.org/abs/1805.11604
 - Group Normalization: https://arxiv.org/abs/1803.08494
 - Weight Standardization: https://arxiv.org/abs/1903.10520
+- DCGAN: https://arxiv.org/abs/1511.06434
 
 ## Code References
 - Basic code structure: http://research.sualab.com/practice/2018/01/17/image-classification-deep-learning.html
