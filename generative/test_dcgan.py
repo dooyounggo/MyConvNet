@@ -43,7 +43,7 @@ test_score = evaluator.score(test_y_true, test_y_pred)
 
 print(evaluator.name + ': {:.4f}'.format(test_score))
 
-test_y_pred = test_y_pred/2 + 0.5
+test_y_pred = test_y_pred
 
 fake_label = np.zeros([test_y_true.shape[0], 2])
 fake_label[:, 0] = 1
