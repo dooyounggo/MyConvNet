@@ -91,12 +91,12 @@ class GAN(ConvNet):
                 self.X_all = tf.concat(self.Xs, axis=0, name='x') + self.image_mean
                 self.Y_all = tf.concat(self.Ys, axis=0, name='y_true')
                 self.valid_mask = tf.ones_like(self.Y_all, dtype=tf.float32)
-                self.pred = tf.concat(self.preds, axis=0, name='y_pred')
+                self.pred = tf.concat(self.preds, axis=0, name='y_pred')/2 + 0.5
                 self.loss = tf.reduce_mean(self.losses, name='mean_loss')
                 self.loss_g = tf.reduce_mean(self.losses_g, name='mean_loss_g')
 
                 self.input_images = tf.concat(self.X_in, axis=0, name='x_in')
-                self.debug_images_0 = self.pred/2 + 0.5
+                self.debug_images_0 = self.pred
 
     @abstractmethod
     def _build_model_g(self, **kwargs):
