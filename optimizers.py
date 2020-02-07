@@ -414,7 +414,7 @@ class Optimizer(object):
 
                     curr_score = eval_score
                 else:
-                    curr_score = step_scores.mean() if show_each_step else step_scores/validation_frequency
+                    curr_score = np.mean(step_scores) if show_each_step else step_scores/validation_frequency
 
                 if self.evaluator.is_better(curr_score, self.best_score, **kwargs):  # Save best model
                     self.best_score = curr_score
