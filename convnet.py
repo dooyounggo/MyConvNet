@@ -1491,8 +1491,8 @@ class ConvNet(object):
                     if not tf.get_variable_scope().reuse:
                         tf.add_to_collection('block_{}_ema_variables'.format(self._curr_block), gamma_ema)
                 else:
-                    gamma = None
-                    gamma_ema = None
+                    gamma = tf.ones(in_channels, dtype=tf.float32, name='gamma')
+                    gamma_ema = tf.ones(in_channels, dtype=tf.float32, name='gamma')
 
                 if shift:
                     beta = tf.get_variable('beta', in_channels, dtype=tf.float32,
@@ -1510,8 +1510,8 @@ class ConvNet(object):
                     if not tf.get_variable_scope().reuse:
                         tf.add_to_collection('block_{}_ema_variables'.format(self._curr_block), beta_ema)
                 else:
-                    beta = None
-                    beta_ema = None
+                    beta = tf.zeros(in_channels, dtype=tf.float32, name='beta')
+                    beta_ema = tf.zeros(in_channels, dtype=tf.float32, name='beta')
 
                 if self._curr_device == self.gpu_offset:
                     self._flops += h*w*in_channels
