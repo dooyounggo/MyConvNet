@@ -43,8 +43,8 @@ else:
 saver.restore(model.session, ckpt_to_load)    # restore learned weights
 test_x, _, test_y_pred, _ = model.predict(test_set, verbose=True, **Param.d)
 
-utils.plot_seg_results(test_x, test_y_pred, test_y_pred, save_dir=os.path.join(Param.save_dir, 'results_inference'),
-                       start_idx=idx_start)
+utils.plot_seg_results(test_x, test_y_pred, num_classes=test_set.num_classes,
+                       save_dir=os.path.join(Param.save_dir, 'results_inference'), start_idx=idx_start)
 plt.show()
 
 model.session.close()
