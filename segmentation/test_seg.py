@@ -1,4 +1,4 @@
-from segmentation.parameters_seg_head import *
+from segmentation.parameters_seg import *
 
 
 Param = Parameters()
