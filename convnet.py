@@ -137,7 +137,7 @@ class ConvNet(object):
                     invalid_mask = tf.cast(tf.logical_not(self.valid_mask), dtype=tf.int32)
                     self.Y_all = tf.math.argmax(self.Y_all, axis=-1, output_type=tf.int32)*valid_mask - invalid_mask
                     self.Y_all = self.Y_all[..., tf.newaxis]
-                    self.pred = tf.math.argmax(self.pred, axis=-1, output_type=tf.int32)*valid_mask - invalid_mask
+                    self.pred = tf.math.argmax(self.pred, axis=-1, output_type=tf.int32)
                     self.pred = self.pred[..., tf.newaxis]
 
         print('\nNumber of GPUs : {}'.format(self._num_gpus))
