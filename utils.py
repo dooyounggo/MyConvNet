@@ -384,17 +384,18 @@ def imshow_subplot(images, num_rows=3, num_cols=3, figure_title='Figure'):
                 break
 
 
-def plot_seg_results(images, y_true, y_pred=None, num_rows=3, num_cols=3, colors=None, save_dir=None, start_idx=0):
+def plot_seg_results(images, y_true, y_pred=None,
+                     num_classes=None, num_rows=3, num_cols=3, colors=None, save_dir=None, start_idx=0):
     if y_pred is None:
         y_pred = y_true
     if y_true.shape[-1] == 1:
         y_t = y_true[..., 0].astype(int)
         valid = np.greater_equal(y_t, 0)
-        num_classes = np.amax(y_t) + 1
+        num_classes = np.amax(y_t) + 1 if num_classes is None else num_classes
     else:
         y_t = y_true.argmax(axis=-1)
         valid = np.isclose(y_true.sum(axis=-1), 1)
-        num_classes = y_true.shape[-1]
+        num_classes = y_true.shape[-1] if num_classes is None else num_classes
     if y_pred.shape[-1] == 1:
         y_p = y_pred[..., 0].astype(int)
     else:
