@@ -1,4 +1,4 @@
-from segmentation.parameters_seg import *
+from segmentation.parameters_seg_head import *
 
 
 Param = Parameters()
@@ -43,8 +43,9 @@ test_score = evaluator.score(test_y_true, test_y_pred)
 
 print(evaluator.name + ': {:.4f}'.format(test_score))
 
-utils.plot_seg_results(test_x, test_y_true, test_y_pred, save_dir=os.path.join(Param.save_dir, 'results_test'),
-                       start_idx=idx_start)
+utils.plot_seg_results(test_x, test_y_pred, num_classes=test_set.num_classes,
+                       save_dir=os.path.join(Param.save_dir, 'results_test'), start_idx=idx_start)
+
 plt.show()
 
 model.session.close()
