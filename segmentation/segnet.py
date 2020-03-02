@@ -55,7 +55,7 @@ class SegNet(ConvNet):
                         self.Xs.append(self.X)
                         self.Ys.append(self.Y)
 
-                        self.X *= 2  # Set input range in [-1, 1]
+                        self.X *= self.scale_factor  # Scale images
 
                         if self.channel_first:
                             self.X = tf.transpose(self.X, perm=[0, 3, 1, 2])
