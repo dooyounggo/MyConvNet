@@ -117,6 +117,8 @@ class ConvNet(object):
                 else:
                     self.image_mean = tf.constant(0.0, dtype=tf.float32, name='0')
 
+                self.scale_factor = tf.constant(kwargs.get('scale_factor', 2.0), dtype=tf.float32, name='scale_factor')
+
                 self.linear_schedule_multiplier = global_step/tf.cast(self.total_steps, dtype=tf.float32)
 
                 self._dummy_image = tf.zeros([4, 8, 8, 3], dtype=tf.float32, name='dummy_image')
@@ -291,7 +293,7 @@ class ConvNet(object):
                         self.Xs.append(self.X)
                         self.Ys.append(self.Y)
 
-                        self.X *= 2  # Set input range in [-1, 1]
+                        self.X *= self.scale_factor  # Scale images
 
                         if self.channel_first:
                             self.X = tf.transpose(self.X, perm=[0, 3, 1, 2])
