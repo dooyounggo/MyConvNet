@@ -168,9 +168,9 @@ class EfficientNet(ConvNet):
             if w is None:
                 new_widths.append(None)
             else:
-                w = coefficient * w
-                new_w = max(divisor, (int(w + divisor / 2) // divisor) * divisor)
-                if new_w < 0.9 * w:
+                w = coefficient*w
+                new_w = max(divisor, (int(w + divisor/2)//divisor)*divisor)
+                if new_w < 0.9*w:
                     new_w += divisor
                 new_widths.append(new_w)
         return new_widths
@@ -181,7 +181,7 @@ class EfficientNet(ConvNet):
             if d is None:
                 new_depths.append(None)
             else:
-                new_depths.append(int(np.ceil(coefficient * d)))
+                new_depths.append(int(np.ceil(coefficient*d)))
         return new_depths
 
 
