@@ -6,6 +6,7 @@ import time
 import warnings
 from abc import abstractmethod
 import tensorflow.compat.v1 as tf
+import tensorflow.contrib as tf_contrib
 import numpy as np
 from contextlib import nullcontext
 
@@ -323,7 +324,7 @@ class ConvNet(object):
                         self.preds.append(self.pred)
                         self.losses.append(self._build_loss(**kwargs))
 
-                        self.bytes_in_use.append(tf.contrib.memory_stats.BytesInUse())
+                        self.bytes_in_use.append(tf_contrib.memory_stats.BytesInUse())
 
         with tf.device(self.param_device):
             with tf.variable_scope('calc/'):
@@ -680,9 +681,9 @@ class ConvNet(object):
             c1 = tf.zeros([batch_size, 1], dtype=tf.float32)
             transforms = tf.concat([a0, a1, a2, b0, b1, b2, c0, c1], axis=1)
 
-            x = tf.contrib.image.transform(x, transforms, interpolation='BILINEAR')
+            x = tf_contrib.image.transform(x, transforms, interpolation='BILINEAR')
             if mask is not None:
-                mask = tf.contrib.image.transform(mask, transforms, interpolation='NEAREST')
+                mask = tf_contrib.image.transform(mask, transforms, interpolation='NEAREST')
 
         return x, mask
 
