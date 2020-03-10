@@ -95,7 +95,7 @@ class ResNetCBAM(ConvNet):    # Residual networks with Convolutional Block Atten
                     d['logits' + '/avgpool'] = x
 
                     if self.feature_reduction > 1:
-                        with tf.variable_scope('comp'):  # Feature compression to prevent overfitting
+                        with tf.variable_scope('comp'):  # Feature compression (experimental)
                             num_channels = x.get_shape()[1] if self.channel_first else x.get_shape()[-1]
                             x = self.fc_layer(x, num_channels//self.feature_reduction)
                             x = self.relu(x, name='relu')
