@@ -4,7 +4,7 @@ Build segmentation networks using TensorFlow low-level APIs.
 
 import time
 from abc import abstractmethod
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 import numpy as np
 from convnet import ConvNet
 
