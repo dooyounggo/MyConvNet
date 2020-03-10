@@ -3,7 +3,7 @@ Manage datasets using the TensorFlow Data API.
 """
 
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 import csv
 import cv2
 import subsets.subset_functions as sf
