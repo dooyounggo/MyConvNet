@@ -5,7 +5,7 @@ ResNet v1: https://github.com/tensorflow/models/tree/master/research/slim
 ResNet v2: https://github.com/tensorflow/models/tree/master/research/slim
 """
 
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 from tensorflow.python import pywrap_tensorflow
 
 
