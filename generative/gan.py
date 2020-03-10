@@ -5,6 +5,7 @@ Build segmentation networks using TensorFlow low-level APIs.
 import time
 from abc import abstractmethod
 import tensorflow.compat.v1 as tf
+import tensorflow.contrib as tf_contrib
 import numpy as np
 from convnet import ConvNet
 
@@ -84,7 +85,7 @@ class GAN(ConvNet):
                         self.losses_g.append(losses[1])
                         self.preds.append(self.pred)
 
-                        self.bytes_in_use.append(tf.contrib.memory_stats.BytesInUse())
+                        self.bytes_in_use.append(tf_contrib.memory_stats.BytesInUse())
 
         with tf.device(self.param_device):
             with tf.variable_scope('calc/'):
