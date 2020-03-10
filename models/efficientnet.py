@@ -85,7 +85,10 @@ class EfficientNet(ConvNet):
                             x = self.swish(x, name='swish')
 
                     x = tf.nn.dropout(x, rate=self.dropout_rate_features)
-                    x = self.fc_layer(x, self.num_classes)
+                    x = self.fc_layer(x, self.num_classes,
+                                      weight_initializer=tf.initializers.variance_scaling(scale=1.0/3.0,
+                                                                                          mode='fan_out',
+                                                                                          distribution='uniform'))
 
                     d['logits'] = x
                     d['pred'] = tf.nn.softmax(x)
@@ -118,7 +121,8 @@ class EfficientNet(ConvNet):
 
             with tf.variable_scope('conv_1'):
                 x = self.conv_layer(x, kernel, stride, in_channels*multiplier,
-                                    padding='SAME', biased=False, depthwise=True)
+                                    padding='SAME', biased=False, depthwise=True,
+                                    weight_initializer=tf.initializers.variance_scaling(mode='fan_out'))
                 print(name + '/conv_1.shape', x.get_shape().as_list())
                 d[name + '/conv_1'] = x
                 x = self.batch_norm(x, shift=True, scale=True, scope='norm')
