@@ -12,6 +12,11 @@ class EfficientNet(ConvNet):
         self.multipliers = [None, 1, 6, 6, 6, 6, 6, 6, None]
 
         self.se_reduction = 4
+        
+        self.conv_initializer = tf.initializers.variance_scaling(mode='fan_out')
+        self.fc_initializer = tf.initializers.variance_scaling(scale=1.0/3.0,
+                                                               mode='fan_out',
+                                                               distribution='uniform')
 
     def _build_model(self, **kwargs):
         d = dict()
@@ -36,7 +41,8 @@ class EfficientNet(ConvNet):
 
         with tf.variable_scope('block_0'):
             with tf.variable_scope('conv_0'):
-                x = self.conv_layer(X_input, kernels[0], strides[0], channels[0], padding='SAME', biased=False)
+                x = self.conv_layer(X_input, kernels[0], strides[0], channels[0], padding='SAME', biased=False,
+                                    weight_initializer=self.conv_initializer)
                 print('block_0' + '/conv_0.shape', x.get_shape().as_list())
                 d['block_0' + '/conv_0'] = x
                 x = self.batch_norm(x, shift=True, scale=True, scope='norm')
@@ -61,7 +67,8 @@ class EfficientNet(ConvNet):
         self._curr_block += 1
         with tf.variable_scope('block_{}'.format(self._curr_block)):
             with tf.variable_scope('conv_0'):
-                x = self.conv_layer(x, 1, 1, self.channels[-1], padding='SAME', biased=False, depthwise=False)
+                x = self.conv_layer(x, 1, 1, self.channels[-1], padding='SAME', biased=False, depthwise=False,
+                                    weight_initializer=self.conv_initializer)
                 print('block_{}'.format(self._curr_block) + '/conv_0.shape', x.get_shape().as_list())
                 d['logits' + '/conv_0'] = x
                 x = self.batch_norm(x, shift=True, scale=True, scope='norm')
@@ -86,9 +93,7 @@ class EfficientNet(ConvNet):
 
                     x = tf.nn.dropout(x, rate=self.dropout_rate_features)
                     x = self.fc_layer(x, self.num_classes,
-                                      weight_initializer=tf.initializers.variance_scaling(scale=1.0/3.0,
-                                                                                          mode='fan_out',
-                                                                                          distribution='uniform'))
+                                      weight_initializer=self.fc_initializer)
 
                     d['logits'] = x
                     d['pred'] = tf.nn.softmax(x)
@@ -111,7 +116,8 @@ class EfficientNet(ConvNet):
 
             with tf.variable_scope('conv_0'):
                 if multiplier > 1:
-                    x = self.conv_layer(x, 1, 1, in_channels*multiplier, padding='SAME', biased=False, depthwise=False)
+                    x = self.conv_layer(x, 1, 1, in_channels*multiplier, padding='SAME', biased=False, depthwise=False,
+                                        weight_initializer=self.conv_initializer)
                     print(name + '/conv_0.shape', x.get_shape().as_list())
                     d[name + '/conv_0'] = x
                     x = self.batch_norm(x, shift=True, scale=True, scope='norm')
@@ -122,7 +128,7 @@ class EfficientNet(ConvNet):
             with tf.variable_scope('conv_1'):
                 x = self.conv_layer(x, kernel, stride, in_channels*multiplier,
                                     padding='SAME', biased=False, depthwise=True,
-                                    weight_initializer=tf.initializers.variance_scaling(mode='fan_out'))
+                                    weight_initializer=self.conv_initializer)
                 print(name + '/conv_1.shape', x.get_shape().as_list())
                 d[name + '/conv_1'] = x
                 x = self.batch_norm(x, shift=True, scale=True, scope='norm')
@@ -135,7 +141,8 @@ class EfficientNet(ConvNet):
             x = x*se_mask
 
             with tf.variable_scope('conv_2'):
-                x = self.conv_layer(x, 1, 1, out_channels, padding='SAME', biased=False, depthwise=False)
+                x = self.conv_layer(x, 1, 1, out_channels, padding='SAME', biased=False, depthwise=False,
+                                    weight_initializer=self.conv_initializer)
                 print(name + '/conv_2.shape', x.get_shape().as_list())
                 d[name + '/conv_2'] = x
                 x = self.batch_norm(x, shift=True, scale=True, zero_scale_init=skip is not None, scope='norm')
@@ -154,12 +161,14 @@ class EfficientNet(ConvNet):
             x = tf.reduce_mean(x, axis=axis, keepdims=True)
 
             with tf.variable_scope('conv_0'):
-                x = self.conv_layer(x, 1, 1, in_channels//reduction)
+                x = self.conv_layer(x, 1, 1, in_channels//reduction,
+                                    weight_initializer=self.conv_initializer)
 
             x = self.swish(x, name='swish')
 
             with tf.variable_scope('conv_1'):
-                x = self.conv_layer(x, 1, 1, in_channels)
+                x = self.conv_layer(x, 1, 1, in_channels,
+                                    weight_initializer=self.conv_initializer)
 
             x = self.sigmoid(x)
 
