@@ -4,7 +4,7 @@ Setup basic hyperparameters
 
 import os
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 import matplotlib.pyplot as plt
 from dataset import DataSet
 from subsets.cityscapes import read_subset
