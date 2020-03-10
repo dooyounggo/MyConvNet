@@ -542,7 +542,7 @@ class ConvNet(object):
             x = self.rand_noise(x, **kwargs)
             x = tf.clip_by_value(x, 0.0 - self.image_mean, 1.0 - self.image_mean)
             x = self.rand_solarization(x, **kwargs)
-            x = self.rand_posterization(x, **kwargs)
+        x = self.rand_posterization(x, **kwargs)  # Quantization
 
         if mask is None:
             return x
@@ -1113,9 +1113,12 @@ class ConvNet(object):
 
                 factors = tf.math.round(tf.random.uniform([batch_size, 1, 1, 1],
                                                           lower - 0.5, upper + 0.5, dtype=tf.float32))
-                maxvals = tf.pow(2.0, factors)
-                x = tf.math.round(x*maxvals)
-                x = x/maxvals
+        else:
+            factors = 8.0
+
+        maxvals = tf.pow(2.0, factors)
+        x = tf.math.round(x*maxvals)
+        x = x/maxvals
 
         return x
 
