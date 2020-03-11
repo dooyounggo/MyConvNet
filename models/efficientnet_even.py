@@ -62,7 +62,7 @@ class EfficientNet(ConvNet):
                 else:
                     s = strides[i]
                     if s == 2:
-                        k += 1
+                        k -= 1
                 x = self._mb_conv_unit(x, k, s, channels[i], multipliers[i], d,
                                        drop_rate=dr, name='block_{}/mbconv_{}'.format(i, j))
             d['block_{}'.format(self._curr_block)] = x
