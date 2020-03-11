@@ -56,12 +56,13 @@ class EfficientNet(ConvNet):
             dr = initial_drop_rate + (final_drop_rate - initial_drop_rate)*i/(self.num_blocks - 2)
             print('block {} drop rate = {:.3f}'.format(i, dr))
             for j in range(res_units[i]):
+                k = kernels[i]
                 if j > 0:
                     s = 1
-                    k = kernels[i]
                 else:
                     s = strides[i]
-                    k = kernels[i] + 1
+                    if s == 2:
+                        k += 1
                 x = self._mb_conv_unit(x, k, s, channels[i], multipliers[i], d,
                                        drop_rate=dr, name='block_{}/mbconv_{}'.format(i, j))
             d['block_{}'.format(self._curr_block)] = x
