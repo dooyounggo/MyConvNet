@@ -6,7 +6,7 @@ from convnet import ConvNet
 class EfficientNet(ConvNet):
     def _init_params(self):
         self.channels = [32, 16, 24, 40, 80, 112, 192, 320, 1280]
-        self.kernels = [4, 3, 3, 5, 3, 5, 5, 3, None]
+        self.kernels = [2, 3, 3, 5, 3, 5, 5, 3, None]
         self.strides = [2, 1, 2, 2, 2, 1, 2, 1, None]
         self.conv_units = [None, 1, 2, 2, 3, 3, 4, 1, None]
         self.multipliers = [None, 1, 6, 6, 6, 6, 6, 6, None]
