@@ -124,7 +124,8 @@ class ConvNet(object):
 
                 self._dummy_image = tf.zeros([4, 8, 8, 3], dtype=tf.float32, name='dummy_image')
 
-        self.ema = tf.train.ExponentialMovingAverage(decay=self.moving_average_decay)
+        self.ema = tf.train.ExponentialMovingAverage(decay=self.moving_average_decay,
+                                                     num_updates=self.global_step)
 
         self.debug_value = self.linear_schedule_multiplier
         self.debug_images_0 = self._dummy_image
