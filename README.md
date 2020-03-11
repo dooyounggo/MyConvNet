@@ -20,6 +20,7 @@
 - Edit parameters.py to change the dataset, model, directories, etc...
 - Run train.py to train the model.
 - Run test.py to test the trained model.
+- Use inference.py if you have no label for test data.
 
 ### Notes
 - Our RandomResizedCrop performs padding prior to cropping so that (each side of an image) ≥ √(max_scale·H·W).
