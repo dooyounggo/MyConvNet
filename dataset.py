@@ -13,6 +13,7 @@ class DataSet(object):
     IMAGE_ONLY = None
     IMAGE_CLASSIFICATION = 'image_classification'
     IMAGE_SEGMENTATION = 'image_segmentation'
+    SEMANTIC_SEGMENTATION = IMAGE_SEGMENTATION
     DCGAN = 'deep_convolutional_gan'
     # IMAGE_TO_IMAGE_TRANSLATION = 'image_to_image_translation'
     # OBJECT_DETECTION = 'object_detection'
