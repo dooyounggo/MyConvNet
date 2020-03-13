@@ -23,6 +23,7 @@
 - Use inference.py if you have no label for test data.
 
 ### Notes
+- If you have no NVIDIA GPU, set num_gpus parameter to 0 in order to use a CPU for training/inference.
 - Our RandomResizedCrop performs padding prior to cropping so that (each side of an image) ≥ √(max_scale·H·W).
 - In the segmentation task, pixels with a value of 0 are ignored, so assign 1 to the first class.
 - Use Linux for faster training.
