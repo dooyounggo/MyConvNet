@@ -1019,13 +1019,16 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True):
     val_info_dir = os.path.join(subset_dir, 'Annotations', 'CLS-LOC', 'val')
 
     train_folders = os.listdir(train_dir)
+    train_folders.sort()
 
     class_names = []
     full_filenames = []
     labels = []
     for n, folder in enumerate(train_folders):
         class_names.append(folder)
-        for fname in os.listdir(os.path.join(train_dir, folder)):
+        subfolders = os.listdir(os.path.join(train_dir, folder))
+        subfolders.sort()
+        for fname in subfolders:
             img_dir = os.path.join(train_dir, folder, fname)
             full_filenames.append(img_dir)
             labels.append(n)
@@ -1059,7 +1062,9 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True):
         os.makedirs(os.path.join(destination_dir, 'validation'))
 
     val_fnames = os.listdir(val_dir)
+    val_fnames.sort()
     val_infos = os.listdir(val_info_dir)
+    val_infos.sort()
     for i, (fname, info) in enumerate(zip(val_fnames, val_infos)):
         if i % 500 == 0:
             print('Saving validation data: {:8,}/50,000...'.format(i))
