@@ -37,13 +37,21 @@ class ConvNet(object):
         self._dtype = tf.float16 if kwargs.get('half_precision', False) else tf.float32
         self._channel_first = kwargs.get('channel_first', False)
         self._argmax_output = kwargs.get('argmax_output', False)
-        self._num_gpus = kwargs.get('num_gpus', 1)
+
+        num_gpus = kwargs.get('num_gpus', 1)
+        if num_gpus == 0:  # No GPU available
+            self._num_gpus = 1
+            self._compute_device = 'cpu'
+        else:
+            self._num_gpus = num_gpus
+            self._compute_device = 'gpu'
+
         self._cpu_offset = kwargs.get('cpu_offset', 0)
         self._gpu_offset = kwargs.get('gpu_offset', 0)
 
         param_device = kwargs.get('param_device', None)
         if param_device is None:
-            self._param_device = '/gpu:{}'.format(self.gpu_offset) if self.num_gpus == 1\
+            self._param_device = '/gpu:{}'.format(self.gpu_offset) if num_gpus == 1\
                 else '/cpu:{}'.format(self.cpu_offset)
         else:
             if 'gpu' in param_device.lower():
@@ -213,6 +221,10 @@ class ConvNet(object):
         return self._param_device
 
     @property
+    def compute_device(self):
+        return self._compute_device
+
+    @property
     def num_blocks(self):
         return self._num_blocks
 
@@ -260,7 +272,7 @@ class ConvNet(object):
                 self._curr_block = 0
                 self._num_blocks = 1  # Total number of blocks
                 self._curr_dependent_op = 0  # For ops with dependencies between GPUs such as BN
-                with tf.device('/gpu:' + str(i)):
+                with tf.device('/{}:'.format(self.compute_device) + str(i)):
                     with tf.name_scope('gpu{}'.format(i)):
                         handle = tf.placeholder(tf.string, shape=[], name='handle')  # Handle for the feedable iterator
                         self.handles.append(handle)
@@ -325,7 +337,7 @@ class ConvNet(object):
                         self.preds.append(self.pred)
                         self.losses.append(self._build_loss(**kwargs))
 
-                        self.bytes_in_use.append(tf_contrib.memory_stats.BytesInUse())
+                        # self.bytes_in_use.append(tf_contrib.memory_stats.BytesInUse())
 
         with tf.device(self.param_device):
             with tf.variable_scope('calc/'):
