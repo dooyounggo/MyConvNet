@@ -56,10 +56,8 @@
 | ResNet-v1.5-50 | [77.51%](https://www.dropbox.com/s/zd27ccoherakcvz/learning_curve-result-1.svg?dl=0) | 93.80% | 224/224 (256<sup>†</sup>/224) | + Extended crop scale <br> [0.08, 1.0] -> [0.04, 1.96] | [#.py](https://www.dropbox.com/s/qusgwj91mgmml79/ResNet-v1.5-50_ImageNet_es.py?dl=0) | [#.zip](https://www.dropbox.com/s/wqcsb0skk4uvwtn/ResNet-v1.5-50_ImageNet_ES.zip?dl=0) |
 | Efficient<br>Net-B0 |  |  |  |  |  |  |
 
-The reported accuracies are single-crop validation scores.
-
-Note that the class numbers are ordered by the [synset IDs](https://www.dropbox.com/s/q8a6epwy2g2phht/synset_words.txt?dl=0) ([train.txt](https://www.dropbox.com/s/bqgzxfv2ys4ej6l/train.txt?dl=0), [val.txt](https://www.dropbox.com/s/wihtxqlotdlmodu/val.txt?dl=0)).
-
-Image size refers to the size after preprocessing. If image and input sizes do not match, cropping or padding is performed.
-
-† Crop method is slightly different, which is center crop of a √(HW) by √(HW) region, zero padding, and resize.
+- The reported accuracies are single-crop validation scores.
+- Note that the class numbers are ordered by the [synset IDs](https://www.dropbox.com/s/q8a6epwy2g2phht/synset_words.txt?dl=0) ([train.txt](https://www.dropbox.com/s/bqgzxfv2ys4ej6l/train.txt?dl=0), [val.txt](https://www.dropbox.com/s/wihtxqlotdlmodu/val.txt?dl=0)).
+- Image size refers to the size after preprocessing.
+  - If image and input sizes do not match, cropping or padding is performed.
+- † Crop method is slightly different, which is center crop of a √(HW) by √(HW) region, zero padding, and resize.
