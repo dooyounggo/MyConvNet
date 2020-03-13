@@ -46,6 +46,7 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True):
     i_test = 0
     for folder in classes:
         filenames = os.listdir(os.path.join(subset_dir, 'images', folder))
+        filenames.sort()
         for fname in filenames:
             if i % 500 == 0:
                 print('Saving subset data: {:6d}...'.format(i))
