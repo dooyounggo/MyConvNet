@@ -15,17 +15,17 @@
 
 ## How To Run
 - Download all the files.
-- Prepare your data using scripts in subsets/.
-- Build your own networks by modifying scripts in models/.
-- Edit parameters.py to change the dataset, model, directories, etc...
-- Run train.py to train the model.
-- Run test.py to test the trained model.
-- Use inference.py if you have no label for test data.
+- Prepare your data using scripts in [subsets/](https://github.com/dooyounggo/MyConvNet/tree/master/subsets).
+- Build your own networks by modifying scripts in [models/](https://github.com/dooyounggo/MyConvNet/tree/master/models).
+- Edit [parameters.py](https://github.com/dooyounggo/MyConvNet/blob/master/classification/parameters.py) to change the dataset, model, directories, etc...
+- Run [train.py](https://github.com/dooyounggo/MyConvNet/blob/master/classification/train.py) to train the model.
+- Run [test.py](https://github.com/dooyounggo/MyConvNet/blob/master/classification/test.py) to test the trained model.
+- Use [inference.py](https://github.com/dooyounggo/MyConvNet/blob/master/classification/inference.py) if you have no label for test data.
 
 ### Notes
 - If you have no NVIDIA GPU, set num_gpus parameter to 0 in order to utilize a CPU for training/inference.
 - Our RandomResizedCrop performs padding prior to cropping so that (each side of an image) ≥ √(max_scale·H·W).
-  - Use random_resized_crop_nopad() in subsets/subset_functions.py for RandomResizedCrop without padding.
+  - Use random_resized_crop_nopad() in [subset_functions.py](https://github.com/dooyounggo/MyConvNet/blob/master/subsets/subset_functions.py) for RandomResizedCrop without padding.
 - In the segmentation task, pixels with a value of 0 are ignored, so assign 1 to the first class.
 - Use Linux for faster training.
 - Multi-GPU training is available based on the parameter server strategy.
