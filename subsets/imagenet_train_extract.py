@@ -6,10 +6,7 @@ import os
 import tarfile
 
 
-if __name__ == '__main__':
-    train_dir = './ILSVRC2012_img_train'
-    remove_tar = True
-
+def train_extract(train_dir, remove_tar=True):
     files = os.listdir(train_dir)
     for i, f in enumerate(files):
         if i % 100 == 0:
@@ -25,3 +22,9 @@ if __name__ == '__main__':
             os.remove(fname)
 
     print('Extraction complete.')
+
+
+if __name__ == '__main__':
+    train_dir = './ILSVRC2012_img_train'
+    remove_tar = True
+    train_extract(train_dir, remove_tar)
