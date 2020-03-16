@@ -58,6 +58,7 @@
 
 - The reported accuracies are single-crop validation scores.
 - Note that the class numbers are ordered by the [synset IDs](https://www.dropbox.com/s/q8a6epwy2g2phht/synset_words.txt?dl=0) ([train.txt](https://www.dropbox.com/s/bqgzxfv2ys4ej6l/train.txt?dl=0), [val.txt](https://www.dropbox.com/s/wihtxqlotdlmodu/val.txt?dl=0)). Refer to [this page](https://gist.github.com/ksimonyan/fd8800eeb36e276cd6f9#file-readme-md).
+  - As a result, the class ordering is different from the one in the devkit.
 - Image size refers to the size after preprocessing.
   - If image and input sizes do not match, cropping or padding is performed.
 - † Crop method is slightly different, which is center crop of a √(HW) by √(HW) region, zero padding, and resize.
