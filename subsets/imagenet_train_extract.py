@@ -29,6 +29,6 @@ def train_extract(train_dir, remove_tar=True):
 
 
 if __name__ == '__main__':
-    train_dir = 'D:/ILSVRC2012_img_train'
+    train_dir = './ILSVRC2012_img_train'
     remove_tar = True
     train_extract(train_dir, remove_tar)
