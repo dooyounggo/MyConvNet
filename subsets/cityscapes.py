@@ -4,7 +4,7 @@ https://www.cityscapes-dataset.com/
 """
 
 import os
-import shutil
+import argparse
 import numpy as np
 import subsets.subset_functions as sf
 from skimage.io import imread
@@ -26,7 +26,7 @@ ID_TO_LABEL_MAP = np.array([0, 0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 3, 4, 5, 0, 0, 0, 6
 #                             20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 0])
 
 
-def save_as_tfdata(subset_dir, destination_dir, copy=True):
+def save_as_tfdata(subset_dir, destination_dir, copy=True, shuffle=False):
     image_folder_train = os.path.join(subset_dir, 'leftImg8bit', 'train')
     train_images = []
     for folder in os.listdir(image_folder_train):
@@ -74,61 +74,67 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True):
 
     if not os.path.exists(os.path.join(destination_dir, 'train')):
         os.makedirs(os.path.join(destination_dir, 'train'))
-
+    idx_train = np.arange(len(train_images))
+    if shuffle:
+        np.random.shuffle(idx_train)
     for i, (image_dir, label_dir) in enumerate(zip(train_images, train_labels)):
         if i % 200 == 0:
             print('Saving training data: {:6d}/{}...'.format(i, len(train_images)))
 
+        idx = idx_train[i]
         image = imread(image_dir)
-        imsave(os.path.join(destination_dir, 'train', '{:010d}.{}'.format(i, 'jpg')), image, quality=100)
+        imsave(os.path.join(destination_dir, 'train', '{:010d}.{}'.format(idx, 'jpg')), image, quality=100)
         if not copy:
             os.remove(label_dir)
 
         label_ext = label_dir.split('.')[-1]
         mask = imread(label_dir).astype(np.uint8)
         label = ID_TO_LABEL_MAP[mask].astype(np.uint8)
-
-        imsave(os.path.join(destination_dir, 'train', '{:010d}.{}'.format(i, label_ext)), label)
+        imsave(os.path.join(destination_dir, 'train', '{:010d}.{}'.format(idx, label_ext)), label)
         if not copy:
             os.remove(label_dir)
 
     if not os.path.exists(os.path.join(destination_dir, 'validation')):
         os.makedirs(os.path.join(destination_dir, 'validation'))
-
+    idx_val = np.arange(len(val_images))
+    if shuffle:
+        np.random.shuffle(idx_val)
     for i, (image_dir, label_dir) in enumerate(zip(val_images, val_labels)):
         if i % 200 == 0:
             print('Saving validation data: {:6d}/{}...'.format(i, len(val_images)))
 
+        idx = idx_val[i]
         image = imread(image_dir)
-        imsave(os.path.join(destination_dir, 'validation', '{:010d}.{}'.format(i, 'jpg')), image, quality=100)
+        imsave(os.path.join(destination_dir, 'validation', '{:010d}.{}'.format(idx, 'jpg')), image, quality=100)
         if not copy:
             os.remove(label_dir)
 
         label_ext = label_dir.split('.')[-1]
         mask = imread(label_dir).astype(np.uint8)
         label = ID_TO_LABEL_MAP[mask].astype(np.uint8)
-
-        imsave(os.path.join(destination_dir, 'validation', '{:010d}.{}'.format(i, label_ext)), label)
+        imsave(os.path.join(destination_dir, 'validation', '{:010d}.{}'.format(idx, label_ext)), label)
         if not copy:
             os.remove(label_dir)
 
     if not os.path.exists(os.path.join(destination_dir, 'test')):
         os.makedirs(os.path.join(destination_dir, 'test'))
-
+    idx_test = np.arange(len(test_images))
+    if shuffle:
+        np.random.shuffle(idx_test)
     for i, (image_dir, label_dir) in enumerate(zip(test_images, test_labels)):
         if i % 200 == 0:
             print('Saving test data: {:6d}/{}...'.format(i, len(test_images)))
 
+        idx = idx_test[i]
         image = imread(image_dir)
-        imsave(os.path.join(destination_dir, 'test', '{:010d}.{}'.format(i, 'jpg')), image, quality=100)
+        imsave(os.path.join(destination_dir, 'test', '{:010d}.{}'.format(idx, 'jpg')), image, quality=100)
         if not copy:
             os.remove(label_dir)
 
         label_ext = label_dir.split('.')[-1]
         mask = imread(label_dir).astype(np.uint8)
         label = ID_TO_LABEL_MAP[mask].astype(np.uint8)
-
-        imsave(os.path.join(destination_dir, 'test', '{:010d}.{}'.format(i, label_ext)), label)
+        imsave(os.path.join(destination_dir, 'test', '{:010d}.{}'.format(idx, label_ext)), label)
         if not copy:
             os.remove(label_dir)
 
@@ -136,9 +142,27 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True):
 
 
 if __name__ == '__main__':
-    subset_dir = "D:/Dropbox/Project/Python/datasets/cityscapes"
-    destination_dir = "D:/Dropbox/Project/Python/tfdatasets/cityscapes"
-    save_as_tfdata(subset_dir, destination_dir, copy=True)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--data', '--subset_dir', help='Path to raw data', type=str,
+                        default='./datasets/cityscapes')
+    parser.add_argument('--dest', '--destination_dir', help='Path to processed data', type=str,
+                        default='./tfdatasets/cityscapes')
+    parser.add_argument('--copy', help='Whether to copy images instead of moving them', type=bool, default=True)
+    parser.add_argument('--shuffle', help='Whether to shuffle images while copying/moving', type=bool, default=False)
+
+    args = parser.parse_args()
+    subset_dir = args.data
+    destination_dir = args.dest
+    copy = args.copy
+    shuffle = args.shuffle
+
+    print('\nPath to raw data:       \"{}\"'.format(subset_dir))
+    print('Path to processed data: \"{}\"'.format(destination_dir))
+    print('Copy = {}. Shuffle = {}.'.format(copy, shuffle))
+
+    answer = input('\nDo you want to proceed? (Y/N): ')
+    if answer.lower() == 'y' or answer.lower() == 'yes':
+        save_as_tfdata(subset_dir, destination_dir, copy=copy, shuffle=shuffle)
 
 
 def read_subset(subset_dir, shuffle=False, sample_size=None):
