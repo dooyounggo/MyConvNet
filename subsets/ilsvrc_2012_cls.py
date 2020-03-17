@@ -1015,71 +1015,72 @@ class_dict =\
      999: 'toilet tissue, toilet paper, bathroom tissue'}
 
 
-def save_as_tfdata(subset_dir, destination_dir, copy=True, shuffle=True):
+def save_as_tfdata(subset_dir, destination_dir, copy=True, shuffle=True, val_only=False):
     train_dir = os.path.join(subset_dir, 'ILSVRC2012_img_train')
     val_dir = os.path.join(subset_dir, 'ILSVRC2012_img_val')
 
-    if not os.path.isdir(train_dir) and os.path.isfile(os.path.join(train_dir, '.tar')):
-        train_tar = tarfile.open(os.path.join(train_dir, '.tar'), 'r:')
-        print('Extracting ILSVRC2012_img_train.tar ...')
-        train_tar.extractall(path=train_dir)
-        print('Extraction complete.')
-        train_tar.close()
-    train_folders = os.listdir(train_dir)
-    train_folders.sort()
-
-    folder_count = 0
-    temp_folders = []
-    for folder in train_folders:
-        if os.path.isdir(os.path.join(train_dir, folder)):
-            folder_count += 1
-            temp_folders.append(folder)
-    if folder_count < 1000:
-        train_extract(train_dir=train_dir)
+    if not val_only:
+        if not os.path.isdir(train_dir) and os.path.isfile(os.path.join(train_dir, '.tar')):
+            train_tar = tarfile.open(os.path.join(train_dir, '.tar'), 'r:')
+            print('Extracting ILSVRC2012_img_train.tar ...')
+            train_tar.extractall(path=train_dir)
+            print('Extraction complete.')
+            train_tar.close()
         train_folders = os.listdir(train_dir)
         train_folders.sort()
-    else:
-        train_folders = temp_folders
 
-    class_names = []
-    full_filenames = []
-    labels = []
-    print('\nChecking raw data...')
-    for n, folder in enumerate(train_folders):
-        class_names.append(folder)
-        images = os.listdir(os.path.join(train_dir, folder))
-        images.sort()
-        for fname in images:
-            img_dir = os.path.join(train_dir, folder, fname)
-            full_filenames.append(img_dir)
-            labels.append(n)
-    num_examples = len(full_filenames)
-    assert num_examples == 1281167, 'The entire training images must be provided as whole' \
-                                    ' (only {:,} images exist).'.format(num_examples)
-    idx = np.arange(num_examples)
-    if shuffle:
-        np.random.shuffle(idx)  # Shuffle the files in advance since there are too many images in the dataset
-
-    if not os.path.exists(os.path.join(destination_dir, 'train')):
-        os.makedirs(os.path.join(destination_dir, 'train'))
-    full_filenames = list(np.array(full_filenames)[idx])
-    labels = list(np.array(labels)[idx])
-    for i, (img_dir, label) in enumerate(zip(full_filenames, labels)):
-        if i % 10000 == 0:
-            print('Saving training data: {:8,}/{:,}...'.format(i, num_examples))
-
-        ext = img_dir.split('.')[-1]
-
-        if copy:
-            shutil.copy2(img_dir, os.path.join(destination_dir, 'train', '{:010d}.{}'.format(i, ext)))
+        folder_count = 0
+        temp_folders = []
+        for folder in train_folders:
+            if os.path.isdir(os.path.join(train_dir, folder)):
+                folder_count += 1
+                temp_folders.append(folder)
+        if folder_count < 1000:
+            train_extract(train_dir=train_dir)
+            train_folders = os.listdir(train_dir)
+            train_folders.sort()
         else:
-            shutil.move(img_dir, os.path.join(destination_dir, 'train', '{:010d}.{}'.format(i, ext)))
-        f = open(os.path.join(destination_dir, 'train', '{:010d}.csv'.format(i)),
-                 'w', encoding='utf-8', newline='')
-        wrt = csv.writer(f)
-        wrt.writerow([str(label)])
-        f.close()
-        i += 1
+            train_folders = temp_folders
+
+        class_names = []
+        full_filenames = []
+        labels = []
+        print('\nChecking raw data...')
+        for n, folder in enumerate(train_folders):
+            class_names.append(folder)
+            images = os.listdir(os.path.join(train_dir, folder))
+            images.sort()
+            for fname in images:
+                img_dir = os.path.join(train_dir, folder, fname)
+                full_filenames.append(img_dir)
+                labels.append(n)
+        num_examples = len(full_filenames)
+        assert num_examples == 1281167, 'The entire training images must be provided as whole' \
+                                        ' (only {:,} images exist).'.format(num_examples)
+        idx = np.arange(num_examples)
+        if shuffle:
+            np.random.shuffle(idx)  # Shuffle the files in advance since there are too many images in the dataset
+
+        if not os.path.exists(os.path.join(destination_dir, 'train')):
+            os.makedirs(os.path.join(destination_dir, 'train'))
+        full_filenames = list(np.array(full_filenames)[idx])
+        labels = list(np.array(labels)[idx])
+        for i, (img_dir, label) in enumerate(zip(full_filenames, labels)):
+            if i % 10000 == 0:
+                print('Saving training data: {:8,}/{:,}...'.format(i, num_examples))
+
+            ext = img_dir.split('.')[-1]
+
+            if copy:
+                shutil.copy2(img_dir, os.path.join(destination_dir, 'train', '{:010d}.{}'.format(i, ext)))
+            else:
+                shutil.move(img_dir, os.path.join(destination_dir, 'train', '{:010d}.{}'.format(i, ext)))
+            f = open(os.path.join(destination_dir, 'train', '{:010d}.csv'.format(i)),
+                     'w', encoding='utf-8', newline='')
+            wrt = csv.writer(f)
+            wrt.writerow([str(label)])
+            f.close()
+            i += 1
 
     if not os.path.isdir(val_dir) and os.path.isfile(os.path.join(val_dir, '.tar')):
         val_tar = tarfile.open(os.path.join(val_dir, '.tar'), 'r:')
@@ -1095,7 +1096,7 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True, shuffle=True):
     with open('./subsets/imagenet_val.txt') as f:
         val_infos = f.readlines()
     for i, (fname, info) in enumerate(zip(val_fnames, val_infos)):
-        if i % 500 == 0:
+        if i % 1000 == 0:
             print('Saving validation data: {:8,}/{}...'.format(i, num_examples))
 
         img_dir = os.path.join(val_dir, fname)
@@ -1123,7 +1124,8 @@ if __name__ == '__main__':
     parser.add_argument('--dest', '--destination_dir', help='Path to processed data', type=str,
                         default='./tfdatasets/ilsvrc2012_cls')
     parser.add_argument('--copy', help='Whether to copy images instead of moving them', type=str, default='True')
-    parser.add_argument('--shuffle', help='Whether to shuffle images while copying/moving', type=str, default='False')
+    parser.add_argument('--shuffle', help='Whether to shuffle training images', type=str, default='False')
+    parser.add_argument('--val_only', help='Whether to process validation images only', type=str, default='False')
 
     args = parser.parse_args()
     subset_dir = args.data
@@ -1134,14 +1136,19 @@ if __name__ == '__main__':
     else:
         copy = True
     shuffle = True  # shuffle=True for large datasets
+    val_only = args.val_only
+    if val_only.lower() == 'true' or val_only == '1':
+        val_only = True
+    else:
+        val_only = False
 
     print('\nPath to raw data:       \"{}\"'.format(subset_dir))
     print('Path to processed data: \"{}\"'.format(destination_dir))
-    print('Copy = {}. Shuffle = {}.'.format(copy, shuffle))
+    print('copy = {}, shuffle = {}, val_only = {}.'.format(copy, shuffle, val_only))
 
     answer = input('\nDo you want to proceed? (Y/N): ')
     if answer.lower() == 'y' or answer.lower() == 'yes':
-        save_as_tfdata(subset_dir, destination_dir, copy=copy, shuffle=shuffle)
+        save_as_tfdata(subset_dir, destination_dir, copy=copy, shuffle=shuffle, val_only=val_only)
 
 
 def read_subset(subset_dir, shuffle=False, sample_size=None):
