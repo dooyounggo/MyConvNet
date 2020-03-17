@@ -106,14 +106,22 @@ if __name__ == '__main__':
                         default='./datasets/stanford_dogs')
     parser.add_argument('--dest', '--destination_dir', help='Path to processed data', type=str,
                         default='./tfdatasets/stanford_dogs')
-    parser.add_argument('--copy', help='Whether to copy images instead of moving them', type=bool, default=True)
-    parser.add_argument('--shuffle', help='Whether to shuffle images while copying/moving', type=bool, default=False)
+    parser.add_argument('--copy', help='Whether to copy images instead of moving them', type=str, default='True')
+    parser.add_argument('--shuffle', help='Whether to shuffle images while copying/moving', type=str, default='False')
 
     args = parser.parse_args()
     subset_dir = args.data
     destination_dir = args.dest
     copy = args.copy
+    if copy.lower() == 'false' or copy == '0':
+        copy = False
+    else:
+        copy = True
     shuffle = args.shuffle
+    if shuffle.lower() == 'true' or shuffle == '1':
+        shuffle = True
+    else:
+        shuffle = False
 
     print('\nPath to raw data:       \"{}\"'.format(subset_dir))
     print('Path to processed data: \"{}\"'.format(destination_dir))
