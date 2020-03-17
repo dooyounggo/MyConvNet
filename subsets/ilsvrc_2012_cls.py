@@ -1144,7 +1144,7 @@ if __name__ == '__main__':
 
     print('\nPath to raw data:       \"{}\"'.format(subset_dir))
     print('Path to processed data: \"{}\"'.format(destination_dir))
-    print('copy = {}, shuffle = {}, val_only = {}.'.format(copy, shuffle, val_only))
+    print('copy = {}, shuffle = {}, val_only = {}'.format(copy, shuffle, val_only))
 
     answer = input('\nDo you want to proceed? (Y/N): ')
     if answer.lower() == 'y' or answer.lower() == 'yes':
