@@ -118,7 +118,7 @@ if __name__ == '__main__':
 
     answer = input('\nDo you want to proceed? (Y/N): ')
     if answer.lower() == 'y' or answer.lower() == 'yes':
-        save_as_tfdata(subset_dir, destination_dir, copy=True)
+        save_as_tfdata(subset_dir, destination_dir, copy=copy, shuffle=shuffle)
 
 
 def read_subset(subset_dir, shuffle=False, sample_size=None):
