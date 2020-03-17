@@ -1044,6 +1044,7 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True, shuffle=True):
     class_names = []
     full_filenames = []
     labels = []
+    print('Checking raw data...')
     for n, folder in enumerate(train_folders):
         class_names.append(folder)
         images = os.listdir(os.path.join(train_dir, folder))
