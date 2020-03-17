@@ -100,17 +100,25 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True, shuffle=False):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--data', '--subset_dir', help='Path to raw data', type=str,
-                        default='./datasets/CUB-200-2011')
+                        default='./datasets/CUB_200_2011')
     parser.add_argument('--dest', '--destination_dir', help='Path to processed data', type=str,
-                        default='./tfdatasets/CUB-200-2011')
-    parser.add_argument('--copy', help='Whether to copy images instead of moving them', type=bool, default=True)
-    parser.add_argument('--shuffle', help='Whether to shuffle images while copying/moving', type=bool, default=False)
+                        default='./tfdatasets/cub_200_2011')
+    parser.add_argument('--copy', help='Whether to copy images instead of moving them', type=str, default='True')
+    parser.add_argument('--shuffle', help='Whether to shuffle images while copying/moving', type=str, default='False')
 
     args = parser.parse_args()
     subset_dir = args.data
     destination_dir = args.dest
     copy = args.copy
+    if copy.lower() == 'false' or copy == '0':
+        copy = False
+    else:
+        copy = True
     shuffle = args.shuffle
+    if shuffle.lower() == 'true' or shuffle == '1':
+        shuffle = True
+    else:
+        shuffle = False
 
     print('\nPath to raw data:       \"{}\"'.format(subset_dir))
     print('Path to processed data: \"{}\"'.format(destination_dir))
