@@ -5,7 +5,9 @@ http://image-net.org/challenges/LSVRC/2012/downloads
 
 import os
 import csv
+import tarfile
 import shutil
+import argparse
 import numpy as np
 import subsets.subset_functions as sf
 from subsets.imagenet_train_extract import train_extract
@@ -1013,10 +1015,16 @@ class_dict =\
      999: 'toilet tissue, toilet paper, bathroom tissue'}
 
 
-def save_as_tfdata(subset_dir, destination_dir, copy=True):
+def save_as_tfdata(subset_dir, destination_dir, copy=True, shuffle=True):
     train_dir = os.path.join(subset_dir, 'ILSVRC2012_img_train')
     val_dir = os.path.join(subset_dir, 'ILSVRC2012_img_val')
 
+    if not os.path.isdir(train_dir) and os.path.isfile(os.path.join(train_dir, '.tar')):
+        train_tar = tarfile.open(os.path.join(train_dir, '.tar'), 'r:')
+        print('Extracting ILSVRC2012_img_train.tar ...')
+        train_tar.extractall(path=train_dir)
+        print('Extraction complete.')
+        train_tar.close()
     train_folders = os.listdir(train_dir)
     train_folders.sort()
 
@@ -1048,14 +1056,15 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True):
     assert num_examples == 1281167, 'The entire training images must be provided as whole' \
                                     ' (only {:,} images exist).'.format(num_examples)
     idx = np.arange(num_examples)
-    np.random.shuffle(idx)  # Shuffle the files in advance since there are too many images in the dataset
+    if shuffle:
+        np.random.shuffle(idx)  # Shuffle the files in advance since there are too many images in the dataset
 
     if not os.path.exists(os.path.join(destination_dir, 'train')):
         os.makedirs(os.path.join(destination_dir, 'train'))
     full_filenames = list(np.array(full_filenames)[idx])
     labels = list(np.array(labels)[idx])
     for i, (img_dir, label) in enumerate(zip(full_filenames, labels)):
-        if i % 1000 == 0:
+        if i % 10000 == 0:
             print('Saving training data: {:8,}/{:,}...'.format(i, num_examples))
 
         ext = img_dir.split('.')[-1]
@@ -1071,6 +1080,12 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True):
         f.close()
         i += 1
 
+    if not os.path.isdir(val_dir) and os.path.isfile(os.path.join(val_dir, '.tar')):
+        val_tar = tarfile.open(os.path.join(val_dir, '.tar'), 'r:')
+        print('Extracting ILSVRC2012_img_val.tar ...')
+        val_tar.extractall(path=val_dir)
+        print('Extraction complete.')
+        val_tar.close()
     if not os.path.exists(os.path.join(destination_dir, 'validation')):
         os.makedirs(os.path.join(destination_dir, 'validation'))
     val_fnames = os.listdir(val_dir)
@@ -1101,9 +1116,27 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True):
 
 
 if __name__ == '__main__':
-    subset_dir = "."
-    destination_dir = "~/Python/tfdatasets/ILSVRC2012_CLS"
-    save_as_tfdata(subset_dir, destination_dir, copy=True)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--data', '--subset_dir', help='Path to raw data', type=str,
+                        default='./datasets/ILSVRC2012_CLS')
+    parser.add_argument('--dest', '--destination_dir', help='Path to processed data', type=str,
+                        default='./tfdatasets/ILSVRC2012_CLS')
+    parser.add_argument('--copy', help='Whether to copy images instead of moving them', type=bool, default=True)
+    parser.add_argument('--shuffle', help='Whether to shuffle images while copying/moving', type=bool, default=False)
+
+    args = parser.parse_args()
+    subset_dir = args.data
+    destination_dir = args.dest
+    copy = args.copy
+    shuffle = True  # shuffle=True for large datasets
+
+    print('\nPath to raw data:       \"{}\"'.format(subset_dir))
+    print('Path to processed data: \"{}\"'.format(destination_dir))
+    print('Copy = {}. Shuffle = {}.'.format(copy, shuffle))
+
+    answer = input('\nDo you want to proceed? (Y/N): ')
+    if answer.lower() == 'y' or answer.lower() == 'yes':
+        save_as_tfdata(subset_dir, destination_dir, copy=copy, shuffle=shuffle)
 
 
 def read_subset(subset_dir, shuffle=False, sample_size=None):
@@ -1112,6 +1145,7 @@ def read_subset(subset_dir, shuffle=False, sample_size=None):
         class_names.append(item.split(', ')[0])
     class_names = tuple(class_names)
 
+    # Shuffling is disabled in order to minimize random file access
     image_dirs, label_dirs = sf.read_subset_cls(subset_dir, shuffle=False, sample_size=sample_size)
 
     return image_dirs, label_dirs, class_names
