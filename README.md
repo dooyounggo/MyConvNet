@@ -23,7 +23,8 @@
 - Use [inference.py](https://github.com/dooyounggo/MyConvNet/blob/master/classification/inference.py) if you have no label for test data.
 
 ### How to prepare data
-Open terminal and cd to MyConvNet.
+Images and labels should be paired and stored in the same directory ([default](https://github.com/dooyounggo/MyConvNet/blob/master/subsets/subset_functions.py#L15)).
+- Open terminal and cd to MyConvNet.
 - ImageNet: http://image-net.org/challenges/LSVRC/2012/downloads (log-in required)
   - python -m subsets.[ilsvrc_2012_cls](https://github.com/dooyounggo/MyConvNet/blob/master/subsets/ilsvrc_2012_cls.py) --data ~/path/to/raw/data --dest ~/path/to/processed/data
 
