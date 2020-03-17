@@ -154,7 +154,15 @@ if __name__ == '__main__':
     subset_dir = args.data
     destination_dir = args.dest
     copy = args.copy
+    if copy.lower() == 'false' or copy == '0':
+        copy = False
+    else:
+        copy = True
     shuffle = args.shuffle
+    if shuffle.lower() == 'true' or shuffle == '1':
+        shuffle = True
+    else:
+        shuffle = False
 
     print('\nPath to raw data:       \"{}\"'.format(subset_dir))
     print('Path to processed data: \"{}\"'.format(destination_dir))
