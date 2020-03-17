@@ -1093,6 +1093,8 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True, shuffle=True, val_onl
     val_fnames = os.listdir(val_dir)
     val_fnames.sort()
     num_examples = len(val_fnames)
+    assert num_examples == 50000, 'The entire validation images must be provided as whole' \
+                                  ' (only {:,} images exist).'.format(num_examples)
     with open('./subsets/imagenet_val.txt') as f:
         val_infos = f.readlines()
     for i, (fname, info) in enumerate(zip(val_fnames, val_infos)):
