@@ -110,7 +110,7 @@ if __name__ == '__main__':
     subset_dir = args.data
     destination_dir = args.dest
     copy = args.copy
-    shuffle = True  # shuffle=True for large datasets
+    shuffle = args.shuffle
 
     print('\nPath to raw data:       \"{}\"'.format(subset_dir))
     print('Path to processed data: \"{}\"'.format(destination_dir))
