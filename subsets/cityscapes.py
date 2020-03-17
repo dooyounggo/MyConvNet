@@ -97,8 +97,8 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True, shuffle=False):
     if not os.path.exists(os.path.join(destination_dir, 'validation')):
         os.makedirs(os.path.join(destination_dir, 'validation'))
     idx_val = np.arange(len(val_images))
-    if shuffle:
-        np.random.shuffle(idx_val)
+    # if shuffle:
+    #     np.random.shuffle(idx_val)
     for i, (image_dir, label_dir) in enumerate(zip(val_images, val_labels)):
         if i % 200 == 0:
             print('Saving validation data: {:6d}/{}...'.format(i, len(val_images)))
@@ -119,8 +119,8 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True, shuffle=False):
     if not os.path.exists(os.path.join(destination_dir, 'test')):
         os.makedirs(os.path.join(destination_dir, 'test'))
     idx_test = np.arange(len(test_images))
-    if shuffle:
-        np.random.shuffle(idx_test)
+    # if shuffle:
+    #     np.random.shuffle(idx_test)
     for i, (image_dir, label_dir) in enumerate(zip(test_images, test_labels)):
         if i % 200 == 0:
             print('Saving test data: {:6d}/{}...'.format(i, len(test_images)))
@@ -148,7 +148,7 @@ if __name__ == '__main__':
     parser.add_argument('--dest', '--destination_dir', help='Path to processed data', type=str,
                         default='./tfdatasets/cityscapes')
     parser.add_argument('--copy', help='Whether to copy images instead of moving them', type=str, default='True')
-    parser.add_argument('--shuffle', help='Whether to shuffle images while copying/moving', type=str, default='False')
+    parser.add_argument('--shuffle', help='Whether to shuffle training images', type=str, default='False')
 
     args = parser.parse_args()
     subset_dir = args.data
@@ -166,7 +166,7 @@ if __name__ == '__main__':
 
     print('\nPath to raw data:       \"{}\"'.format(subset_dir))
     print('Path to processed data: \"{}\"'.format(destination_dir))
-    print('Copy = {}. Shuffle = {}.'.format(copy, shuffle))
+    print('copy = {}, shuffle = {}'.format(copy, shuffle))
 
     answer = input('\nDo you want to proceed? (Y/N): ')
     if answer.lower() == 'y' or answer.lower() == 'yes':
