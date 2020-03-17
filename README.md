@@ -30,7 +30,7 @@ Images and labels should be paired and stored in the same directory ([default](h
 - ImageNet: http://image-net.org/challenges/LSVRC/2012/downloads (log-in required)
   - python -m subsets.[ilsvrc_2012_cls](https://github.com/dooyounggo/MyConvNet/blob/master/subsets/ilsvrc_2012_cls.py) --data ~/path/to/raw/data --dest ~/path/to/processed/data
 - And so on.
-Some scripts may not support command-line execution
+Some scripts may not support command-line execution.
 
 ### Notes
 - If you have no NVIDIA GPU, set [num_gpus](https://github.com/dooyounggo/MyConvNet/blob/master/classification/parameters.py#L60) parameter to 0 in order to utilize a CPU for training/inference.
