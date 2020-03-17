@@ -1121,14 +1121,18 @@ if __name__ == '__main__':
     parser.add_argument('--data', '--subset_dir', help='Path to raw data', type=str,
                         default='./datasets/ILSVRC2012_CLS')
     parser.add_argument('--dest', '--destination_dir', help='Path to processed data', type=str,
-                        default='./tfdatasets/ILSVRC2012_CLS')
-    parser.add_argument('--copy', help='Whether to copy images instead of moving them', type=bool, default=True)
-    parser.add_argument('--shuffle', help='Whether to shuffle images while copying/moving', type=bool, default=False)
+                        default='./tfdatasets/ilsvrc2012_cls')
+    parser.add_argument('--copy', help='Whether to copy images instead of moving them', type=str, default='True')
+    parser.add_argument('--shuffle', help='Whether to shuffle images while copying/moving', type=str, default='False')
 
     args = parser.parse_args()
     subset_dir = args.data
     destination_dir = args.dest
     copy = args.copy
+    if copy.lower() == 'false' or copy == '0':
+        copy = False
+    else:
+        copy = True
     shuffle = True  # shuffle=True for large datasets
 
     print('\nPath to raw data:       \"{}\"'.format(subset_dir))
