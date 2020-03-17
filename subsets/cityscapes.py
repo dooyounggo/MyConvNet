@@ -147,8 +147,8 @@ if __name__ == '__main__':
                         default='./datasets/cityscapes')
     parser.add_argument('--dest', '--destination_dir', help='Path to processed data', type=str,
                         default='./tfdatasets/cityscapes')
-    parser.add_argument('--copy', help='Whether to copy images instead of moving them', type=bool, default=True)
-    parser.add_argument('--shuffle', help='Whether to shuffle images while copying/moving', type=bool, default=False)
+    parser.add_argument('--copy', help='Whether to copy images instead of moving them', type=str, default='True')
+    parser.add_argument('--shuffle', help='Whether to shuffle images while copying/moving', type=str, default='False')
 
     args = parser.parse_args()
     subset_dir = args.data
