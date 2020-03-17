@@ -25,7 +25,7 @@
 ### How to prepare data
 Open terminal and cd to MyConvNet.
 - ImageNet: http://image-net.org/challenges/LSVRC/2012/downloads (log-in required)
-  - python -m subsets.ilsvrc_2012_cls --data ~/path/to/raw/data --dest ~/path/to/processed/data
+  - python -m subsets.[ilsvrc_2012_cls](https://github.com/dooyounggo/MyConvNet/blob/master/subsets/ilsvrc_2012_cls.py) --data ~/path/to/raw/data --dest ~/path/to/processed/data
 
 ### Notes
 - If you have no NVIDIA GPU, set [num_gpus](https://github.com/dooyounggo/MyConvNet/blob/master/classification/parameters.py#L60) parameter to 0 in order to utilize a CPU for training/inference.
