@@ -22,6 +22,11 @@
 - Run [test.py](https://github.com/dooyounggo/MyConvNet/blob/master/classification/test.py) to test the trained model.
 - Use [inference.py](https://github.com/dooyounggo/MyConvNet/blob/master/classification/inference.py) if you have no label for test data.
 
+### How to prepare data
+- ImageNet: http://image-net.org/challenges/LSVRC/2012/downloads (log-in required)
+  - Open terminal and cd to MyConvNet
+  - python -m subsets.ilsvrc_2012_cls --data ~/path/to/raw/data --dest ~/path/to/processed/data
+
 ### Notes
 - If you have no NVIDIA GPU, set [num_gpus](https://github.com/dooyounggo/MyConvNet/blob/master/classification/parameters.py#L60) parameter to 0 in order to utilize a CPU for training/inference.
 - Our RandomResizedCrop performs padding prior to cropping so that (each side of an image) ≥ √(max_scale·H·W).
