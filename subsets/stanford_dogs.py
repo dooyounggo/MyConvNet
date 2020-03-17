@@ -6,11 +6,13 @@ http://vision.stanford.edu/aditya86/ImageNetDogs/
 import os
 import csv
 import shutil
+import argparse
+import numpy as np
 import subsets.subset_functions as sf
 from scipy.io import loadmat
 
 
-def save_as_tfdata(subset_dir, destination_dir, copy=True):
+def save_as_tfdata(subset_dir, destination_dir, copy=True, shuffle=False):
     train_info = os.path.join(subset_dir, 'train_list.mat')
     test_info = os.path.join(subset_dir, 'test_list.mat')
 
@@ -22,14 +24,18 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True):
     test_images = test_dict['file_list']
     test_labels = test_dict['labels']
 
-    set_size = len(train_images) + len(test_images)
+    num_train = len(train_images)
+    num_test = len(test_images)
+    set_size = num_train + num_test
 
     class_names = []
 
     if not os.path.exists(os.path.join(destination_dir, 'train')):
         os.makedirs(os.path.join(destination_dir, 'train'))
-
     i = 0
+    idx_train = np.arange(num_train)
+    if shuffle:
+        np.random.shuffle(idx_train)
     for i_train, (fname, label) in enumerate(zip(train_images, train_labels)):
         if i % 500 == 0:
             print('Saving subset data: {:6d}/{}...'.format(i, set_size))
@@ -43,11 +49,12 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True):
         if name not in class_names:
             class_names.append(name)
 
+        idx = idx_train[i_train]
         if copy:
-            shutil.copy2(img_dir, os.path.join(destination_dir, 'train', '{:010d}.{}'.format(i_train, ext)))
+            shutil.copy2(img_dir, os.path.join(destination_dir, 'train', '{:010d}.{}'.format(idx, ext)))
         else:
-            shutil.move(img_dir, os.path.join(destination_dir, 'train', '{:010d}.{}'.format(i_train, ext)))
-        f = open(os.path.join(destination_dir, 'train', '{:010d}.csv'.format(i_train)),
+            shutil.move(img_dir, os.path.join(destination_dir, 'train', '{:010d}.{}'.format(idx, ext)))
+        f = open(os.path.join(destination_dir, 'train', '{:010d}.csv'.format(idx)),
                  'w', encoding='utf-8', newline='')
         wrt = csv.writer(f)
         wrt.writerow([str(label)])
@@ -56,7 +63,9 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True):
 
     if not os.path.exists(os.path.join(destination_dir, 'test')):
         os.makedirs(os.path.join(destination_dir, 'test'))
-
+    idx_test = np.arange(num_test)
+    if shuffle:
+        np.random.shuffle(idx_test)
     for i_test, (fname, label) in enumerate(zip(test_images, test_labels)):
         if i % 500 == 0:
             print('Saving subset data: {:6d}/{}...'.format(i, set_size))
@@ -67,11 +76,12 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True):
         img_dir = os.path.join(subset_dir, 'images', fname)
         ext = img_dir.split('.')[-1]
 
+        idx = idx_test[i_test]
         if copy:
-            shutil.copy2(img_dir, os.path.join(destination_dir, 'test', '{:010d}.{}'.format(i_test, ext)))
+            shutil.copy2(img_dir, os.path.join(destination_dir, 'test', '{:010d}.{}'.format(idx, ext)))
         else:
-            shutil.move(img_dir, os.path.join(destination_dir, 'test', '{:010d}.{}'.format(i_test, ext)))
-        f = open(os.path.join(destination_dir, 'test', '{:010d}.csv'.format(i_test)),
+            shutil.move(img_dir, os.path.join(destination_dir, 'test', '{:010d}.{}'.format(idx, ext)))
+        f = open(os.path.join(destination_dir, 'test', '{:010d}.csv'.format(idx)),
                  'w', encoding='utf-8', newline='')
         wrt = csv.writer(f)
         wrt.writerow([str(label)])
@@ -91,9 +101,27 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True):
 
 
 if __name__ == '__main__':
-    subset_dir = "D:/Dropbox/Project/Python/datasets/stanford-dogs"
-    destination_dir = "D:/Dropbox/Project/Python/tfdatasets/stanford-dogs"
-    save_as_tfdata(subset_dir, destination_dir, copy=True)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--data', '--subset_dir', help='Path to raw data', type=str,
+                        default='./datasets/stanford_dogs')
+    parser.add_argument('--dest', '--destination_dir', help='Path to processed data', type=str,
+                        default='./tfdatasets/stanford_dogs')
+    parser.add_argument('--copy', help='Whether to copy images instead of moving them', type=bool, default=True)
+    parser.add_argument('--shuffle', help='Whether to shuffle images while copying/moving', type=bool, default=False)
+
+    args = parser.parse_args()
+    subset_dir = args.data
+    destination_dir = args.dest
+    copy = args.copy
+    shuffle = args.shuffle
+
+    print('\nPath to raw data:       \"{}\"'.format(subset_dir))
+    print('Path to processed data: \"{}\"'.format(destination_dir))
+    print('Copy = {}. Shuffle = {}.'.format(copy, shuffle))
+
+    answer = input('\nDo you want to proceed? (Y/N): ')
+    if answer.lower() == 'y' or answer.lower() == 'yes':
+        save_as_tfdata(subset_dir, destination_dir, copy=copy, shuffle=shuffle)
 
 
 def read_subset(subset_dir, shuffle=False, sample_size=None):
