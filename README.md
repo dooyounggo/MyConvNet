@@ -25,6 +25,7 @@
 ### How to prepare data
 Images and labels should be paired and stored in the same directory ([default](https://github.com/dooyounggo/MyConvNet/blob/master/subsets/subset_functions.py#L15)).
 - Open terminal and cd to MyConvNet.
+- Download and extract datasets.
 - CUB-200-2011: http://www.vision.caltech.edu/visipedia/CUB-200-2011.html
   - python -m subsets.[cub_200_2011](https://github.com/dooyounggo/MyConvNet/blob/master/subsets/cub_200_2011.py) --data ~/path/to/raw/data --dest ~/path/to/processed/data
 - ImageNet: http://image-net.org/challenges/LSVRC/2012/downloads (log-in required)
