@@ -24,7 +24,7 @@
 
 ### How to prepare data
 - ImageNet: http://image-net.org/challenges/LSVRC/2012/downloads (log-in required)
-  - Open terminal and cd to MyConvNet
+  - Open terminal and cd to MyConvNet.
   - python -m subsets.ilsvrc_2012_cls --data ~/path/to/raw/data --dest ~/path/to/processed/data
 
 ### Notes
