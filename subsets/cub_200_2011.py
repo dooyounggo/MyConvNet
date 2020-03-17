@@ -6,10 +6,12 @@ http://www.vision.caltech.edu/visipedia/CUB-200-2011.html
 import os
 import csv
 import shutil
+import argparse
+import numpy as np
 import subsets.subset_functions as sf
 
 
-def save_as_tfdata(subset_dir, destination_dir, copy=True):
+def save_as_tfdata(subset_dir, destination_dir, copy=True, shuffle=False):
     class_info = os.path.join(subset_dir, 'classes.txt')
     label_info = os.path.join(subset_dir, 'image_class_labels.txt')
     split_info = os.path.join(subset_dir, 'train_test_split.txt')
@@ -29,11 +31,18 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True):
         label.append(int(line.rstrip().split(' ')[-1]) - 1)
     f.close()
 
-    split = []
+    splits = []
     f = open(split_info, 'r')
     lines = f.readlines()
+    num_train = 0
+    num_test = 0
     for line in lines:
-        split.append(int(line.rstrip().split(' ')[-1]))
+        is_training = int(line.rstrip().split(' ')[-1])
+        splits.append(is_training)
+        if is_training == 1:
+            num_train += 1
+        elif is_training == 0:
+            num_test += 1
     f.close()
 
     if not os.path.exists(os.path.join(destination_dir, 'train')):
@@ -44,33 +53,40 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True):
     i = 0
     i_train = 0
     i_test = 0
+    idx_train = np.arange(num_train)
+    idx_test = np.arange(num_test)
+    if shuffle:
+        np.random.shuffle(idx_train)
+        np.random.shuffle(idx_test)
     for folder in classes:
         filenames = os.listdir(os.path.join(subset_dir, 'images', folder))
         filenames.sort()
         for fname in filenames:
             if i % 500 == 0:
-                print('Saving subset data: {:6d}...'.format(i))
+                print('Saving subset data: {:6d}/{}...'.format(i, num_train + num_test))
 
             img_dir = os.path.join(subset_dir, 'images', folder, fname)
             ext = img_dir.split('.')[-1]
 
-            if split[i] == 1:
+            if splits[i] == 1:
+                idx = int(idx_train[i_train])
                 if copy:
-                    shutil.copy2(img_dir, os.path.join(destination_dir, 'train', '{:010d}.{}'.format(i_train, ext)))
+                    shutil.copy2(img_dir, os.path.join(destination_dir, 'train', '{:010d}.{}'.format(idx, ext)))
                 else:
-                    shutil.move(img_dir, os.path.join(destination_dir, 'train', '{:010d}.{}'.format(i_train, ext)))
-                f = open(os.path.join(destination_dir, 'train', '{:010d}.csv'.format(i_train)),
+                    shutil.move(img_dir, os.path.join(destination_dir, 'train', '{:010d}.{}'.format(idx, ext)))
+                f = open(os.path.join(destination_dir, 'train', '{:010d}.csv'.format(idx)),
                          'w', encoding='utf-8', newline='')
                 wrt = csv.writer(f)
                 wrt.writerow([str(label[i])])
                 f.close()
                 i_train += 1
             else:
+                idx = int(idx_test[i_test])
                 if copy:
-                    shutil.copy2(img_dir, os.path.join(destination_dir, 'test', '{:010d}.{}'.format(i_test, ext)))
+                    shutil.copy2(img_dir, os.path.join(destination_dir, 'test', '{:010d}.{}'.format(idx, ext)))
                 else:
-                    shutil.move(img_dir, os.path.join(destination_dir, 'test', '{:010d}.{}'.format(i_test, ext)))
-                f = open(os.path.join(destination_dir, 'test', '{:010d}.csv'.format(i_test)),
+                    shutil.move(img_dir, os.path.join(destination_dir, 'test', '{:010d}.{}'.format(idx, ext)))
+                f = open(os.path.join(destination_dir, 'test', '{:010d}.csv'.format(idx)),
                          'w', encoding='utf-8', newline='')
                 wrt = csv.writer(f)
                 wrt.writerow([str(label[i])])
@@ -82,9 +98,27 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True):
 
 
 if __name__ == '__main__':
-    subset_dir = "D:/Dropbox/Project/Python/datasets/CUB-200-2011"
-    destination_dir = "D:/Dropbox/Project/Python/tfdatasets/CUB-200-2011"
-    save_as_tfdata(subset_dir, destination_dir, copy=True)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--data', '--subset_dir', help='Path to raw data', type=str,
+                        default='./datasets/CUB-200-2011')
+    parser.add_argument('--dest', '--destination_dir', help='Path to processed data', type=str,
+                        default='./tfdatasets/CUB-200-2011')
+    parser.add_argument('--copy', help='Whether to copy images instead of moving them', type=bool, default=True)
+    parser.add_argument('--shuffle', help='Whether to shuffle images while copying/moving', type=bool, default=False)
+
+    args = parser.parse_args()
+    subset_dir = args.data
+    destination_dir = args.dest
+    copy = args.copy
+    shuffle = True  # shuffle=True for large datasets
+
+    print('\nPath to raw data:       \"{}\"'.format(subset_dir))
+    print('Path to processed data: \"{}\"'.format(destination_dir))
+    print('Copy = {}. Shuffle = {}.'.format(copy, shuffle))
+
+    answer = input('\nDo you want to proceed? (Y/N): ')
+    if answer.lower() == 'y' or answer.lower() == 'yes':
+        save_as_tfdata(subset_dir, destination_dir, copy=True)
 
 
 def read_subset(subset_dir, shuffle=False, sample_size=None):
