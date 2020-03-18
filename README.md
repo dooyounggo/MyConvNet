@@ -37,7 +37,7 @@ Some scripts may not support command-line execution.
 ### Notes
 - If you have no NVIDIA GPU, set [num_gpus](https://github.com/dooyounggo/MyConvNet/blob/master/classification/parameters.py#L60) parameter to 0 in order to utilize a CPU for training/inference.
 - Our RandomResizedCrop performs padding prior to cropping so that (each side of an image) ≥ √(max_scale·H·W).
-  - Set padding=False for random_resized_crop() in [subset_functions.py](https://github.com/dooyounggo/MyConvNet/blob/master/subsets/subset_functions.py) for RandomResizedCrop without padding.
+  - Set padding=False for [random_resized_crop()](https://github.com/dooyounggo/MyConvNet/blob/master/subsets/subset_functions.py#L137) for RandomResizedCrop without padding.
 - In the segmentation task, pixels with a value of 0 are ignored, so assign 1 to the first class.
 - Use Linux for faster training.
 - Multi-GPU training is available based on the parameter server strategy.
