@@ -71,7 +71,7 @@ Some scripts may not support command-line execution.
 - The reported accuracies are single-crop validation scores.
 - Note that the class numbers are ordered by the [synset IDs](https://www.dropbox.com/s/q8a6epwy2g2phht/synset_words.txt?dl=0) ([train.txt](https://www.dropbox.com/s/bqgzxfv2ys4ej6l/train.txt?dl=0), [val.txt](https://www.dropbox.com/s/wihtxqlotdlmodu/val.txt?dl=0)). Refer to [ilsvrc_2012_cls.py]() and [this page](https://gist.github.com/ksimonyan/fd8800eeb36e276cd6f9#file-readme-md).
   - Therefore, the class ordering is different from the one in the [devkit](http://image-net.org/challenges/LSVRC/2017/downloads).
-- Image size refers to the size after preprocessing such as RandomResizedCrop.
+- Image size refers to the size after preprocessing.
   - If image and input sizes do not match, cropping or padding is performed.
 - Training scores are calculated with augmentation and validation is performed with exponential moving average.
   - As a result, validation scores can surpass training scores in the training curves.
