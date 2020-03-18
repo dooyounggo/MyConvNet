@@ -27,9 +27,9 @@ Images and labels should be paired and stored in the same directory ([default](h
 - Open terminal and cd to MyConvNet.
 - Download, extract, and process datasets:
   - CUB-200-2011: http://www.vision.caltech.edu/visipedia/CUB-200-2011.html
-    - python -m subsets.[cub_200_2011](https://github.com/dooyounggo/MyConvNet/blob/master/subsets/cub_200_2011.py) --data ~/path/to/raw/data --dest ~/path/to/processed/data
+    - python -m subsets.[cub_200_2011](https://github.com/dooyounggo/MyConvNet/blob/master/subsets/cub_200_2011.py) --data /path/to/raw/data --dest /path/to/processed/data
   - ImageNet: http://image-net.org/challenges/LSVRC/2012/downloads (log-in required)
-    - python -m subsets.[ilsvrc_2012_cls](https://github.com/dooyounggo/MyConvNet/blob/master/subsets/ilsvrc_2012_cls.py) --data ~/path/to/raw/data --dest ~/path/to/processed/data
+    - python -m subsets.[ilsvrc_2012_cls](https://github.com/dooyounggo/MyConvNet/blob/master/subsets/ilsvrc_2012_cls.py) --data /path/to/raw/data --dest /path/to/processed/data
 - And so on.
 
 Some scripts may not support command-line execution.
