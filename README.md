@@ -74,5 +74,5 @@ Some scripts may not support command-line execution.
 - Image size refers to the size after preprocessing.
   - If image and input sizes do not match, cropping or padding is performed.
 - Training scores are calculated with augmentation and validation is performed with exponential moving average.
-  - As a result, validation scores can surpass training scores in the training graphs.
+  - As a result, validation scores can surpass training scores in the training curves.
 - † Crop method is slightly different, which is center crop of a √(HW) by √(HW) region, zero padding, and resize.
