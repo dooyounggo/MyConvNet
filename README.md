@@ -35,7 +35,7 @@ Images and labels should be paired and stored in the same directory ([default](h
 Some scripts may not support command-line execution.
 
 ### Notes
-- If you have no NVIDIA GPU, set [num_gpus](https://github.com/dooyounggo/MyConvNet/blob/master/classification/parameters.py#L60) parameter to 0 in order to utilize a CPU for training/inference.
+- If you have no NVIDIA GPU, set ['num_gpus'](https://github.com/dooyounggo/MyConvNet/blob/master/classification/parameters.py#L60) parameter to 0 in order to utilize a CPU for training/inference (very slow).
 - Our RandomResizedCrop performs padding prior to cropping so that (each side of an image) ≥ √(max_scale·H·W).
   - Set padding=False for [random_resized_crop()](https://github.com/dooyounggo/MyConvNet/blob/master/subsets/subset_functions.py#L137) to use RandomResizedCrop without padding.
 - In the segmentation task, pixels with a value of 0 are ignored, so assign 1 to the first class.
