@@ -1960,6 +1960,8 @@ class ConvNet(object):
             act = activation_type.lower()
             if act == 'relu':
                 return self.relu(x, name=activation_type)
+            elif act == 'relu6':
+                return self.relu6(x, name=activation_type)
             elif act == 'lrelu':
                 return self.lrelu(x, alpha=params, name=activation_type)
             elif act == 'tanh':
@@ -1973,6 +1975,9 @@ class ConvNet(object):
 
     def relu(self, x, name='relu'):
         return tf.nn.relu(x, name=name)
+
+    def relu6(self, x, name='relu6'):
+        return tf.nn.relu6(x, name=name)
 
     def lrelu(self, x, alpha=0.2, name='lrelu'):
         return tf.nn.leaky_relu(x, alpha=alpha, name=name)
