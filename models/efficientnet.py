@@ -29,13 +29,13 @@ class EfficientNet(ConvNet):
         channels = self.channels
         kernels = self.kernels
         strides = self.strides
-        res_units = self.conv_units
+        conv_units = self.conv_units
         multipliers = self.multipliers
 
         len_c = len(channels)
         len_k = len(kernels)
         len_s = len(strides)
-        len_r = len(res_units)
+        len_r = len(conv_units)
         len_m = len(multipliers)
         self._num_blocks = min([len_c, len_k, len_s, len_r, len_m])
 
@@ -55,7 +55,7 @@ class EfficientNet(ConvNet):
             self._curr_block = i
             dr = initial_drop_rate + (final_drop_rate - initial_drop_rate)*i/(self.num_blocks - 2)
             print('block {} drop rate = {:.3f}'.format(i, dr))
-            for j in range(res_units[i]):
+            for j in range(conv_units[i]):
                 if j > 0:
                     s = 1
                 else:
