@@ -73,6 +73,7 @@ Some scripts may not support command-line execution.
   - Therefore, the class ordering is different from the one in the [devkit](http://image-net.org/challenges/LSVRC/2017/downloads).
 - Image size refers to the size after preprocessing and input size is about networks' inputs.
   - If image and input sizes do not match, cropping or padding is performed.
-- Training scores are calculated with augmentation and validation is performed with exponential moving average.
+- Training scores are calculated with augmentation and validation is performed with exponential moving average (EMA).
   - As a result, validation scores can surpass training scores in the training curves.
+  - EMA is known to play a crucial role in training EfficientNet.
 - † Crop method is slightly different, which is center crop of a √(HW) by √(HW) region, zero padding, and resize.
