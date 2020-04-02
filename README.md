@@ -39,7 +39,7 @@ Some scripts may not support command-line execution.
 - Our RandomResizedCrop performs padding prior to cropping so that (each side of an image) ≥ √(max_scale·H·W).
   - Set padding=False for [random_resized_crop()](https://github.com/dooyounggo/MyConvNet/blob/master/subsets/subset_functions.py#L137) to use RandomResizedCrop without padding.
   - We are doing an experiment inspired by "Fixing the train-test resolution discrepancy".
-    - Which is extending RandomResizedCrop scale from [0.08, 1.0] to [0.04, 1.96] (includes padding).
+    - Which is extending the RandomResizedCrop scale range to [0.04, 1.96] (includes padding).
 - In the segmentation task, pixels with a value of 0 are ignored, so assign 1 to the first class.
 - Use Linux for faster training.
 - Multi-GPU training is available based on the parameter server strategy.
