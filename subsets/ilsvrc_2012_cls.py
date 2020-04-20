@@ -1020,7 +1020,7 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True, shuffle=True, val_onl
     val_dir = os.path.join(subset_dir, 'ILSVRC2012_img_val')
 
     if not val_only:
-        if not os.path.isdir(train_dir) and os.path.isfile(os.path.join(train_dir, '.tar')):
+        if not os.path.isdir(train_dir) and os.path.isfile(train_dir + '.tar'):
             train_tar = tarfile.open(os.path.join(train_dir, '.tar'), 'r:')
             print('Extracting ILSVRC2012_img_train.tar ...')
             train_tar.extractall(path=train_dir)
@@ -1082,7 +1082,7 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True, shuffle=True, val_onl
             f.close()
             i += 1
 
-    if not os.path.isdir(val_dir) and os.path.isfile(os.path.join(val_dir, '.tar')):
+    if not os.path.isdir(val_dir) and os.path.isfile(val_dir + '.tar'):
         val_tar = tarfile.open(os.path.join(val_dir, '.tar'), 'r:')
         print('Extracting ILSVRC2012_img_val.tar ...')
         val_tar.extractall(path=val_dir)
