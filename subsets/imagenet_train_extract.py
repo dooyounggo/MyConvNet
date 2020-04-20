@@ -21,7 +21,7 @@ def train_extract(train_dir, remove_tar=True):
 
         fname = os.path.join(train_dir, f)
         tar = tarfile.open(fname, 'r:')
-        tar.extractall(path=os.path.join(train_dir, fname.split('.')[0]))
+        tar.extractall(path=os.path.join(train_dir, f.split('.')[0]))
         tar.close()
         if remove_tar:
             os.remove(fname)
