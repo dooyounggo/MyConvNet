@@ -115,8 +115,8 @@ class DataSet(object):
                                               num_parallel_calls=kwargs.get('num_parallel_calls', 4)//self.num_shards)
                     dataset = dataset.batch(batch_size_per_gpu)
                     dataset = dataset.apply(tf.data.experimental.copy_to_device('/{}:{}'.format(compute_device,
-                                                                                                i + self.gpu_offset)))
-                    with tf.device('/{}:{}'.format(compute_device, i + self.gpu_offset)):
+                                                                                                i + 0)))
+                    with tf.device('/{}:{}'.format(compute_device, i + 0)):
                         dataset = dataset.prefetch(buffer_size=1)
                         self._datasets.append(dataset)
                         iterator = dataset.make_initializable_iterator()

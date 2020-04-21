@@ -111,6 +111,10 @@ class Parameters(object):
         print('Data save directory: ', self.save_dir)
         print('')
 
+        os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
+        os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(str(num) for num
+                                                      in range(self.d['gpu_offset'],
+                                                               self.d['num_gpus'] + self.d['gpu_offset']))
         # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
         os.environ['TF_GPU_THREAD_MODE'] = 'gpu_private'
         os.environ['TF_GPU_THREAD_COUNT'] = str(self.d['num_gpus'])

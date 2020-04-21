@@ -78,10 +78,10 @@ class Optimizer(object):
 
         tower_grads = []
         with tf.variable_scope(tf.get_variable_scope()):
-            for i in range(self.model.gpu_offset, self.model.num_gpus + self.model.gpu_offset):
+            for i in range(0, self.model.num_gpus + 0):
                 with tf.device('/{}:'.format(self.model.compute_device) + str(i)):
                     with tf.variable_scope('gpu{}/gradients'.format(i)):
-                        loss = self.model.losses[i - self.model.gpu_offset]
+                        loss = self.model.losses[i - 0]
                         if loss_scaling_factor > 1.0:
                             loss *= loss_scaling_factor
                         if self.model.dtype is not tf.float32:
