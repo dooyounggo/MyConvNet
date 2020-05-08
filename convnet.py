@@ -512,6 +512,15 @@ class ConvNet(object):
 
         return features
 
+    def cond(self, pred, true_fn, false_fn, name=None):
+        if isinstance(pred, tf.Tensor):
+            return tf.cond(pred, true_fn, false_fn, name=name)
+        else:
+            if pred:
+                return true_fn()
+            else:
+                return false_fn()
+
     def zero_pad(self, x, pad_value=0.0):
         with tf.variable_scope('zero_pad'):
             shape_tensor = tf.cast(tf.shape(x), dtype=tf.float32)
@@ -1200,9 +1209,9 @@ class ConvNet(object):
             if not tf.get_variable_scope().reuse:
                 tf.add_to_collection('block_{}_ema_variables'.format(self._curr_block), weights_ema)
 
-            weights = tf.cond(self.is_train,
-                              lambda: weights,
-                              lambda: weights_ema)
+            weights = self.cond(self.is_train,
+                                lambda: weights,
+                                lambda: weights_ema)
 
         if weight_standardization:
             with tf.variable_scope('ws'):
@@ -1250,9 +1259,9 @@ class ConvNet(object):
             if not tf.get_variable_scope().reuse:
                 tf.add_to_collection('block_{}_ema_variables'.format(self._curr_block), biases_ema)
 
-            biases = tf.cond(self.is_train,
-                             lambda: biases,
-                             lambda: biases_ema)
+            biases = self.cond(self.is_train,
+                               lambda: biases,
+                               lambda: biases_ema)
 
         if self.dtype is not tf.float32:
             biases = tf.cast(biases, dtype=self.dtype)
@@ -1535,17 +1544,17 @@ class ConvNet(object):
                 if self._curr_device == 0:
                     self._flops += h*w*in_channels
 
-                mean, var = tf.cond(self.is_train,
-                                    lambda: (mu, sigma),
-                                    lambda: (mu_ema, sigma_ema))
-                beta = tf.cond(self.is_train, lambda: beta, lambda: beta_ema) if beta is not None else None
-                gamma = tf.cond(self.is_train, lambda: gamma, lambda: gamma_ema) if gamma is not None else None
+                mean, var = self.cond(self.is_train,
+                                      lambda: (mu, sigma),
+                                      lambda: (mu_ema, sigma_ema))
+                beta = self.cond(self.is_train, lambda: beta, lambda: beta_ema) if beta is not None else None
+                gamma = self.cond(self.is_train, lambda: gamma, lambda: gamma_ema) if gamma is not None else None
 
             if self.dtype is not tf.float32:
                 x = tf.cast(x, dtype=tf.float32)
             data_format = 'NCHW' if self.channel_first else 'NHWC'
             if update:
-                x, batch_mean, batch_var = tf.cond(self.is_train,
+                x, batch_mean, batch_var = self.cond(self.is_train,
                                                    lambda: tf.nn.fused_batch_norm(x,
                                                                                   gamma,
                                                                                   beta,
@@ -1664,8 +1673,8 @@ class ConvNet(object):
                 if self._curr_device == 0:
                     self._flops += h*w*in_channels
 
-            beta = tf.cond(self.is_train, lambda: beta, lambda: beta_ema) if beta is not None else None
-            gamma = tf.cond(self.is_train, lambda: gamma, lambda: gamma_ema) if gamma is not None else None
+            beta = self.cond(self.is_train, lambda: beta, lambda: beta_ema) if beta is not None else None
+            gamma = self.cond(self.is_train, lambda: gamma, lambda: gamma_ema) if gamma is not None else None
             beta = tf.reshape(beta, var_shape) if beta is not None else None
             gamma = tf.reshape(gamma, var_shape) if gamma is not None else None
 
@@ -1793,12 +1802,12 @@ class ConvNet(object):
                 if self._curr_device == 0:
                     self._flops += h*w*in_channels
 
-                moving_mean, moving_var = tf.cond(self.is_train,
+                moving_mean, moving_var = self.cond(self.is_train,
                                                   lambda: (mu, sigma),
                                                   lambda: (mu_ema, sigma_ema))
 
-            beta = tf.cond(self.is_train, lambda: beta, lambda: beta_ema) if beta is not None else None
-            gamma = tf.cond(self.is_train, lambda: gamma, lambda: gamma_ema) if gamma is not None else None
+            beta = self.cond(self.is_train, lambda: beta, lambda: beta_ema) if beta is not None else None
+            gamma = self.cond(self.is_train, lambda: gamma, lambda: gamma_ema) if gamma is not None else None
             beta = tf.reshape(beta, var_shape) if beta is not None else None
             gamma = tf.reshape(gamma, var_shape) if gamma is not None else None
 
@@ -1942,7 +1951,7 @@ class ConvNet(object):
         if drop_rate > 0.0:
             with tf.variable_scope(name):
                 batch_size = tf.shape(x)[0]
-                drop_rate = tf.cond(self.is_train, lambda: drop_rate, lambda: 0.0)
+                drop_rate = self.cond(self.is_train, lambda: drop_rate, lambda: 0.0)
 
                 s = tf.math.greater_equal(tf.random.uniform([batch_size, 1, 1, 1], dtype=tf.float32), drop_rate)
                 survived = tf.cast(tf.cast(s, dtype=tf.float32)/(1.0 - drop_rate), dtype=self.dtype)
