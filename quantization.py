@@ -55,6 +55,7 @@ def quantize(model, images, ckpt_dir, save_dir, **kwargs):
                                                      input_tensors=[input_tensor],
                                                      output_tensors=[output_tensor])
 
+    print('Converting the model.')
     tflite_model = converter.convert()
     tflite_models_dir = pathlib.Path(os.path.join(save_dir, 'tflite'))
     tflite_models_dir.mkdir(exist_ok=True, parents=True)
@@ -75,6 +76,7 @@ def quantize(model, images, ckpt_dir, save_dir, **kwargs):
         converter.inference_input_type = tf.uint8
         converter.inference_output_type = tf.uint8
 
+        print('Converting the quantized model.')
         tflite_model_quant = converter.convert()
         tflite_model_quant_file.write_bytes(tflite_model_quant)
 
