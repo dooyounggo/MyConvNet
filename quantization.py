@@ -24,6 +24,7 @@ def quantize(model, images, ckpt_dir, save_dir, **kwargs):
     graph = tf.get_default_graph()
     config = tf.ConfigProto()
     sess = tf.Session(graph=graph, config=config)
+    model._curr_device = 0
     with tf.device(model.param_device):
         # model.is_train = tf.constant(False, dtype=tf.bool, name='is_train')
         model.is_train = False
