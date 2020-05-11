@@ -1,6 +1,6 @@
 """
 Model quantization.
-Note that only single GPU inference, the float32 data type, and the "NHWC" format are supported.
+Note that only the float32 data type and the "NHWC" format are supported.
 """
 
 import os
@@ -121,18 +121,19 @@ def evaluate_quantized_model(model_file, model_quant_file, test_set, evaluator, 
     output_index_quant = output_details_quant['index']
 
     label_shape = [test_set.num_examples] + list(output_details_quant['shape'][1:])
-    gt_label = np.empty(label_shape, dtype=np.float32)
+    gt_label = np.empty(label_shape[:-1], dtype=np.float32)
     results = np.empty(label_shape, dtype=np.float32)
     results_quant = np.empty(label_shape, dtype=output_details_quant['dtype'])
+
     image_mean = kwargs.get('image_mean', 0.5)
     scale_factor = kwargs.get('scale_factor', 2.0)
     total_time = 0
+
     input_image_tensor, input_label_tensor = iterator.get_next()
     for i in range(test_set.num_examples):
         if (i % 100) == 0:
             print('Evaluating models... {:5d}/{}'.format(i, test_set.num_examples))
-        if i < 10:
-            t_start = time.time()
+        t_start = time.time()
         input_image, input_label = sess.run([input_image_tensor, input_label_tensor])
         input_image = resize_with_crop_or_pad(input_image[0],
                                               out_size=input_details_quant['shape'][1:])
@@ -166,19 +167,20 @@ def evaluate_quantized_model(model_file, model_quant_file, test_set, evaluator, 
         results_quant[i] = interpreter_quant.get_tensor(output_index_quant)[0]
 
         if i < 10:
-            print('GT:')
-            print(np.argmax(gt_label[i], axis=-1))
-            print('Before:')
-            print(np.argmax(results[i], axis=-1))
-            print('After:')
-            print(np.argmax(results_quant[i], axis=-1))
-
             total_time += time.time() - t_start
             print('Estimated test time: {} min.'.format(int(total_time/(i + 1)*test_set.num_examples/60)))
+
+        if i < 100:
+            print('{}. GT:'.format(i))
+            print(gt_label[i].astype(int))
+            print('{}. Before:'.format(i))
+            print(np.argmax(results[i], axis=-1))
+            print('{}. After:'.format(i))
+            print(np.argmax(results_quant[i], axis=-1))
             print('')
-    accuracy = evaluator.score(np.argmax(gt_label, axis=-1)[..., np.newaxis],
+    accuracy = evaluator.score(gt_label[..., np.newaxis],
                                np.argmax(results, axis=-1)[..., np.newaxis])
-    accuracy_quant = evaluator.score(np.argmax(gt_label, axis=-1)[..., np.newaxis],
+    accuracy_quant = evaluator.score(gt_label[..., np.newaxis],
                                      np.argmax(results_quant, axis=-1)[..., np.newaxis])
 
     print('Accuracy Before Quantization: {:.4f}'.format(accuracy))
