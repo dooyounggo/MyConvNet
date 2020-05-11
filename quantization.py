@@ -54,14 +54,16 @@ def quantize(model, images, ckpt_dir, save_dir, **kwargs):
     converter = tf.lite.TFLiteConverter.from_session(sess=sess,
                                                      input_tensors=[input_tensor],
                                                      output_tensors=[output_tensor])
-
-    print('Converting the model.')
-    tflite_model = converter.convert()
     tflite_models_dir = pathlib.Path(os.path.join(save_dir, 'tflite'))
     tflite_models_dir.mkdir(exist_ok=True, parents=True)
     tflite_model_file = tflite_models_dir/'model.tflite'
     tflite_model_quant_file = tflite_models_dir/'model_quantized.tflite'
-    tflite_model_file.write_bytes(tflite_model)
+
+    # if not tflite_model_file.exists():  # FIXME
+    if True:
+        print('Converting the model.')
+        tflite_model = converter.convert()
+        tflite_model_file.write_bytes(tflite_model)
 
     # if not tflite_model_quant_file.exists():  # FIXME
     if True:
@@ -114,13 +116,12 @@ def evaluate_quantized_model(model_file, model_quant_file, test_set, evaluator, 
 
     input_index = interpreter.get_input_details()[0]['index']
     output_index = interpreter.get_output_details()[0]['index']
-
     input_details_quant = interpreter_quant.get_input_details()[0]
     output_details_quant = interpreter_quant.get_output_details()[0]
     input_index_quant = input_details_quant['index']
     output_index_quant = output_details_quant['index']
 
-    label_shape = [test_set.num_examples, test_set.num_classes]
+    label_shape = [test_set.num_examples] + list(output_details_quant['shape'][1:])
     gt_label = np.empty(label_shape, dtype=np.float32)
     results = np.empty(label_shape, dtype=np.float32)
     results_quant = np.empty(label_shape, dtype=output_details_quant['dtype'])
@@ -166,10 +167,20 @@ def evaluate_quantized_model(model_file, model_quant_file, test_set, evaluator, 
         results_quant[i] = interpreter_quant.get_tensor(output_index_quant)[0]
 
         if i < 10:
+            print('GT:')
+            print(np.argmax(gt_label[i], axis=-1))
+            print('Before:')
+            print(np.argmax(results[i], axis=-1))
+            print('After:')
+            print(np.argmax(results_quant[i], axis=-1))
+
             total_time += time.time() - t_start
             print('Estimated test time: {} min.'.format(int(total_time/(i + 1)*test_set.num_examples/60)))
-    accuracy = evaluator.score(gt_label, results)
-    accuracy_quant = evaluator.score(gt_label, results_quant)
+            print('')
+    accuracy = evaluator.score(np.argmax(gt_label, axis=-1)[..., np.newaxis],
+                               np.argmax(results, axis=-1)[..., np.newaxis])
+    accuracy_quant = evaluator.score(np.argmax(gt_label, axis=-1)[..., np.newaxis],
+                                     np.argmax(results_quant, axis=-1)[..., np.newaxis])
 
-    print('Accuracy Before Quantization: {:.2f}'.format(accuracy))
-    print('Accuracy After Quantization:  {:.2f}'.format(accuracy_quant))
+    print('Accuracy Before Quantization: {:.4f}'.format(accuracy))
+    print('Accuracy After Quantization:  {:.4f}'.format(accuracy_quant))
