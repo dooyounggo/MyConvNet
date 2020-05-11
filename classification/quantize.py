@@ -1,4 +1,4 @@
-from classification.parameters_cub import *
+from classification.parameters import *
 import quantization
 
 
