@@ -11,12 +11,13 @@ import time
 from subsets.subset_functions import resize_with_crop_or_pad
 
 
-def quantize(model, images, ckpt_dir, save_dir, **kwargs):
+def quantize(model, images, ckpt_dir, save_dir, overwrite=True, **kwargs):
     """
     :param model: ConvNet, a model to be quantized.
     :param images: np.ndarray, representative images used for quantization.
     :param ckpt_dir: string, a path to saved checkpoint.
     :param save_dir: string, a path to save models.
+    :param overwrite: bool, whether to overwrite tflite files already exist.
     :param kwargs: hyperparameters.
     :return: paths to a tflite model file and a quantized tflite model file.
     """
@@ -59,14 +60,12 @@ def quantize(model, images, ckpt_dir, save_dir, **kwargs):
     tflite_model_file = tflite_models_dir/'model.tflite'
     tflite_model_quant_file = tflite_models_dir/'model_quantized.tflite'
 
-    # if not tflite_model_file.exists():  # FIXME
-    if True:
+    if overwrite or not tflite_model_file.exists():
         print('Converting the model.')
         tflite_model = converter.convert()
         tflite_model_file.write_bytes(tflite_model)
 
-    # if not tflite_model_quant_file.exists():  # FIXME
-    if True:
+    if overwrite or not tflite_model_quant_file.exists():
         converter.optimizations = [tf.lite.Optimize.OPTIMIZE_FOR_SIZE]
 
         def repr_data_gen():

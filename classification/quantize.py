@@ -53,6 +53,7 @@ for i, (idir, ldir) in enumerate(zip(image_dirs, label_dirs)):
 print('Done.')
 print('')
 
-(tflite_model_file, tflite_model_quant_file) = quantization.quantize(model, images, ckpt_to_load, Param.save_dir)
+(tflite_model_file, tflite_model_quant_file) = quantization.quantize(model, images, ckpt_to_load, Param.save_dir,
+                                                                     overwrite=True, **Param.d)
 quantization.evaluate_quantized_model(tflite_model_file, tflite_model_quant_file, test_set, evaluator,
                                       show_details=True, **Param.d)
