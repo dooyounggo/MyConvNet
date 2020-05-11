@@ -1,5 +1,6 @@
 """
 Model quantization.
+Note that only single GPU inference, the float32 data type, and the "NHWC" format are supported.
 """
 
 import os
@@ -124,12 +125,13 @@ def evaluate_quantized_model(model_file, model_quant_file, test_set, evaluator, 
     image_mean = kwargs.get('image_mean', 0.5)
     scale_factor = kwargs.get('scale_factor', 2.0)
     total_time = 0
+    input_image_tensor, input_label_tensor = iterator.get_next()
     for i in range(test_set.num_examples):
         if (i % 100) == 0:
             print('Evaluating models... {:5d}/{}'.format(i, test_set.num_examples))
         if i < 10:
             t_start = time.time()
-        input_image, input_label = sess.run(iterator.get_next())
+        input_image, input_label = sess.run([input_image_tensor, input_label_tensor])
         input_image = resize_with_crop_or_pad(input_image[0],
                                               out_size=input_details_quant['shape'][1:])
         input_image = (input_image[np.newaxis, ...] - image_mean)*scale_factor

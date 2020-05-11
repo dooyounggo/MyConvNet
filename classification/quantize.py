@@ -25,6 +25,8 @@ Param.d['image_mean'] = image_mean
 Param.d['monte_carlo'] = False
 
 # Initialize
+Param.d['half_precision'] = False
+Param.d['channel_first'] = False
 model = ConvNet(Param.d['input_size'], test_set.num_classes, loss_weights=None, **Param.d)
 evaluator = Evaluator()
 
