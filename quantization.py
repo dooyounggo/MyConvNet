@@ -101,12 +101,12 @@ def evaluate_quantized_model(model_file, model_quant_file, test_set, evaluator, 
         print('Tensor Details:')
         for detail in tensor_details:
             print(detail)
-            print('')
+        print('')
         tensor_details = interpreter_quant.get_tensor_details()
         print('Quantized Tensor Details:')
         for detail in tensor_details:
             print(detail)
-            print('')
+        print('')
 
     input_index = interpreter.get_input_details()[0]['index']
     output_index = interpreter.get_output_details()[0]['index']
