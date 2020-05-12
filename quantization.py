@@ -189,6 +189,7 @@ def evaluate_quantized_model(model_file, model_quant_file, test_set, evaluator, 
 
 def evaluate_quantized_model_multiprocess(model_file, model_quant_file, test_set, evaluator, show_details=False,
                                           num_processes=4, **kwargs):
+    mp.set_start_method('spawn')
     dataset = tf.data.Dataset.from_tensor_slices((test_set.image_dirs, test_set.label_dirs))
     if not test_set.from_memory:
         dataset = dataset.map(lambda image_dir, label_dir: tuple(tf.py_func(test_set._load_function,
@@ -239,7 +240,6 @@ def evaluate_quantized_model_multiprocess(model_file, model_quant_file, test_set
     w_lock = mp.Lock()
     r_lock = mp.Lock()
 
-    mp.set_start_method('spawn')
     r_lock.acquire()  # Lock image read at the beginning
     procs = []
     for n in range(num_processes):
