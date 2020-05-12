@@ -7,7 +7,7 @@
   
   DCGAN is now available.
   
-  Post-training quantization is now supported.
+  [Post-training quantization](https://www.tensorflow.org/lite/performance/post_training_integer_quant) is now supported.
   
   Verified on Windows 10 and Ubuntu 18.04 using PyCharm with Anaconda.
   
