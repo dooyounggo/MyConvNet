@@ -7,6 +7,8 @@
   
   DCGAN is now available.
   
+  Post-training quantization is now supported.
+  
   Verified on Windows 10 and Ubuntu 18.04 using PyCharm with Anaconda.
   
   Check out the [instruction](https://www.dropbox.com/s/64wtb6kvn9ms5o3/MyConvNet.pptx?dl=0).
@@ -21,6 +23,7 @@
 - Run [train.py](https://github.com/dooyounggo/MyConvNet/blob/master/classification/train.py) to train the model.
 - Run [test.py](https://github.com/dooyounggo/MyConvNet/blob/master/classification/test.py) to test the trained model.
 - Use [inference.py](https://github.com/dooyounggo/MyConvNet/blob/master/classification/inference.py) if you have no label for test data.
+- Run [quantize.py](https://github.com/dooyounggo/MyConvNet/blob/master/classification/quantize.py) to perform post-training quantization.
 
 ### How to prepare data
 Images and labels should be paired and stored in the same directory ([default](https://github.com/dooyounggo/MyConvNet/blob/master/subsets/subset_functions.py#L15)).
