@@ -239,6 +239,7 @@ def evaluate_quantized_model_multiprocess(model_file, model_quant_file, test_set
     w_lock = mp.Lock()
     r_lock = mp.Lock()
 
+    mp.set_start_method('spawn')
     r_lock.acquire()  # Lock image read at the beginning
     procs = []
     for n in range(num_processes):
