@@ -4,6 +4,7 @@ Note that only the float32 data type and the "NHWC" format are supported.
 """
 
 import os
+import sys
 import numpy as np
 import tensorflow.compat.v1 as tf
 import pathlib
@@ -334,7 +335,7 @@ def tflite_process(idx, image, results, results_quant, w_lock, r_lock, **kwargs)
     total_time = 0
     print('Start {} (PID: {}).'.format(mp.current_process().name, os.getpid()))
     while True:
-        r_lock.acquire()
+        r_lock.acquire(timeout=60)
         i = idx.value - 1
         if i >= num_images:
             try:
@@ -346,6 +347,7 @@ def tflite_process(idx, image, results, results_quant, w_lock, r_lock, **kwargs)
         else:
             if (i % 100) == 0:
                 print('Evaluating models... {:5d}/{}'.format(i, num_images))
+            sys.stdout.flush()
             t_start = time.time()
             input_image = np.array(image, dtype=np.float32).reshape(image_shape)[np.newaxis, ...]
             w_lock.release()
@@ -378,3 +380,4 @@ def tflite_process(idx, image, results, results_quant, w_lock, r_lock, **kwargs)
                 print('{}. After:'.format(i))
                 print(np.argmax(output_quant, axis=-1))
                 print('')
+                sys.stdout.flush()
