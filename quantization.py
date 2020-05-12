@@ -305,8 +305,9 @@ def load_function(idx, image, gt_label, w_lock, r_lock, session, iterator, inter
             idx.value = i + 1
             r_lock.release()
 
-            print('{}. GT:'.format(i))
-            print(input_label.astype(int))
+            if i < 100:
+                print('{}. GT:'.format(i))
+                print(input_label.astype(int))
 
 
 def tflite_process(idx, image, results, results_quant, w_lock, r_lock, **kwargs):
