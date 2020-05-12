@@ -8,6 +8,7 @@ import numpy as np
 import tensorflow.compat.v1 as tf
 import pathlib
 import time
+import multiprocessing as mp
 from subsets.subset_functions import resize_with_crop_or_pad
 
 
@@ -95,6 +96,7 @@ def evaluate_quantized_model(model_file, model_quant_file, test_set, evaluator, 
     iterator = dataset.make_initializable_iterator()
     sess = tf.Session()
     sess.run(iterator.initializer)
+    input_image_tensor, input_label_tensor = iterator.get_next()
 
     interpreter = tf.lite.Interpreter(model_path=str(model_file))
     interpreter.allocate_tensors()
@@ -120,16 +122,15 @@ def evaluate_quantized_model(model_file, model_quant_file, test_set, evaluator, 
     input_index_quant = input_details_quant['index']
     output_index_quant = output_details_quant['index']
 
+    image_mean = kwargs.get('image_mean', 0.5)
+    scale_factor = kwargs.get('scale_factor', 2.0)
+
     label_shape = [test_set.num_examples] + list(output_details_quant['shape'][1:])
     gt_label = np.empty(label_shape[:-1], dtype=np.float32)
     results = np.empty(label_shape, dtype=np.float32)
     results_quant = np.empty(label_shape, dtype=output_details_quant['dtype'])
 
-    image_mean = kwargs.get('image_mean', 0.5)
-    scale_factor = kwargs.get('scale_factor', 2.0)
     total_time = 0
-
-    input_image_tensor, input_label_tensor = iterator.get_next()
     for i in range(test_set.num_examples):
         if (i % 100) == 0:
             print('Evaluating models... {:5d}/{}'.format(i, test_set.num_examples))
@@ -169,7 +170,6 @@ def evaluate_quantized_model(model_file, model_quant_file, test_set, evaluator, 
         if i < 10:
             total_time += time.time() - t_start
             print('Estimated test time: {} min.'.format(int(total_time/(i + 1)*test_set.num_examples/60)))
-
         if i < 100:
             print('{}. GT:'.format(i))
             print(gt_label[i].astype(int))
@@ -185,3 +185,195 @@ def evaluate_quantized_model(model_file, model_quant_file, test_set, evaluator, 
 
     print('Accuracy Before Quantization: {:.4f}'.format(accuracy))
     print('Accuracy After Quantization:  {:.4f}'.format(accuracy_quant))
+
+
+def evaluate_quantized_model_multiprocess(model_file, model_quant_file, test_set, evaluator, show_details=False,
+                                          num_processes=4, **kwargs):
+    dataset = tf.data.Dataset.from_tensor_slices((test_set.image_dirs, test_set.label_dirs))
+    if not test_set.from_memory:
+        dataset = dataset.map(lambda image_dir, label_dir: tuple(tf.py_func(test_set._load_function,
+                                                                            (image_dir, label_dir),
+                                                                            (tf.float32, tf.float32))),
+                              num_parallel_calls=1)
+    dataset = dataset.batch(1)
+    iterator = dataset.make_initializable_iterator()
+    session = tf.Session()
+
+    interpreter = tf.lite.Interpreter(model_path=str(model_file))
+    interpreter.allocate_tensors()
+    interpreter_quant = tf.lite.Interpreter(model_path=str(model_quant_file))
+    interpreter_quant.allocate_tensors()
+
+    if show_details:
+        tensor_details = interpreter.get_tensor_details()
+        print('Tensor Details:')
+        for detail in tensor_details:
+            print(detail)
+        print('')
+        tensor_details = interpreter_quant.get_tensor_details()
+        print('Quantized Tensor Details:')
+        for detail in tensor_details:
+            print(detail)
+        print('')
+
+    input_details_quant = interpreter_quant.get_input_details()[0]
+    output_details_quant = interpreter_quant.get_output_details()[0]
+
+    image_mean = kwargs.get('image_mean', 0.5)
+    scale_factor = kwargs.get('scale_factor', 2.0)
+
+    params = dict()
+    params['model_file'] = model_file
+    params['model_quant_file'] = model_quant_file
+    params['num_images'] = test_set.num_examples
+    params['image_mean'] = image_mean
+    params['scale_factor'] = scale_factor
+    params['num_processes'] = num_processes
+
+    label_shape = [test_set.num_examples] + list(output_details_quant['shape'][1:])
+    idx = mp.Value('l', lock=False)
+    image_arr = mp.Array('f', int(np.prod(input_details_quant['shape'][1:])), lock=False)
+    gt_label_arr = mp.Array('f', int(np.prod(label_shape[:-1])), lock=False)
+    results_arr = mp.Array('f', int(np.prod(label_shape)), lock=False)
+    results_quant_arr = mp.Array('f', int(np.prod(label_shape)), lock=False)
+    w_lock = mp.Lock()
+    r_lock = mp.Lock()
+
+    r_lock.acquire()  # Lock image read at the beginning
+    procs = []
+    for n in range(num_processes):
+        proc = mp.Process(target=tflite_process, name='invoke_process_{}'.format(n),
+                          args=(idx, image_arr, results_arr, results_quant_arr, w_lock, r_lock), kwargs=params)
+        proc.start()
+        procs.append(proc)
+
+    load_function(idx, image_arr, gt_label_arr, w_lock, r_lock, session, iterator, interpreter, **params)
+
+    for proc in procs:
+        proc.join()
+
+    gt_label = np.empty(label_shape[:-1], dtype=np.float32)
+    results = np.empty(label_shape, dtype=np.float32)
+    results_quant = np.empty(label_shape, dtype=np.float32)
+    gt_len = np.prod(label_shape[1:-1]).astype(int)
+    r_len = np.prod(label_shape[1:]).astype(int)
+    for i in range(test_set.num_examples):
+        gt_label[i] = np.array(gt_label_arr[i*gt_len:(i + 1)*gt_len]).reshape(label_shape[1:-1])
+        results[i] = np.array(results_arr[i*r_len:(i + 1)*r_len]).reshape(label_shape[1:])
+        results_quant[i] = np.array(results_quant_arr[i*r_len:(i + 1)*r_len]).reshape(label_shape[1:])
+
+    accuracy = evaluator.score(gt_label[..., np.newaxis],
+                               np.argmax(results, axis=-1)[..., np.newaxis])
+    accuracy_quant = evaluator.score(gt_label[..., np.newaxis],
+                                     np.argmax(results_quant, axis=-1)[..., np.newaxis])
+
+    print('Accuracy Before Quantization: {:.4f}'.format(accuracy))
+    print('Accuracy After Quantization:  {:.4f}'.format(accuracy_quant))
+
+
+def load_function(idx, image, gt_label, w_lock, r_lock, session, iterator, interpreter, **kwargs):
+    num_images = kwargs['num_images']
+    image_mean = kwargs['image_mean']
+    scale_factor = kwargs['scale_factor']
+
+    image_shape = interpreter.get_input_details()[0]['shape'][1:]
+    label_len = np.prod(interpreter.get_output_details()[0]['shape'][1:-1]).astype(int)
+    image_np = np.frombuffer(image, dtype=np.float32)
+    label_np = np.frombuffer(gt_label, dtype=np.float32)
+
+    session.run(iterator.initializer)
+    image_tensor, label_tensor = iterator.get_next()
+    while True:
+        w_lock.acquire()
+        i = idx.value
+        if i >= num_images:
+            try:
+                r_lock.release()
+            except ValueError:
+                pass
+            w_lock.release()
+            break
+        else:
+            input_image, input_label = session.run([image_tensor, label_tensor])
+            input_image = resize_with_crop_or_pad(input_image[0],
+                                                  out_size=image_shape)
+            input_image = (input_image - image_mean)*scale_factor
+            image_np[:] = input_image.reshape(np.prod(image_shape).astype(int)).copy()
+            label_np[i*label_len:(i + 1)*label_len] = input_label.reshape(label_len).copy()
+            idx.value = i + 1
+            r_lock.release()
+
+            print('{}. GT:'.format(i))
+            print(input_label.astype(int))
+
+
+def tflite_process(idx, image, results, results_quant, w_lock, r_lock, **kwargs):
+    model_file = kwargs['model_file']
+    model_quant_file = kwargs['model_quant_file']
+    num_images = kwargs['num_images']
+    num_processes = kwargs['num_processes']
+
+    interpreter = tf.lite.Interpreter(model_path=str(model_file))
+    interpreter.allocate_tensors()
+    interpreter_quant = tf.lite.Interpreter(model_path=str(model_quant_file))
+    interpreter_quant.allocate_tensors()
+
+    input_index = interpreter.get_input_details()[0]['index']
+    output_index = interpreter.get_output_details()[0]['index']
+    input_details_quant = interpreter_quant.get_input_details()[0]
+    output_details_quant = interpreter_quant.get_output_details()[0]
+    input_index_quant = input_details_quant['index']
+    output_index_quant = output_details_quant['index']
+
+    results_np = np.frombuffer(results, dtype=np.float32)
+    results_quant_np = np.frombuffer(results_quant, dtype=np.float32)
+    image_shape = interpreter_quant.get_input_details()[0]['shape'][1:]
+    label_len = np.prod(interpreter_quant.get_output_details()[0]['shape'][1:]).astype(int)
+    i_local = 0
+    total_time = 0
+    print('Start {} (PID: {}).'.format(mp.current_process().name, os.getpid()))
+    while True:
+        r_lock.acquire()
+        i = idx.value - 1
+        if i >= num_images:
+            try:
+                w_lock.release()
+            except ValueError:
+                pass
+            r_lock.release()
+            break
+        else:
+            if (i % 100) == 0:
+                print('Evaluating models... {:5d}/{}'.format(i, num_images))
+            t_start = time.time()
+            input_image = np.array(image, dtype=np.float32).reshape(image_shape)[np.newaxis, ...]
+            w_lock.release()
+
+            interpreter.set_tensor(input_index, input_image)
+            interpreter.invoke()
+
+            input_quant_details = input_details_quant['quantization']
+            if input_quant_details[0] > 0.0:
+                input_image_quant = input_image/input_quant_details[0] + input_quant_details[1]
+            else:
+                input_image_quant = input_image
+            input_image_quant = input_image_quant.astype(input_details_quant['dtype'])
+
+            interpreter_quant.set_tensor(input_index_quant, input_image_quant)
+            interpreter_quant.invoke()
+
+            output = interpreter.get_tensor(output_index)[0]
+            output_quant = interpreter_quant.get_tensor(output_index_quant)[0]
+            results_np[i*label_len:(i + 1)*label_len] = output.reshape(label_len).copy()
+            results_quant_np[i*label_len:(i + 1)*label_len] = output_quant.reshape(label_len).astype(np.float32).copy()
+
+            i_local += 1
+            if i < 10:
+                total_time += time.time() - t_start
+                print('Estimated test time: {} min.'.format(int(total_time/i_local*num_images/60/num_processes)))
+            if i < 100:
+                print('{}. Before:'.format(i))
+                print(np.argmax(output, axis=-1))
+                print('{}. After:'.format(i))
+                print(np.argmax(output_quant, axis=-1))
+                print('')
