@@ -179,13 +179,18 @@ def evaluate_quantized_model(model_file, model_quant_file, test_set, evaluator, 
             print('{}. After:'.format(i))
             print(np.argmax(results_quant[i], axis=-1))
             print('')
+
+    results_argmax = np.argmax(results, axis=-1)
+    results_quant_argmax = np.argmax(results_quant, axis=-1)
     accuracy = evaluator.score(gt_label[..., np.newaxis],
-                               np.argmax(results, axis=-1)[..., np.newaxis])
+                               results_argmax[..., np.newaxis])
     accuracy_quant = evaluator.score(gt_label[..., np.newaxis],
-                                     np.argmax(results_quant, axis=-1)[..., np.newaxis])
+                                     results_quant_argmax[..., np.newaxis])
+    is_different = np.not_equal(results_argmax, results_quant_argmax)
 
     print('Accuracy Before Quantization: {:.4f}'.format(accuracy))
     print('Accuracy After Quantization:  {:.4f}'.format(accuracy_quant))
+    print('Number of Different Results: {}/{}'.format(np.sum(is_different), np.prod(is_different.shape)))
 
 
 def evaluate_quantized_model_multiprocess(model_file, model_quant_file, test_set, evaluator, show_details=False,
@@ -264,13 +269,17 @@ def evaluate_quantized_model_multiprocess(model_file, model_quant_file, test_set
         results[i] = np.array(results_arr[i*r_len:(i + 1)*r_len]).reshape(label_shape[1:])
         results_quant[i] = np.array(results_quant_arr[i*r_len:(i + 1)*r_len]).reshape(label_shape[1:])
 
+    results_argmax = np.argmax(results, axis=-1)
+    results_quant_argmax = np.argmax(results_quant, axis=-1)
     accuracy = evaluator.score(gt_label[..., np.newaxis],
-                               np.argmax(results, axis=-1)[..., np.newaxis])
+                               results_argmax[..., np.newaxis])
     accuracy_quant = evaluator.score(gt_label[..., np.newaxis],
-                                     np.argmax(results_quant, axis=-1)[..., np.newaxis])
+                                     results_quant_argmax[..., np.newaxis])
+    is_different = np.not_equal(results_argmax, results_quant_argmax)
 
     print('Accuracy Before Quantization: {:.4f}'.format(accuracy))
     print('Accuracy After Quantization:  {:.4f}'.format(accuracy_quant))
+    print('Number of Different Results: {}/{}'.format(np.sum(is_different), np.prod(is_different.shape)))
 
 
 def load_function(idx, image, gt_label, w_lock, r_lock, session, iterator, interpreter, **kwargs):
@@ -288,12 +297,10 @@ def load_function(idx, image, gt_label, w_lock, r_lock, session, iterator, inter
     while True:
         w_lock.acquire()
         i = idx.value
+        idx.value = i + 1
         if i >= num_images:
-            try:
-                r_lock.release()
-            except ValueError:
-                pass
             w_lock.release()
+            r_lock.release()
             break
         else:
             input_image, input_label = session.run([image_tensor, label_tensor])
@@ -302,7 +309,6 @@ def load_function(idx, image, gt_label, w_lock, r_lock, session, iterator, inter
             input_image = (input_image - image_mean)*scale_factor
             image_np[:] = input_image.reshape(np.prod(image_shape).astype(int)).copy()
             label_np[i*label_len:(i + 1)*label_len] = input_label.reshape(label_len).copy()
-            idx.value = i + 1
             r_lock.release()
 
             if i < 100:
@@ -335,20 +341,17 @@ def tflite_process(idx, image, results, results_quant, w_lock, r_lock, **kwargs)
     i_local = 0
     total_time = 0
     print('Start {} (PID: {}).'.format(mp.current_process().name, os.getpid()))
+    sys.stdout.flush()
     while True:
-        r_lock.acquire(timeout=60)
+        r_lock.acquire(timeout=60)  # If you kill the main process, the child process will terminate in ~60 seconds.
         i = idx.value - 1
         if i >= num_images:
-            try:
-                w_lock.release()
-            except ValueError:
-                pass
             r_lock.release()
             break
         else:
             if (i % 100) == 0:
                 print('Evaluating models... {:5d}/{}'.format(i, num_images))
-            sys.stdout.flush()
+                sys.stdout.flush()
             t_start = time.time()
             input_image = np.array(image, dtype=np.float32).reshape(image_shape)[np.newaxis, ...]
             w_lock.release()
@@ -372,10 +375,9 @@ def tflite_process(idx, image, results, results_quant, w_lock, r_lock, **kwargs)
             results_quant_np[i*label_len:(i + 1)*label_len] = output_quant.reshape(label_len).astype(np.float32).copy()
 
             i_local += 1
-            if i < 10:
+            if i < 100:
                 total_time += time.time() - t_start
                 print('Estimated test time: {} min.'.format(int(total_time/i_local*num_images/60/num_processes)))
-            if i < 100:
                 print('{}. Before:'.format(i))
                 print(np.argmax(output, axis=-1))
                 print('{}. After:'.format(i))
