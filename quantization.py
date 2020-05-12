@@ -343,7 +343,7 @@ def tflite_process(idx, image, results, results_quant, w_lock, r_lock, **kwargs)
     print('Start {} (PID: {}).'.format(mp.current_process().name, os.getpid()))
     sys.stdout.flush()
     while True:
-        r_lock.acquire(timeout=60)  # If you kill the main process, the child process will terminate in ~60 seconds.
+        r_lock.acquire(timeout=60)  # If you kill the main process, child processes will terminate in about 60 seconds.
         i = idx.value - 1
         if i >= num_images:
             r_lock.release()
