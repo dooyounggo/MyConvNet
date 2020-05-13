@@ -5,10 +5,11 @@ Note that only the float32 data type and the "NHWC" format are supported.
 
 import os
 import sys
-import numpy as np
-import tensorflow.compat.v1 as tf
 import pathlib
 import time
+import pydot
+import numpy as np
+import tensorflow.compat.v1 as tf
 import multiprocessing as mp
 from subsets.subset_functions import resize_with_crop_or_pad
 
@@ -54,34 +55,55 @@ def quantize(model, images, ckpt_dir, save_dir, overwrite=True, **kwargs):
     saver = tf.train.Saver(var_list=tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES))
     saver.restore(sess, ckpt_dir)
 
-    converter = tf.lite.TFLiteConverter.from_session(sess=sess,
-                                                     input_tensors=[input_tensor],
-                                                     output_tensors=[output_tensor])
     tflite_models_dir = pathlib.Path(os.path.join(save_dir, 'tflite'))
     tflite_models_dir.mkdir(exist_ok=True, parents=True)
     tflite_model_file = tflite_models_dir/'model.tflite'
     tflite_model_quant_file = tflite_models_dir/'model_quantized.tflite'
 
+    tflite_graphviz_dir = tflite_models_dir/'graphviz'
+    tflite_graphviz_quant_dir = tflite_models_dir/'graphviz_quant'
+    tflite_graphviz_dir.mkdir(exist_ok=True, parents=True)
+    tflite_graphviz_quant_dir.mkdir(exist_ok=True, parents=True)
+    dotfile_names = ['toco_AT_IMPORT', 'toco_AFTER_TRANSFORMATIONS', 'toco_AFTER_ALLOCATION']
+
     if overwrite or not tflite_model_file.exists():
-        print('Converting the model.')
+        converter = tf.lite.TFLiteConverter.from_session(sess=sess,
+                                                         input_tensors=[input_tensor],
+                                                         output_tensors=[output_tensor])
+        print('Converting the model...')
+        converter.dump_graphviz_dir = str(tflite_graphviz_dir)
         tflite_model = converter.convert()
         tflite_model_file.write_bytes(tflite_model)
+        if os.name != 'nt':  # Conversion from dot to svg is not supported on Windows due to UnicodeDecodeError.
+            for dotname in dotfile_names:
+                (dotgraph,) = pydot.graph_from_dot_file(os.path.join(str(tflite_graphviz_dir), dotname + '.dot'))
+                dotgraph.write_svg(os.path.join(str(tflite_graphviz_dir), dotname + '.svg'))
+        print('Done. \n')
 
     if overwrite or not tflite_model_quant_file.exists():
-        converter.optimizations = [tf.lite.Optimize.OPTIMIZE_FOR_SIZE]
+        converter_quant = tf.lite.TFLiteConverter.from_session(sess=sess,
+                                                               input_tensors=[input_tensor],
+                                                               output_tensors=[output_tensor])
+        converter_quant.optimizations = [tf.lite.Optimize.OPTIMIZE_FOR_SIZE]
 
         def repr_data_gen():
             for img in images:
                 yield [(img[np.newaxis, ...] - image_mean)*scale_factor]
 
-        converter.representative_dataset = repr_data_gen
-        converter.target_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
-        converter.inference_input_type = tf.uint8
-        converter.inference_output_type = tf.uint8
+        converter_quant.representative_dataset = repr_data_gen
+        converter_quant.target_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
+        converter_quant.inference_input_type = tf.uint8
+        converter_quant.inference_output_type = tf.uint8
 
-        print('Converting the quantized model.')
-        tflite_model_quant = converter.convert()
+        print('Converting the quantized model...')
+        converter_quant.dump_graphviz_dir = str(tflite_graphviz_quant_dir)
+        tflite_model_quant = converter_quant.convert()
         tflite_model_quant_file.write_bytes(tflite_model_quant)
+        if os.name != 'nt':
+            for dotname in dotfile_names:
+                (dotgraph,) = pydot.graph_from_dot_file(os.path.join(str(tflite_graphviz_quant_dir), dotname + '.dot'))
+                dotgraph.write_svg(os.path.join(str(tflite_graphviz_quant_dir), dotname + '.svg'))
+        print('Done. \n')
 
     return tflite_model_file, tflite_model_quant_file
 
@@ -188,7 +210,7 @@ def evaluate_quantized_model(model_file, model_quant_file, test_set, evaluator, 
                                      results_quant_argmax[..., np.newaxis])
     is_different = np.not_equal(results_argmax, results_quant_argmax)
 
-    print('Accuracy Before Quantization: {:.4f}'.format(accuracy))
+    print('\nAccuracy Before Quantization: {:.4f}'.format(accuracy))
     print('Accuracy After Quantization:  {:.4f}'.format(accuracy_quant))
     print('Number of Different Results: {}/{}'.format(np.sum(is_different), np.prod(is_different.shape)))
 
@@ -277,7 +299,7 @@ def evaluate_quantized_model_multiprocess(model_file, model_quant_file, test_set
                                      results_quant_argmax[..., np.newaxis])
     is_different = np.not_equal(results_argmax, results_quant_argmax)
 
-    print('Accuracy Before Quantization: {:.4f}'.format(accuracy))
+    print('\nAccuracy Before Quantization: {:.4f}'.format(accuracy))
     print('Accuracy After Quantization:  {:.4f}'.format(accuracy_quant))
     print('Number of Different Results: {}/{}'.format(np.sum(is_different), np.prod(is_different.shape)))
 
