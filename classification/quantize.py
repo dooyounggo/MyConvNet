@@ -4,7 +4,8 @@ import argparse
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Post-training integer quantization')
+    parser = argparse.ArgumentParser(description='Post-training integer quantization',
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--overwrite', '-o', help='Whether to overwrite existing tflite models',
                         type=str, default='False', metavar='')
     parser.add_argument('--saved_model', '-s', help='Whether to create saved_model from ckpt',
