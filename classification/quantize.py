@@ -1,9 +1,44 @@
 from classification.parameters import *
 import quantization
+import argparse
 
 
 if __name__ == '__main__':
-    num_repr_data = 1000
+    parser = argparse.ArgumentParser(description='Post-training integer quantization')
+    parser.add_argument('--overwrite', '-o', help='Whether to overwrite existing tflite models',
+                        type=str, default='False')
+    parser.add_argument('--saved_model', '-s', help='Whether to create saved_model from ckpt',
+                        type=str, default='True')
+    parser.add_argument('--evaluate_models', '-e', help='Whether to evaluate tflite models',
+                        type=str, default='True')
+    parser.add_argument('--write_tensors', '-w', help='Whether to write tensors in binary files',
+                        type=str, default='True')
+    parser.add_argument('--num_repr_data', '-n', '--num_data', '--num_images', help='Number of representative images',
+                        type=str, default='1000')
+
+    args = parser.parse_args()
+    overwrite = args.overwrite
+    if overwrite.lower() == 'true' or overwrite.strip() == '1':
+        overwrite = True
+    else:
+        overwrite = False
+    saved_model = args.saved_model
+    if saved_model.lower() == 'false' or saved_model.strip() == '0':
+        saved_model = False
+    else:
+        saved_model = True
+    evaluate_models = args.evaluate_models
+    if evaluate_models.lower() == 'false' or evaluate_models.strip() == '0':
+        evaluate_models = False
+    else:
+        evaluate_models = True
+    write_tensors = args.write_tensors
+    if write_tensors.lower() == 'false' or write_tensors.strip() == '0':
+        write_tensors = False
+    else:
+        write_tensors = True
+    num_repr_data = int(args.num_repr_data)
+
     Param = Parameters()
     model_to_load = Param.d['model_to_load']
     idx_start = 0
@@ -55,12 +90,13 @@ if __name__ == '__main__':
     print('')
 
     (tflite_model_file, tflite_model_quant_file) = quantization.quantize(model, images, ckpt_to_load, Param.save_dir,
-                                                                         overwrite=True, **Param.d)
-    # quantization.evaluate_quantized_model(tflite_model_file, tflite_model_quant_file, test_set, evaluator,
-    #                                       show_details=True, **Param.d)
-    quantization.evaluate_quantized_model_multiprocess(tflite_model_file, tflite_model_quant_file, test_set, evaluator,
-                                                       show_details=True,
-                                                       num_processes=Param.d.get('num_parallel_calls', 4),
-                                                       **Param.d)
-    quantization.write_tensors(tflite_model_file, images[0], tensor_list=None, with_txt=True)
-    quantization.write_tensors(tflite_model_quant_file, images[0], tensor_list=None, with_txt=True)
+                                                                         overwrite=overwrite, saved_model=saved_model,
+                                                                         **Param.d)
+    if evaluate_models:
+        quantization.evaluate_quantized_model(tflite_model_file, tflite_model_quant_file,
+                                              test_set, evaluator, show_details=True,
+                                              num_processes=Param.d.get('num_parallel_calls', 4),
+                                              **Param.d)
+    if write_tensors:
+        quantization.write_tensors(tflite_model_file, images[0], tensor_list=None, with_txt=True)
+        quantization.write_tensors(tflite_model_quant_file, images[0], tensor_list=None, with_txt=True)
