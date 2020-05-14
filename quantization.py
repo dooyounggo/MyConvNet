@@ -247,8 +247,8 @@ def load_function(idx, image, gt_label, w_lock, r_lock, session, iterator, inter
             input_image = resize_with_crop_or_pad(input_image[0],
                                                   out_size=image_shape)
             input_image = (input_image - image_mean)*scale_factor
-            image_np[:] = input_image.reshape(np.prod(image_shape).astype(int)).copy()
-            label_np[i*label_len:(i + 1)*label_len] = input_label.reshape(label_len).copy()
+            image_np[:] = np.reshape(input_image, np.prod(image_shape).astype(int))
+            label_np[i*label_len:(i + 1)*label_len] = np.reshape(input_label, label_len)
             r_lock.release()
 
             if i < num_prints:
