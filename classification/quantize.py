@@ -6,15 +6,15 @@ import argparse
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Post-training integer quantization')
     parser.add_argument('--overwrite', '-o', help='Whether to overwrite existing tflite models',
-                        type=str, default='False')
+                        type=str, default='False', metavar='')
     parser.add_argument('--saved_model', '-s', help='Whether to create saved_model from ckpt',
-                        type=str, default='True')
+                        type=str, default='True', metavar='')
     parser.add_argument('--evaluate_models', '-e', help='Whether to evaluate tflite models',
-                        type=str, default='True')
+                        type=str, default='True', metavar='')
     parser.add_argument('--write_tensors', '-w', help='Whether to write tensors in binary files',
-                        type=str, default='True')
+                        type=str, default='True', metavar='')
     parser.add_argument('--num_repr_data', '-n', '--num_data', '--num_images', help='Number of representative images',
-                        type=str, default='1000')
+                        type=str, default='1000', metavar='')
 
     args = parser.parse_args()
     overwrite = args.overwrite
