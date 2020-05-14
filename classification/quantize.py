@@ -55,10 +55,12 @@ if __name__ == '__main__':
     print('')
 
     (tflite_model_file, tflite_model_quant_file) = quantization.quantize(model, images, ckpt_to_load, Param.save_dir,
-                                                                         overwrite=False, **Param.d)
+                                                                         overwrite=True, **Param.d)
     # quantization.evaluate_quantized_model(tflite_model_file, tflite_model_quant_file, test_set, evaluator,
     #                                       show_details=True, **Param.d)
     quantization.evaluate_quantized_model_multiprocess(tflite_model_file, tflite_model_quant_file, test_set, evaluator,
                                                        show_details=True,
                                                        num_processes=Param.d.get('num_parallel_calls', 4),
                                                        **Param.d)
+    quantization.write_tensors(tflite_model_file, images[0], tensor_list=None, with_txt=True)
+    quantization.write_tensors(tflite_model_quant_file, images[0], tensor_list=None, with_txt=True)

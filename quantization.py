@@ -54,55 +54,45 @@ def quantize(model, images, ckpt_dir, save_dir, overwrite=True, **kwargs):
 
     saver = tf.train.Saver(var_list=tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES))
     saver.restore(sess, ckpt_dir)
+    converter = tf.lite.TFLiteConverter.from_session(sess=sess,
+                                                     input_tensors=[input_tensor],
+                                                     output_tensors=[output_tensor])
 
     tflite_models_dir = pathlib.Path(os.path.join(save_dir, 'tflite'))
     tflite_models_dir.mkdir(exist_ok=True, parents=True)
     tflite_model_file = tflite_models_dir/'model.tflite'
     tflite_model_quant_file = tflite_models_dir/'model_quantized.tflite'
 
-    tflite_graphviz_dir = tflite_models_dir/'graphviz'
-    tflite_graphviz_quant_dir = tflite_models_dir/'graphviz_quant'
-    tflite_graphviz_dir.mkdir(exist_ok=True, parents=True)
-    tflite_graphviz_quant_dir.mkdir(exist_ok=True, parents=True)
-    dotfile_names = ['toco_AT_IMPORT', 'toco_AFTER_TRANSFORMATIONS', 'toco_AFTER_ALLOCATION']
-
     if overwrite or not tflite_model_file.exists():
-        converter = tf.lite.TFLiteConverter.from_session(sess=sess,
-                                                         input_tensors=[input_tensor],
-                                                         output_tensors=[output_tensor])
         print('Converting the model...')
+        tflite_graphviz_dir = tflite_models_dir/'graphviz'
+        tflite_graphviz_dir.mkdir(exist_ok=True, parents=True)
         converter.dump_graphviz_dir = str(tflite_graphviz_dir)
         tflite_model = converter.convert()
         tflite_model_file.write_bytes(tflite_model)
         if os.name != 'nt':  # Conversion from dot to svg is not supported on Windows due to UnicodeDecodeError.
+            dotfile_names = ['toco_AT_IMPORT', 'toco_AFTER_TRANSFORMATIONS', 'toco_AFTER_ALLOCATION']
             for dotname in dotfile_names:
                 (dotgraph,) = pydot.graph_from_dot_file(os.path.join(str(tflite_graphviz_dir), dotname + '.dot'))
                 dotgraph.write_svg(os.path.join(str(tflite_graphviz_dir), dotname + '.svg'))
         print('Done. \n')
 
     if overwrite or not tflite_model_quant_file.exists():
-        converter_quant = tf.lite.TFLiteConverter.from_session(sess=sess,
-                                                               input_tensors=[input_tensor],
-                                                               output_tensors=[output_tensor])
-        converter_quant.optimizations = [tf.lite.Optimize.OPTIMIZE_FOR_SIZE]
+        converter.inference_input_type = tf.uint8
+        converter.inference_output_type = tf.uint8
+        converter.target_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
+        converter.optimizations = [tf.lite.Optimize.OPTIMIZE_FOR_SIZE]
 
         def repr_data_gen():
             for img in images:
                 yield [(img[np.newaxis, ...] - image_mean)*scale_factor]
 
-        converter_quant.representative_dataset = repr_data_gen
-        converter_quant.target_ops = [tf.lite.OpsSet.TFLITE_BUILTINS_INT8]
-        converter_quant.inference_input_type = tf.uint8
-        converter_quant.inference_output_type = tf.uint8
+        converter.representative_dataset = repr_data_gen
 
         print('Converting the quantized model...')
-        converter_quant.dump_graphviz_dir = str(tflite_graphviz_quant_dir)
-        tflite_model_quant = converter_quant.convert()
+        converter.dump_graphviz_dir = None  # No graphviz for the quantized model since the results are identical.
+        tflite_model_quant = converter.convert()
         tflite_model_quant_file.write_bytes(tflite_model_quant)
-        if os.name != 'nt':
-            for dotname in dotfile_names:
-                (dotgraph,) = pydot.graph_from_dot_file(os.path.join(str(tflite_graphviz_quant_dir), dotname + '.dot'))
-                dotgraph.write_svg(os.path.join(str(tflite_graphviz_quant_dir), dotname + '.svg'))
         print('Done. \n')
 
     return tflite_model_file, tflite_model_quant_file
@@ -406,3 +396,115 @@ def tflite_process(idx, image, results, results_quant, w_lock, r_lock, **kwargs)
                 print(np.argmax(output_quant, axis=-1))
                 print('')
                 sys.stdout.flush()
+
+
+def write_tensors(model_file, sample_image, tensor_list=None, with_txt=True):
+    model_file = str(model_file)
+    model_dir = model_file.replace('.tflite', '')
+    os.makedirs(model_dir, exist_ok=True)
+    interpreter = tf.lite.Interpreter(model_path=model_file)
+    interpreter.allocate_tensors()
+
+    input_details = interpreter.get_input_details()[0]
+    tensor_details = interpreter.get_tensor_details()
+
+    input_quant_details = input_details['quantization']
+    if input_quant_details[0] > 0.0:
+        input_image_quant = sample_image/input_quant_details[0] + input_quant_details[1]
+    else:
+        input_image_quant = sample_image
+    input_image = input_image_quant.astype(input_details['dtype'])[np.newaxis, ...]
+
+    interpreter.set_tensor(input_details['index'], input_image)
+    interpreter.invoke()
+
+    int_types = ['uint8', 'int8', 'uint16', 'int16', 'uint32', 'int32', 'uint64', 'int64']
+    float_types = ['float16', 'float32', 'float64']
+    print('Writing tensors for {} ...'.format(os.path.split(model_file)[1]), end=' ')
+    if tensor_list is None:
+        for td in tensor_details:
+            name = td['name']
+            main_name = os.path.join(model_dir, name)
+            os.makedirs(os.path.split(main_name)[0], exist_ok=True)
+            quantization = td['quantization']
+            index = td['index']
+
+            array = interpreter.get_tensor(index)
+            shape = array.shape
+            dtype = array.dtype
+            if len(shape) == 4:
+                array = np.transpose(array, [1, 2, 3, 0])
+            array_bin = array.tobytes()
+
+            with open(main_name + '.bin', mode='wb') as f:
+                f.write(array_bin)
+            with open(main_name + '.info', mode='w') as f:
+                f.write('Name:       ' + name)
+                f.write('Shape:      ' + str(shape))
+                f.write('Dtype:      ' + str(dtype))
+                f.write('Scale:      ' + str(quantization[0]))
+                f.write('Zero point: ' + str(quantization[1]))
+            if with_txt:
+                if dtype in int_types:
+                    fmt = '%+3d'
+                elif dtype in float_types:
+                    fmt = '%+1.5f'
+                else:
+                    raise TypeError('Invalid numpy dtype: {}'.format(dtype))
+                array_sq = np.squeeze(array)
+                if array_sq.ndim == 3:
+                    array_sq = np.squeeze(array_sq[:, :, 0])
+                elif array_sq.ndim == 4:
+                    array_sq = np.squeeze(array_sq[:, :, 0, 0])
+                elif array_sq.ndim == 5:
+                    array_sq = np.squeeze(array_sq[:, :, 0, 0, 0])
+                np.savetxt(main_name + '.txt', array_sq, fmt=fmt)
+    else:
+        tensor_names = []
+        for tensor in tensor_list:
+            if isinstance(tensor, str):
+                tensor_names.append(tensor)
+            if isinstance(tensor, dict):
+                tensor_names.append(tensor['name'])
+            elif isinstance(tensor, tf.Tensor):
+                tensor_names.append(tensor.name)
+        for td in tensor_details:
+            name = td['name']
+            if name in tensor_names:
+                main_name = os.path.join(model_dir, name)
+                os.makedirs(os.path.split(main_name)[0], exist_ok=True)
+                quantization = td['quantization']
+                index = td['index']
+
+                array = interpreter.get_tensor(index)
+                shape = array.shape
+                dtype = array.dtype
+                if len(shape) == 4:
+                    array = np.transpose(array, [1, 2, 3, 0])
+                array_bin = array.tobytes()
+
+                with open(main_name + '.bin', mode='wb') as f:
+                    f.write(array_bin)
+                with open(main_name + '.info', mode='w') as f:
+                    f.write('Name:       ' + name)
+                    f.write('Shape:      ' + str(shape))
+                    f.write('Dtype:      ' + str(dtype))
+                    f.write('Scale:      ' + str(quantization[0]))
+                    f.write('Zero point: ' + str(quantization[1]))
+                if with_txt:
+                    if dtype in int_types:
+                        fmt = '%+3d'
+                    elif dtype in float_types:
+                        fmt = '%+1.5f'
+                    else:
+                        raise TypeError('Invalid numpy dtype: {}'.format(dtype))
+                    array_sq = np.squeeze(array)
+                    if array_sq.ndim == 3:
+                        array_sq = np.squeeze(array_sq[:, :, 0])
+                    elif array_sq.ndim == 4:
+                        array_sq = np.squeeze(array_sq[:, :, 0, 0])
+                    elif array_sq.ndim == 5:
+                        array_sq = np.squeeze(array_sq[:, :, 0, 0, 0])
+                    np.savetxt(main_name + '.txt', array_sq, fmt=fmt)
+
+    print('Done.')
