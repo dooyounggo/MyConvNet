@@ -18,22 +18,22 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     overwrite = args.overwrite
-    if overwrite.lower() == 'true' or overwrite.strip() == '1':
+    if overwrite.lower().strip() == 'true' or overwrite.strip() == '1':
         overwrite = True
     else:
         overwrite = False
     saved_model = args.saved_model
-    if saved_model.lower() == 'false' or saved_model.strip() == '0':
+    if saved_model.lower().strip() == 'false' or saved_model.strip() == '0':
         saved_model = False
     else:
         saved_model = True
     evaluate_models = args.evaluate_models
-    if evaluate_models.lower() == 'false' or evaluate_models.strip() == '0':
+    if evaluate_models.lower().strip() == 'false' or evaluate_models.strip() == '0':
         evaluate_models = False
     else:
         evaluate_models = True
     write_tensors = args.write_tensors
-    if write_tensors.lower() == 'false' or write_tensors.strip() == '0':
+    if write_tensors.lower().strip() == 'false' or write_tensors.strip() == '0':
         write_tensors = False
     else:
         write_tensors = True
