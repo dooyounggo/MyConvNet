@@ -128,12 +128,16 @@ class AccuracyTopNEvaluator(Evaluator):
         return 'max'
 
     def score(self, y_true, y_pred):
-        assert y_true.shape[-1] > 1 and y_pred.shape[-1] > 1, 'Labels must be one-hot encoded.'
-        y_t = np.expand_dims(y_true.argmax(axis=-1), axis=-1)
+        assert y_pred.shape[-1] > 1, 'Labels must be one-hot encoded.'
+        if y_true.shape[-1] > 1:
+            y_t = np.expand_dims(y_true.argmax(axis=-1), axis=-1)
+            valid = np.isclose(y_true.sum(axis=-1), 1)
+        else:
+            y_t = y_true
+            valid = np.greater_equal(y_true[..., 0], 0)
         y_t = np.tile(y_t, self.top)
         y_p = np.argsort(y_pred, axis=-1)
         y_p = y_p[..., -self.top:]
-        valid = np.isclose(y_true.sum(axis=-1), 1)
         right = np.equal(y_t, y_p).sum(axis=-1)*valid
 
         accuracies = np.empty(y_t.shape[0], dtype=float)
