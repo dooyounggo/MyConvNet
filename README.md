@@ -23,7 +23,7 @@
 - Run [train.py](https://github.com/dooyounggo/MyConvNet/blob/master/classification/train.py) to train the model.
 - Run [test.py](https://github.com/dooyounggo/MyConvNet/blob/master/classification/test.py) to test the trained model.
 - Use [inference.py](https://github.com/dooyounggo/MyConvNet/blob/master/classification/inference.py) if you have no label for test data.
-- Run [quantize.py](https://github.com/dooyounggo/MyConvNet/blob/master/classification/quantize.py) to perform post-training quantization.
+- Run [quantize.py](https://github.com/dooyounggo/MyConvNet/blob/master/classification/quantize.py) to perform post-training quantization (pydot package required).
 
 ### How to prepare data
 Images and labels should be paired and stored in the same directory ([default](https://github.com/dooyounggo/MyConvNet/blob/master/subsets/subset_functions.py#L15)).
