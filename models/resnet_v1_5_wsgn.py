@@ -9,6 +9,9 @@ class ResNet(ConvNet):  # Base model. ResNet-50 with weight standardization and 
         self.strides = [2, 1, 2, 2, 2]
         self.res_units = [None, 3, 4, 6, 3]
 
+        self.dilations = [None, 1, 1, 1, 1]
+        self.multi_grid = [1, 2, 4]
+
         self.erase_relu = False
 
     def _build_model(self, **kwargs):
@@ -23,12 +26,14 @@ class ResNet(ConvNet):  # Base model. ResNet-50 with weight standardization and 
         kernels = self.kernels
         strides = self.strides
         res_units = self.res_units
+        dilation = self.dilations
 
         len_c = len(channels)
         len_k = len(kernels)
         len_s = len(strides)
-        len_r = len(res_units) + 1
-        self._num_blocks = min([len_c, len_k, len_s, len_r])
+        len_r = len(res_units)
+        len_d = len(dilation)
+        self._num_blocks = min([len_c, len_k, len_s, len_r, len_d])
 
         with tf.variable_scope('block_0'):
             with tf.variable_scope('conv_0'):
@@ -53,7 +58,13 @@ class ResNet(ConvNet):  # Base model. ResNet-50 with weight standardization and 
                     s = 1
                 else:
                     s = strides[i]
-                x = self._res_unit(x, kernels[i], s, channels[i], d, drop_rate=dr, name='block_{}/res_{}'.format(i, j))
+                if dilation[i] == 1:
+                    dil = 1
+                else:
+                    mg_idx = j % len(self.multi_grid)
+                    dil = dilation[i]*self.multi_grid[mg_idx]
+                x = self._res_unit(x, kernels[i], s, channels[i], dil,
+                                   d, drop_rate=dr, name='block_{}/res_{}'.format(i, j))
             d['block_{}'.format(i)] = x
 
         if self.backbone_only is False:
@@ -72,7 +83,7 @@ class ResNet(ConvNet):  # Base model. ResNet-50 with weight standardization and 
 
         return d
 
-    def _res_unit(self, x, kernel, stride, out_channels, d, drop_rate=0.0, name='res_unit'):
+    def _res_unit(self, x, kernel, stride, out_channels, dilation, d, drop_rate=0.0, name='res_unit'):
         in_channels = x.get_shape()[1] if self.channel_first else x.get_shape()[-1]
         if not isinstance(stride, (list, tuple)):
             stride = [stride, stride]
@@ -101,7 +112,8 @@ class ResNet(ConvNet):  # Base model. ResNet-50 with weight standardization and 
                 d[name + '/conv_0' + '/relu'] = x
 
             with tf.variable_scope('conv_1'):
-                x = self.conv_layer(x, kernel, stride, out_channels//4, padding='SAME', biased=False, ws=True)
+                x = self.conv_layer(x, kernel, stride, out_channels//4, padding='SAME', biased=False,
+                                    dilation=dilation, ws=True)
                 print(name + '/conv_1.shape', x.get_shape().as_list())
                 d[name + '/conv_1'] = x
                 x = self.group_norm(x, num_groups=32, shift=True, scale=True, scope='bn')
@@ -132,3 +144,16 @@ class ResNet101(ResNet):
     def _init_params(self):
         super()._init_params()
         self.res_units = [None, 3, 4, 23, 3]
+
+
+class ResNet50OS16(ResNet):
+    def _init_params(self):
+        super()._init_params()
+        self.dilations = [None, 1, 1, 1, 2]
+
+
+class ResNet101OS16(ResNet):
+    def _init_params(self):
+        super()._init_params()
+        self.res_units = [None, 3, 4, 23, 3]
+        self.dilations = [None, 1, 1, 1, 2]
