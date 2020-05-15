@@ -382,7 +382,7 @@ def write_tensors(model_file, sample_image, tensor_list=None, with_txt=True):
                 f.write(array_bin)
             with open(main_name + '.info', mode='w') as f:
                 f.write('Name:       ' + name + '\n')
-                f.write('Shape:      ' + str(shape) + '\n')
+                f.write('Shape:      ' + str(array.shape) + '\n')
                 f.write('Dtype:      ' + str(dtype) + '\n')
                 f.write('Scale:      ' + str(quantization[0]) + '\n')
                 f.write('Zero point: ' + str(quantization[1]) + '\n')
@@ -428,11 +428,11 @@ def write_tensors(model_file, sample_image, tensor_list=None, with_txt=True):
                 with open(main_name + '.bin', mode='wb') as f:
                     f.write(array_bin)
                 with open(main_name + '.info', mode='w') as f:
-                    f.write('Name:       ' + name)
-                    f.write('Shape:      ' + str(shape))
-                    f.write('Dtype:      ' + str(dtype))
-                    f.write('Scale:      ' + str(quantization[0]))
-                    f.write('Zero point: ' + str(quantization[1]))
+                    f.write('Name:       ' + name + '\n')
+                    f.write('Shape:      ' + str(array.shape) + '\n')
+                    f.write('Dtype:      ' + str(dtype) + '\n')
+                    f.write('Scale:      ' + str(quantization[0]) + '\n')
+                    f.write('Zero point: ' + str(quantization[1]) + '\n')
                 if with_txt:
                     if dtype in int_types:
                         fmt = '%+6d'
