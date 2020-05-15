@@ -58,6 +58,7 @@ Some scripts may not support command-line execution.
 - scikit-image: 0.15.0
 - scikit-learn: 0.22
 - opencv-python: 4.1.2.30
+- pydot: 1.4.1 (graphviz: 2.40.1)
 
 ### TODO
 - Speedup: Training is slower than tf_cnn_benchmark.
