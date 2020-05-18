@@ -8,6 +8,7 @@ import sys
 import pathlib
 import shutil
 import time
+import ast
 import pydot
 import numpy as np
 import tensorflow.compat.v1 as tf
@@ -40,14 +41,25 @@ def quantize(model, images, ckpt_dir, save_dir, overwrite=False, saved_model=Tru
         model.ema = tf.train.ExponentialMovingAverage(decay=model.moving_average_decay)
     with tf.device('/{}:0'.format(model.compute_device)):
         input_tensor = tf.placeholder(dtype=tf.float32, shape=([None] + list(model.input_size)), name='input')
-        if model.channel_first:
-            model.X = tf.transpose(input_tensor, perm=[0, 3, 1, 2])
-        else:
-            model.X = input_tensor
-        if model.dtype is not tf.float32:
-            model.X = tf.cast(model.X, dtype=model.dtype)
+        model.X = input_tensor
         d = model._build_model(**kwargs)
         output_tensor = d['pred']
+
+    output_tensors = [output_tensor]
+    operations = graph.get_operations()
+    act_names = ['relu', 'swish', 'tanh', 'sigmoid']
+    for op in operations:
+        op_tensors = op.values()
+        if len(op_tensors) > 0:
+            op_tensor = op_tensors[0]
+            for act in act_names:
+                if act in op_tensor.name.lower():
+                    output_tensors.append(op_tensor)
+                    break
+    for n in range(model.num_blocks):
+        if f'block_{n}' in d:
+            output_tensors.append(d[f'block_{n}'])
+
     if kwargs.get('zero_center', True):
         image_mean = kwargs.get('image_mean', 0.5)
     else:
@@ -58,7 +70,7 @@ def quantize(model, images, ckpt_dir, save_dir, overwrite=False, saved_model=Tru
     saver.restore(sess, ckpt_dir)
     converter = tf.lite.TFLiteConverter.from_session(sess=sess,
                                                      input_tensors=[input_tensor],
-                                                     output_tensors=[output_tensor])
+                                                     output_tensors=output_tensors)
 
     tflite_models_dir = pathlib.Path(os.path.join(save_dir, 'tflite'))
     tflite_models_dir.mkdir(exist_ok=True, parents=True)
@@ -115,8 +127,7 @@ def quantize(model, images, ckpt_dir, save_dir, overwrite=False, saved_model=Tru
     return tflite_model_file, tflite_model_quant_file
 
 
-def evaluate_quantized_model(model_file, model_quant_file, test_set, evaluator, show_details=False, num_processes=4,
-                             **kwargs):
+def evaluate_quantized_model(model_file, model_quant_file, test_set, evaluator, num_processes=4, **kwargs):
     mp.set_start_method('spawn')
     dataset = tf.data.Dataset.from_tensor_slices((test_set.image_dirs, test_set.label_dirs))
     if not test_set.from_memory:
@@ -132,18 +143,6 @@ def evaluate_quantized_model(model_file, model_quant_file, test_set, evaluator, 
     interpreter.allocate_tensors()
     interpreter_quant = tf.lite.Interpreter(model_path=str(model_quant_file))
     interpreter_quant.allocate_tensors()
-
-    if show_details:
-        tensor_details = interpreter.get_tensor_details()
-        print('Tensor Details:')
-        for detail in tensor_details:
-            print(detail)
-        print('')
-        tensor_details = interpreter_quant.get_tensor_details()
-        print('Quantized Tensor Details:')
-        for detail in tensor_details:
-            print(detail)
-        print('')
 
     input_details_quant = interpreter_quant.get_input_details()[0]
     output_details_quant = interpreter_quant.get_output_details()[0]
@@ -336,7 +335,7 @@ def tflite_process(idx, image, results, results_quant, w_lock, r_lock, **kwargs)
                     print(output_quant)
                 else:
                     print(np.argmax(output_quant, axis=-1))
-                print('')
+                print()
                 sys.stdout.flush()
 
 
@@ -388,7 +387,7 @@ def write_tensors(model_file, sample_image, tensor_list=None, with_txt=True):
                 f.write('Zero point: ' + str(quantization[1]) + '\n')
             if with_txt:
                 if dtype in int_types:
-                    fmt = '%+3d'
+                    fmt = '%+6d'
                 elif dtype in float_types:
                     fmt = '%+1.5f'
                 else:
@@ -448,5 +447,131 @@ def write_tensors(model_file, sample_image, tensor_list=None, with_txt=True):
                     elif array_sq.ndim == 5:
                         array_sq = np.squeeze(array_sq[:, :, 0, 0, 0])
                     np.savetxt(main_name + '.txt', array_sq, fmt=fmt)
-
     print('Done.')
+
+
+def write_quantization_params(model_file, model_file_quant, tensor_list=None, show_details=True):
+    model_file = str(model_file)
+    model_dir = model_file.replace('.tflite', '')
+    model_file_quant = str(model_file_quant)
+    model_dir_quant = model_file_quant.replace('.tflite', '')
+
+    interpreter = tf.lite.Interpreter(model_path=model_file)
+    interpreter.allocate_tensors()
+    interpreter_quant = tf.lite.Interpreter(model_path=model_file_quant)
+    interpreter_quant.allocate_tensors()
+
+    tensor_details = interpreter.get_tensor_details()
+    tensor_details_quant = interpreter_quant.get_tensor_details()
+
+    if show_details:
+        print('Tensor Details:')
+        for detail in tensor_details:
+            print(detail)
+        print()
+        print('Quantized Tensor Details:')
+        for detail in tensor_details_quant:
+            print(detail)
+        print()
+
+    print('Writing quantization information for {} ...'.format(os.path.split(model_file_quant)[1]), end=' ')
+    if tensor_list is None:
+        for i, tdq in enumerate(tensor_details_quant):
+            name = tdq['name']
+            if i >= len(tensor_details):
+                break
+            elif name.replace('_int8', '') != tensor_details[i]['name']:
+                break
+            else:
+                main_name = os.path.join(model_dir, name.replace('_int8', ''))
+                main_name_quant = os.path.join(model_dir_quant, name)
+                with open(main_name + '.bin', mode='rb') as f:
+                    arr_binary = f.read()
+                with open(main_name + '.info', mode='r') as f:
+                    lines = f.readlines()
+                    shape = ast.literal_eval(lines[1][12:].rstrip())
+                    dtype = lines[2][12:].rstrip()
+
+                with open(main_name_quant + '.bin', mode='rb') as f:
+                    arr_binary_quant = f.read()
+                with open(main_name_quant + '.info', mode='r') as f:
+                    lines = f.readlines()
+                    dtype_quant = lines[2][12:].rstrip()
+                    scale = float(lines[3][12:].rstrip())
+                    offset = float(lines[4][12:].rstrip())
+
+                if scale == offset == 0.0:
+                    arr = np.frombuffer(arr_binary, dtype=dtype).reshape(shape).astype(np.float64)
+                    arr_quant = np.frombuffer(arr_binary_quant, dtype=dtype_quant).reshape(shape).astype(np.float64)
+                    quant_scale = (arr/arr_quant).astype(np.float32)
+                    quant_scale = np.where(np.isinf(quant_scale),
+                                           np.zeros(quant_scale.shape, dtype=np.float32), quant_scale)
+                    dim = quant_scale.ndim
+                    if dim == 1:  # Bias
+                        quant_scale = quant_scale
+                    elif dim == 4:  # Convolution
+                        if quant_scale.shape[-1] == 1:  # Depthwise
+                            quant_scale = np.mean(quant_scale, axis=(0, 1, 3))
+                        else:
+                            quant_scale = np.mean(quant_scale, axis=(0, 1, 2))
+                    else:
+                        raise(ValueError, 'Invalid tensor dimension: {}'.format(dim))
+                    with open(main_name_quant + '.quant', mode='wb') as f:
+                        f.write(np.reshape(quant_scale, (np.prod(quant_scale.shape))).tobytes())
+                else:
+                    with open(main_name_quant + '.quant', mode='wb') as f:
+                        f.write(np.array(scale).tobytes())
+    else:
+        tensor_names = []
+        for tensor in tensor_list:
+            if isinstance(tensor, str):
+                tensor_names.append(tensor)
+            if isinstance(tensor, dict):
+                tensor_names.append(tensor['name'])
+            elif isinstance(tensor, tf.Tensor):
+                tensor_names.append(tensor.name)
+        for i, tdq in enumerate(tensor_details_quant):
+            name = tdq['name']
+            if i >= len(tensor_details):
+                break
+            elif name.replace('_int8', '') != tensor_details[i]['name']:
+                break
+            elif name.replace('_int8', '') in tensor_names:
+                main_name = os.path.join(model_dir, name.replace('_int8', ''))
+                main_name_quant = os.path.join(model_dir_quant, name)
+                with open(main_name + '.bin', mode='rb') as f:
+                    arr_binary = f.read()
+                with open(main_name + '.info', mode='r') as f:
+                    lines = f.readlines()
+                    shape = ast.literal_eval(lines[1][12:].rstrip())
+                    dtype = lines[2][12:].rstrip()
+
+                with open(main_name_quant + '.bin', mode='rb') as f:
+                    arr_binary_quant = f.read()
+                with open(main_name_quant + '.info', mode='r') as f:
+                    lines = f.readlines()
+                    dtype_quant = lines[2][12:].rstrip()
+                    scale = float(lines[3][12:].rstrip())
+                    offset = float(lines[4][12:].rstrip())
+
+                if scale == offset == 0.0:
+                    arr = np.frombuffer(arr_binary, dtype=dtype).reshape(shape).astype(np.float64)
+                    arr_quant = np.frombuffer(arr_binary_quant, dtype=dtype_quant).reshape(shape).astype(np.float64)
+                    quant_scale = (arr/arr_quant).astype(np.float32)
+                    quant_scale = np.where(np.isinf(quant_scale),
+                                           np.zeros(quant_scale.shape, dtype=np.float32), quant_scale)
+                    dim = quant_scale.ndim
+                    if dim == 1:  # Bias
+                        quant_scale = quant_scale
+                    elif dim == 4:  # Convolution
+                        if quant_scale.shape[-1] == 1:  # Depthwise
+                            quant_scale = np.mean(quant_scale, axis=(0, 1, 3))
+                        else:
+                            quant_scale = np.mean(quant_scale, axis=(0, 1, 2))
+                    else:
+                        raise (ValueError, 'Invalid tensor dimension: {}'.format(dim))
+                    with open(main_name_quant + '.quant', mode='wb') as f:
+                        f.write(np.reshape(quant_scale, (np.prod(quant_scale.shape))).tobytes())
+                else:
+                    with open(main_name_quant + '.quant', mode='wb') as f:
+                        f.write(np.array(scale).tobytes())

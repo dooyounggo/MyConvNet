@@ -95,9 +95,10 @@ if __name__ == '__main__':
                                                                          **Param.d)
     if evaluate_models:
         quantization.evaluate_quantized_model(tflite_model_file, tflite_model_quant_file,
-                                              test_set, evaluator, show_details=True,
-                                              num_processes=Param.d.get('num_parallel_calls', 4),
+                                              test_set, evaluator, num_processes=Param.d.get('num_parallel_calls', 4),
                                               **Param.d)
     if write_tensors:
         quantization.write_tensors(tflite_model_file, images[0], tensor_list=None, with_txt=True)
         quantization.write_tensors(tflite_model_quant_file, images[0], tensor_list=None, with_txt=True)
+        quantization.write_quantization_params(tflite_model_file, tflite_model_quant_file, tensor_list=None,
+                                               show_details=True)
