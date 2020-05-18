@@ -363,8 +363,20 @@ def write_tensors(model_file, sample_image, tensor_list=None, with_txt=True):
     float_types = ['float16', 'float32', 'float64']
     print('Writing tensors for {} ...'.format(os.path.split(model_file)[1]), end=' ')
     if tensor_list is None:
-        for td in tensor_details:
-            name = td['name']
+        tensor_list = tensor_details
+
+    tensor_names = []
+    for tensor in tensor_list:
+        if isinstance(tensor, str):
+            tensor_names.append(tensor)
+        if isinstance(tensor, dict):
+            tensor_names.append(tensor['name'])
+        elif isinstance(tensor, tf.Tensor):
+            tensor_names.append(tensor.name)
+
+    for td in tensor_details:
+        name = td['name']
+        if name in tensor_names:
             main_name = os.path.join(model_dir, name)
             os.makedirs(os.path.split(main_name)[0], exist_ok=True)
             quantization = td['quantization']
@@ -400,53 +412,6 @@ def write_tensors(model_file, sample_image, tensor_list=None, with_txt=True):
                 elif array_sq.ndim == 5:
                     array_sq = np.squeeze(array_sq[:, :, 0, 0, 0])
                 np.savetxt(main_name + '.txt', array_sq, fmt=fmt)
-    else:
-        tensor_names = []
-        for tensor in tensor_list:
-            if isinstance(tensor, str):
-                tensor_names.append(tensor)
-            if isinstance(tensor, dict):
-                tensor_names.append(tensor['name'])
-            elif isinstance(tensor, tf.Tensor):
-                tensor_names.append(tensor.name)
-        for td in tensor_details:
-            name = td['name']
-            if name in tensor_names:
-                main_name = os.path.join(model_dir, name)
-                os.makedirs(os.path.split(main_name)[0], exist_ok=True)
-                quantization = td['quantization']
-                index = td['index']
-
-                array = interpreter.get_tensor(index)
-                shape = array.shape
-                dtype = array.dtype
-                if len(shape) == 4:
-                    array = np.transpose(array, [1, 2, 3, 0])
-                array_bin = array.tobytes()
-
-                with open(main_name + '.bin', mode='wb') as f:
-                    f.write(array_bin)
-                with open(main_name + '.info', mode='w') as f:
-                    f.write('Name:       ' + name + '\n')
-                    f.write('Shape:      ' + str(array.shape) + '\n')
-                    f.write('Dtype:      ' + str(dtype) + '\n')
-                    f.write('Scale:      ' + str(quantization[0]) + '\n')
-                    f.write('Zero point: ' + str(quantization[1]) + '\n')
-                if with_txt:
-                    if dtype in int_types:
-                        fmt = '%+6d'
-                    elif dtype in float_types:
-                        fmt = '%+1.5f'
-                    else:
-                        raise TypeError('Invalid numpy dtype: {}'.format(dtype))
-                    array_sq = np.squeeze(array)
-                    if array_sq.ndim == 3:
-                        array_sq = np.squeeze(array_sq[:, :, 0])
-                    elif array_sq.ndim == 4:
-                        array_sq = np.squeeze(array_sq[:, :, 0, 0])
-                    elif array_sq.ndim == 5:
-                        array_sq = np.squeeze(array_sq[:, :, 0, 0, 0])
-                    np.savetxt(main_name + '.txt', array_sq, fmt=fmt)
     print('Done.')
 
 
@@ -476,102 +441,59 @@ def write_quantization_params(model_file, model_file_quant, tensor_list=None, sh
 
     print('Writing quantization information for {} ...'.format(os.path.split(model_file_quant)[1]), end=' ')
     if tensor_list is None:
-        for i, tdq in enumerate(tensor_details_quant):
-            name = tdq['name']
-            if i >= len(tensor_details):
-                break
-            elif name.replace('_int8', '') != tensor_details[i]['name']:
-                break
+        tensor_list = tensor_details_quant
+
+    tensor_names = []
+    for tensor in tensor_list:
+        if isinstance(tensor, str):
+            tensor_names.append(tensor)
+        if isinstance(tensor, dict):
+            tensor_names.append(tensor['name'])
+        elif isinstance(tensor, tf.Tensor):
+            tensor_names.append(tensor.name)
+
+    for i, tdq in enumerate(tensor_details_quant):
+        name = tdq['name']
+        if i >= len(tensor_details):
+            break
+        elif name.replace('_int8', '') != tensor_details[i]['name']:
+            continue
+        elif name in tensor_names or name.replace('_int8', '') in tensor_names:
+            main_name = os.path.join(model_dir, name.replace('_int8', ''))
+            main_name_quant = os.path.join(model_dir_quant, name)
+            with open(main_name + '.bin', mode='rb') as f:
+                arr_binary = f.read()
+            with open(main_name + '.info', mode='r') as f:
+                lines = f.readlines()
+                shape = ast.literal_eval(lines[1][12:].rstrip())
+                dtype = lines[2][12:].rstrip()
+
+            with open(main_name_quant + '.bin', mode='rb') as f:
+                arr_binary_quant = f.read()
+            with open(main_name_quant + '.info', mode='r') as f:
+                lines = f.readlines()
+                dtype_quant = lines[2][12:].rstrip()
+                scale = float(lines[3][12:].rstrip())
+                offset = float(lines[4][12:].rstrip())
+
+            if scale == offset == 0.0:
+                arr = np.frombuffer(arr_binary, dtype=dtype).reshape(shape).astype(np.float64)
+                arr_quant = np.frombuffer(arr_binary_quant, dtype=dtype_quant).reshape(shape).astype(np.float64)
+                quant_scale = (arr/arr_quant).astype(np.float32)
+                quant_scale = np.where(np.isinf(quant_scale),
+                                       np.zeros(quant_scale.shape, dtype=np.float32), quant_scale)
+                dim = quant_scale.ndim
+                if dim == 1:  # Bias
+                    quant_scale = quant_scale
+                elif dim == 4:  # Convolution
+                    if quant_scale.shape[-1] == 1:  # Depthwise
+                        quant_scale = np.mean(quant_scale, axis=(0, 1, 3))
+                    else:
+                        quant_scale = np.mean(quant_scale, axis=(0, 1, 2))
+                else:
+                    raise (ValueError, 'Invalid tensor dimension: {}'.format(dim))
+                with open(main_name_quant + '.quant', mode='wb') as f:
+                    f.write(np.reshape(quant_scale, (np.prod(quant_scale.shape))).tobytes())
             else:
-                main_name = os.path.join(model_dir, name.replace('_int8', ''))
-                main_name_quant = os.path.join(model_dir_quant, name)
-                with open(main_name + '.bin', mode='rb') as f:
-                    arr_binary = f.read()
-                with open(main_name + '.info', mode='r') as f:
-                    lines = f.readlines()
-                    shape = ast.literal_eval(lines[1][12:].rstrip())
-                    dtype = lines[2][12:].rstrip()
-
-                with open(main_name_quant + '.bin', mode='rb') as f:
-                    arr_binary_quant = f.read()
-                with open(main_name_quant + '.info', mode='r') as f:
-                    lines = f.readlines()
-                    dtype_quant = lines[2][12:].rstrip()
-                    scale = float(lines[3][12:].rstrip())
-                    offset = float(lines[4][12:].rstrip())
-
-                if scale == offset == 0.0:
-                    arr = np.frombuffer(arr_binary, dtype=dtype).reshape(shape).astype(np.float64)
-                    arr_quant = np.frombuffer(arr_binary_quant, dtype=dtype_quant).reshape(shape).astype(np.float64)
-                    quant_scale = (arr/arr_quant).astype(np.float32)
-                    quant_scale = np.where(np.isinf(quant_scale),
-                                           np.zeros(quant_scale.shape, dtype=np.float32), quant_scale)
-                    dim = quant_scale.ndim
-                    if dim == 1:  # Bias
-                        quant_scale = quant_scale
-                    elif dim == 4:  # Convolution
-                        if quant_scale.shape[-1] == 1:  # Depthwise
-                            quant_scale = np.mean(quant_scale, axis=(0, 1, 3))
-                        else:
-                            quant_scale = np.mean(quant_scale, axis=(0, 1, 2))
-                    else:
-                        raise(ValueError, 'Invalid tensor dimension: {}'.format(dim))
-                    with open(main_name_quant + '.quant', mode='wb') as f:
-                        f.write(np.reshape(quant_scale, (np.prod(quant_scale.shape))).tobytes())
-                else:
-                    with open(main_name_quant + '.quant', mode='wb') as f:
-                        f.write(np.array(scale).tobytes())
-    else:
-        tensor_names = []
-        for tensor in tensor_list:
-            if isinstance(tensor, str):
-                tensor_names.append(tensor)
-            if isinstance(tensor, dict):
-                tensor_names.append(tensor['name'])
-            elif isinstance(tensor, tf.Tensor):
-                tensor_names.append(tensor.name)
-        for i, tdq in enumerate(tensor_details_quant):
-            name = tdq['name']
-            if i >= len(tensor_details):
-                break
-            elif name.replace('_int8', '') != tensor_details[i]['name']:
-                break
-            elif name.replace('_int8', '') in tensor_names:
-                main_name = os.path.join(model_dir, name.replace('_int8', ''))
-                main_name_quant = os.path.join(model_dir_quant, name)
-                with open(main_name + '.bin', mode='rb') as f:
-                    arr_binary = f.read()
-                with open(main_name + '.info', mode='r') as f:
-                    lines = f.readlines()
-                    shape = ast.literal_eval(lines[1][12:].rstrip())
-                    dtype = lines[2][12:].rstrip()
-
-                with open(main_name_quant + '.bin', mode='rb') as f:
-                    arr_binary_quant = f.read()
-                with open(main_name_quant + '.info', mode='r') as f:
-                    lines = f.readlines()
-                    dtype_quant = lines[2][12:].rstrip()
-                    scale = float(lines[3][12:].rstrip())
-                    offset = float(lines[4][12:].rstrip())
-
-                if scale == offset == 0.0:
-                    arr = np.frombuffer(arr_binary, dtype=dtype).reshape(shape).astype(np.float64)
-                    arr_quant = np.frombuffer(arr_binary_quant, dtype=dtype_quant).reshape(shape).astype(np.float64)
-                    quant_scale = (arr/arr_quant).astype(np.float32)
-                    quant_scale = np.where(np.isinf(quant_scale),
-                                           np.zeros(quant_scale.shape, dtype=np.float32), quant_scale)
-                    dim = quant_scale.ndim
-                    if dim == 1:  # Bias
-                        quant_scale = quant_scale
-                    elif dim == 4:  # Convolution
-                        if quant_scale.shape[-1] == 1:  # Depthwise
-                            quant_scale = np.mean(quant_scale, axis=(0, 1, 3))
-                        else:
-                            quant_scale = np.mean(quant_scale, axis=(0, 1, 2))
-                    else:
-                        raise (ValueError, 'Invalid tensor dimension: {}'.format(dim))
-                    with open(main_name_quant + '.quant', mode='wb') as f:
-                        f.write(np.reshape(quant_scale, (np.prod(quant_scale.shape))).tobytes())
-                else:
-                    with open(main_name_quant + '.quant', mode='wb') as f:
-                        f.write(np.array(scale).tobytes())
+                with open(main_name_quant + '.quant', mode='wb') as f:
+                    f.write(np.array(scale).tobytes())
