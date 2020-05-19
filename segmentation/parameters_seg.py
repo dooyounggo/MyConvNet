@@ -9,7 +9,7 @@ import tensorflow.compat.v1 as tf
 import matplotlib.pyplot as plt
 from dataset import DataSet
 from subsets.cityscapes import read_subset
-from models.deeplabv3plus import DeepLabV3PlusResNet as ConvNet
+from models.deeplabv3plus_nobn import DeepLabV3PlusResNet as ConvNet
 from optimizers import MomentumOptimizer as Optimizer
 from evaluators import AccuracyEvaluator as Evaluator
 from models.init_from_checkpoint import resnet_v1_50_101 as init_from_checkpoint
