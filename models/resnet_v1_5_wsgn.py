@@ -3,7 +3,7 @@ from convnet import ConvNet
 
 
 class ResNet(ConvNet):  # Base model. ResNet-50 with weight standardization and group normalization
-    def _init_params(self):
+    def _init_params(self, **kwargs):
         self.channels = [64, 256, 512, 1024, 2048]
         self.kernels = [7, 3, 3, 3, 3]
         self.strides = [2, 1, 2, 2, 2]
@@ -141,19 +141,19 @@ class ResNet50(ResNet):
 
 
 class ResNet101(ResNet):
-    def _init_params(self):
-        super()._init_params()
+    def _init_params(self, **kwargs):
+        super()._init_params(**kwargs)
         self.res_units = [None, 3, 4, 23, 3]
 
 
 class ResNet50OS16(ResNet):
-    def _init_params(self):
-        super()._init_params()
+    def _init_params(self, **kwargs):
+        super()._init_params(**kwargs)
         self.dilations = [None, 1, 1, 1, 2]
 
 
 class ResNet101OS16(ResNet):
-    def _init_params(self):
-        super()._init_params()
+    def _init_params(self, **kwargs):
+        super()._init_params(**kwargs)
         self.res_units = [None, 3, 4, 23, 3]
         self.dilations = [None, 1, 1, 1, 2]

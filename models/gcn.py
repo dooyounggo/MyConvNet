@@ -5,8 +5,8 @@ from models.efficientnet import EfficientNetB3 as EffNet
 
 
 class GCN(SegNet, ResNet):     # Global Convolutional Networks
-    def _init_params(self):
-        ResNet._init_params(self)
+    def _init_params(self, **kwargs):
+        ResNet._init_params(self, **kwargs)
         self.block_activations = False
         self.max_conv_channels = 64
         self.conv_channels = [4*self.num_classes, 3*self.num_classes, 2*self.num_classes, self.num_classes]
@@ -141,8 +141,8 @@ class GCN(SegNet, ResNet):     # Global Convolutional Networks
 
 
 class SCN(GCN, EffNet):  # Separable Convolution Networks: GCN with separable convolution and efficientnet backbone
-    def _init_params(self):
-        EffNet._init_params(self)
+    def _init_params(self, **kwargs):
+        EffNet._init_params(self, **kwargs)
         self.max_conv_channels = 128
         self.conv_channels = [self.num_classes, self.num_classes, self.num_classes, self.num_classes]
         self.conv_kernels = [5, 9, 13, 17]

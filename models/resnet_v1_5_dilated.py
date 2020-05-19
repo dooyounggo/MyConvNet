@@ -3,7 +3,7 @@ from convnet import ConvNet
 
 
 class ResNetDilated(ConvNet):  # Dilated ResNet-50
-    def _init_params(self):
+    def _init_params(self, **kwargs):
         self.channels = [64, 256, 512, 1024, 2048]
         self.kernels = [7, 3, 3, 3, 3]
         self.strides = [2, 1, 2, 2, 2]
@@ -138,24 +138,24 @@ class ResNet50OS16(ResNetDilated):
 
 
 class ResNet50OS8(ResNetDilated):
-    def _init_params(self):
-        super()._init_params()
+    def _init_params(self, **kwargs):
+        super()._init_params(**kwargs)
         self.strides = [2, 1, 2, 1, 1]
         self.res_units = [None, 3, 4, 6, 3]
         self.dilations = [None, 1, 1, 2, 4]
 
 
 class ResNet101OS16(ResNetDilated):
-    def _init_params(self):
-        super()._init_params()
+    def _init_params(self, **kwargs):
+        super()._init_params(**kwargs)
         self.strides = [2, 1, 2, 2, 1]
         self.res_units = [None, 3, 4, 23, 3]
         self.dilations = [None, 1, 1, 1, 2]
 
 
 class ResNet101OS8(ResNetDilated):
-    def _init_params(self):
-        super()._init_params()
+    def _init_params(self, **kwargs):
+        super()._init_params(**kwargs)
         self.strides = [2, 1, 2, 1, 1]
         self.res_units = [None, 3, 4, 23, 3]
         self.dilations = [None, 1, 1, 2, 4]

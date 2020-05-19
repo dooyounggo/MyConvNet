@@ -3,7 +3,7 @@ from convnet import ConvNet
 
 
 class ResNetCBAM(ConvNet):    # Residual networks with Convolutional Block Attention Modules (Based on ResNet-V2-D)
-    def _init_params(self):
+    def _init_params(self, **kwargs):
         self.channels = [64, 256, 512, 1024, 2048]
         self.kernels = [3, 3, 3, 3, 3]
         self.strides = [2, 1, 2, 2, 2]
@@ -207,12 +207,12 @@ class ResNetCBAM(ConvNet):    # Residual networks with Convolutional Block Atten
 
 
 class ResNetCBAM50(ResNetCBAM):
-    def _init_params(self):
-        super()._init_params()
+    def _init_params(self, **kwargs):
+        super()._init_params(**kwargs)
         self.res_units = [None, 3, 4, 6, 3]
 
 
 class ResNetCBAM101(ResNetCBAM):
-    def _init_params(self):
-        super()._init_params()
+    def _init_params(self, **kwargs):
+        super()._init_params(**kwargs)
         self.res_units = [None, 3, 4, 23, 3]

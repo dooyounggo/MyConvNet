@@ -3,7 +3,7 @@ from convnet import ConvNet
 
 
 class ResNet(ConvNet):  # Base model. ResNet-18 (v1.5: stride = 2 at 3x3 convolutions)
-    def _init_params(self):
+    def _init_params(self, **kwargs):
         self.channels = [64, 64, 128, 256, 512]
         self.kernels = [7, 3, 3, 3, 3]
         self.strides = [2, 1, 2, 2, 2]
@@ -116,7 +116,7 @@ class ResNet(ConvNet):  # Base model. ResNet-18 (v1.5: stride = 2 at 3x3 convolu
 
 
 class ResNetBot(ResNet):  # ResNet with bottlenecks. ResNet-50
-    def _init_params(self):
+    def _init_params(self, **kwargs):
         self.channels = [64, 256, 512, 1024, 2048]
         self.kernels = [7, 3, 3, 3, 3]
         self.strides = [2, 1, 2, 2, 2]
@@ -181,8 +181,8 @@ class ResNet18(ResNet):
 
 
 class ResNet34(ResNet):
-    def _init_params(self):
-        super()._init_params()
+    def _init_params(self, **kwargs):
+        super()._init_params(**kwargs)
         self.res_units = [None, 3, 4, 6, 3]
 
 
@@ -191,6 +191,6 @@ class ResNet50(ResNetBot):
 
 
 class ResNet101(ResNetBot):
-    def _init_params(self):
-        super()._init_params()
+    def _init_params(self, **kwargs):
+        super()._init_params(**kwargs)
         self.res_units = [None, 3, 4, 23, 3]

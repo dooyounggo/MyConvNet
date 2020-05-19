@@ -139,7 +139,7 @@ class ConvNet(object):
         self.debug_images_0 = self._dummy_image
         self.debug_images_1 = self._dummy_image
 
-        self._init_params()
+        self._init_params(**kwargs)
         self._init_model(**kwargs)
 
         if self.argmax_output:
@@ -156,7 +156,7 @@ class ConvNet(object):
         print('Total number of blocks: {}'.format(self._num_blocks))
         print('\n# FLOPs : {:-15,}\n# Params: {:-15,}\n'.format(int(self._flops), int(self._params)))
 
-    def _init_params(self):
+    def _init_params(self, **kwargs):
         """
         Parameter initialization.
         Initialize model parameters.

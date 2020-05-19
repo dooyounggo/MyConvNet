@@ -3,7 +3,7 @@ from convnet import ConvNet
 
 
 class ResNetD(ConvNet):  # Base model. ResNet-D-50
-    def _init_params(self):
+    def _init_params(self, **kwargs):
         self.channels = [64, 256, 512, 1024, 2048]
         self.kernels = [3, 3, 3, 3, 3]
         self.strides = [2, 2, 2, 2, 2]
@@ -148,6 +148,6 @@ class ResNetD50(ResNetD):
 
 
 class ResNetD101(ResNetD):
-    def _init_params(self):
-        super()._init_params()
+    def _init_params(self, **kwargs):
+        super()._init_params(**kwargs)
         self.res_units = [None, 3, 4, 23, 3]

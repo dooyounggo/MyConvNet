@@ -3,7 +3,7 @@ from convnet import ConvNet
 
 
 class ResNetCBAMDilated(ConvNet):    # ResNet with dilated convolutions
-    def _init_params(self):
+    def _init_params(self, **kwargs):
         self.channels = [64, 256, 512, 1024, 2048]
         self.kernels = [3, 3, 3, 3, 3]
         self.strides = [2, 1, 2, 2, 1]
@@ -218,16 +218,16 @@ class ResNetCBAMDilated(ConvNet):    # ResNet with dilated convolutions
 
 
 class ResNetCBAM50OS16(ResNetCBAMDilated):
-    def _init_params(self):
-        super()._init_params()
+    def _init_params(self, **kwargs):
+        super()._init_params(**kwargs)
         self.strides = [2, 1, 2, 2, 1]
         self.res_units = [None, 3, 4, 6, 3]
         self.dilations = [None, 1, 1, 1, 2]
 
 
 class ResNetCBAM50OS8(ResNetCBAMDilated):
-    def _init_params(self):
-        super()._init_params()
+    def _init_params(self, **kwargs):
+        super()._init_params(**kwargs)
         self.strides = [2, 1, 2, 1, 1]
         self.res_units = [None, 3, 4, 6, 3]
         self.dilations = [None, 1, 1, 2, 4]

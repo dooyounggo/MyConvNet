@@ -71,7 +71,7 @@ class ResNetSE(ResNetID):   # Residual squeeze-and-excitation networks
 
 
 class ResNetSEBot(ResNetSE):    # Residual squeeze-and-excitation networks with bottlenecks
-    def _init_params(self):
+    def _init_params(self, **kwargs):
         self.channels = [64, 256, 512, 1024, 2048]
         self.kernels = [7, 3, 3, 3, 3]
         self.strides = [2, 1, 2, 2, 2]
@@ -133,21 +133,21 @@ class ResNetSEBot(ResNetSE):    # Residual squeeze-and-excitation networks with 
 
 
 class ResNetSE18(ResNetSE):
-    def _init_params(self):
-        super()._init_params()
+    def _init_params(self, **kwargs):
+        super()._init_params(**kwargs)
         self.channels = [64, 64, 128, 256, 512]
         self.res_units = [2, 2, 2, 2]
 
 
 class ResNetSE50(ResNetSEBot):
-    def _init_params(self):
-        super()._init_params()
+    def _init_params(self, **kwargs):
+        super()._init_params(**kwargs)
         self.channels = [64, 256, 512, 1024, 2048]
         self.res_units = [3, 4, 6, 3]
 
 
 class ResNetSE101(ResNetSEBot):
-    def _init_params(self):
-        super()._init_params()
+    def _init_params(self, **kwargs):
+        super()._init_params(**kwargs)
         self.channels = [64, 256, 512, 1024, 2048]
         self.res_units = [3, 4, 23, 3]

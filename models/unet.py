@@ -3,7 +3,7 @@ from segmentation.segnet import SegNet
 
 
 class UNet(SegNet):
-    def _init_params(self):
+    def _init_params(self, **kwargs):
         self.channels = [64, 128, 256, 512]
         self.is_bn = True
 

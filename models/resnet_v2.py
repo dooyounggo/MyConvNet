@@ -109,7 +109,7 @@ class ResNetID(ResNet):  # ResNet with identity connections (ResNet-v2) and stoc
 
 
 class ResNetBot(ResNetID):  # ResNet with bottlenecks. ResNet-50
-    def _init_params(self):
+    def _init_params(self, **kwargs):
         self.channels = [64, 256, 512, 1024, 2048]
         self.kernels = [7, 3, 3, 3, 3]
         self.strides = [2, 1, 2, 2, 2]
@@ -171,8 +171,8 @@ class ResNet18(ResNetID):
 
 
 class ResNet34(ResNetID):
-    def _init_params(self):
-        super()._init_params()
+    def _init_params(self, **kwargs):
+        super()._init_params(**kwargs)
         self.res_units = [3, 4, 6, 3]
 
 
@@ -181,6 +181,6 @@ class ResNet50(ResNetBot):
 
 
 class ResNet101(ResNetBot):
-    def _init_params(self):
-        super()._init_params()
+    def _init_params(self, **kwargs):
+        super()._init_params(**kwargs)
         self.res_units = [3, 4, 23, 3]

@@ -4,8 +4,8 @@ from models.resnet_v1_5_dilated import ResNet50OS16 as ResNet
 
 
 class DeepLabV3PlusResNet(SegNet, ResNet):  # No BN model
-    def _init_params(self):
-        ResNet._init_params(self)
+    def _init_params(self, **kwargs):
+        ResNet._init_params(self, **kwargs)
         self.feature_blocks = [4, 1]
         self.feature_channels = [256, 48]
         self.feature_gradients = [None, True]

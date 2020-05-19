@@ -4,7 +4,7 @@ from convnet import ConvNet
 
 
 class EfficientNetLite(ConvNet):
-    def _init_params(self):
+    def _init_params(self, **kwargs):
         self.channels = [32, 16, 24, 40, 80, 112, 192, 320, 1280]
         self.kernels = [3, 3, 3, 5, 3, 5, 5, 3, None]
         self.strides = [2, 1, 2, 2, 2, 1, 2, 1, None]
@@ -197,15 +197,15 @@ class EfficientNetLite(ConvNet):
 
 
 class EfficientNetLite0(EfficientNetLite):  # 224
-    def _init_params(self):
-        super()._init_params()
+    def _init_params(self, **kwargs):
+        super()._init_params(**kwargs)
         print('Widths:', self.channels)
         print('Depths:', self.conv_units)
 
 
 class EfficientNetLite1(EfficientNetLite):  # 240
-    def _init_params(self):
-        super()._init_params()
+    def _init_params(self, **kwargs):
+        super()._init_params(**kwargs)
         self.channels = self._calc_widths(self.channels, 1.0)
         self.conv_units = self._calc_depths(self.conv_units, 1.1)
         print('Widths:', self.channels)
@@ -213,8 +213,8 @@ class EfficientNetLite1(EfficientNetLite):  # 240
 
 
 class EfficientNetLite2(EfficientNetLite):  # 260
-    def _init_params(self):
-        super()._init_params()
+    def _init_params(self, **kwargs):
+        super()._init_params(**kwargs)
         self.channels = self._calc_widths(self.channels, 1.1)
         self.conv_units = self._calc_depths(self.conv_units, 1.2)
         print('Widths:', self.channels)
@@ -222,8 +222,8 @@ class EfficientNetLite2(EfficientNetLite):  # 260
 
 
 class EfficientNetLite3(EfficientNetLite):  # 300
-    def _init_params(self):
-        super()._init_params()
+    def _init_params(self, **kwargs):
+        super()._init_params(**kwargs)
         self.channels = self._calc_widths(self.channels, 1.2)
         self.conv_units = self._calc_depths(self.conv_units, 1.4)
         print('Widths:', self.channels)
@@ -231,8 +231,8 @@ class EfficientNetLite3(EfficientNetLite):  # 300
 
 
 class EfficientNetLite4(EfficientNetLite):  # 380
-    def _init_params(self):
-        super()._init_params()
+    def _init_params(self, **kwargs):
+        super()._init_params(**kwargs)
         self.channels = self._calc_widths(self.channels, 1.4)
         self.conv_units = self._calc_depths(self.conv_units, 1.8)
         print('Widths:', self.channels)

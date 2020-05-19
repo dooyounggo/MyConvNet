@@ -4,7 +4,7 @@ from convnet import ConvNet
 
 
 class EfficientNet(ConvNet):
-    def _init_params(self):
+    def _init_params(self, **kwargs):
         self.channels = [32, 16, 24, 40, 80, 112, 192, 320, 1280]
         self.kernels = [2, 3, 3, 5, 3, 5, 5, 3, None]
         self.strides = [2, 1, 2, 2, 2, 1, 2, 1, None]
@@ -202,15 +202,15 @@ class EfficientNet(ConvNet):
 
 
 class EfficientNetB0(EfficientNet):  # 224
-    def _init_params(self):
-        super()._init_params()
+    def _init_params(self, **kwargs):
+        super()._init_params(**kwargs)
         print('Widths:', self.channels)
         print('Depths:', self.conv_units)
 
 
 class EfficientNetB1(EfficientNet):  # 240
-    def _init_params(self):
-        super()._init_params()
+    def _init_params(self, **kwargs):
+        super()._init_params(**kwargs)
         self.channels = self._calc_widths(self.channels, 1.0)
         self.conv_units = self._calc_depths(self.conv_units, 1.1)
         print('Widths:', self.channels)
@@ -218,8 +218,8 @@ class EfficientNetB1(EfficientNet):  # 240
 
 
 class EfficientNetB2(EfficientNet):  # 260
-    def _init_params(self):
-        super()._init_params()
+    def _init_params(self, **kwargs):
+        super()._init_params(**kwargs)
         self.channels = self._calc_widths(self.channels, 1.1)
         self.conv_units = self._calc_depths(self.conv_units, 1.2)
         print('Widths:', self.channels)
@@ -227,8 +227,8 @@ class EfficientNetB2(EfficientNet):  # 260
 
 
 class EfficientNetB3(EfficientNet):  # 300
-    def _init_params(self):
-        super()._init_params()
+    def _init_params(self, **kwargs):
+        super()._init_params(**kwargs)
         self.channels = self._calc_widths(self.channels, 1.2)
         self.conv_units = self._calc_depths(self.conv_units, 1.4)
         print('Widths:', self.channels)
@@ -236,8 +236,8 @@ class EfficientNetB3(EfficientNet):  # 300
 
 
 class EfficientNetB4(EfficientNet):  # 380
-    def _init_params(self):
-        super()._init_params()
+    def _init_params(self, **kwargs):
+        super()._init_params(**kwargs)
         self.channels = self._calc_widths(self.channels, 1.4)
         self.conv_units = self._calc_depths(self.conv_units, 1.8)
         print('Widths:', self.channels)
@@ -245,8 +245,8 @@ class EfficientNetB4(EfficientNet):  # 380
 
 
 class EfficientNetB5(EfficientNet):  # 456
-    def _init_params(self):
-        super()._init_params()
+    def _init_params(self, **kwargs):
+        super()._init_params(**kwargs)
         self.channels = self._calc_widths(self.channels, 1.6)
         self.conv_units = self._calc_depths(self.conv_units, 2.2)
         print('Widths:', self.channels)
@@ -254,8 +254,8 @@ class EfficientNetB5(EfficientNet):  # 456
 
 
 class EfficientNetB6(EfficientNet):  # 528
-    def _init_params(self):
-        super()._init_params()
+    def _init_params(self, **kwargs):
+        super()._init_params(**kwargs)
         self.channels = self._calc_widths(self.channels, 1.8)
         self.conv_units = self._calc_depths(self.conv_units, 2.6)
         print('Widths:', self.channels)
@@ -263,8 +263,8 @@ class EfficientNetB6(EfficientNet):  # 528
 
 
 class EfficientNetB7(EfficientNet):  # 600
-    def _init_params(self):
-        super()._init_params()
+    def _init_params(self, **kwargs):
+        super()._init_params(**kwargs)
         self.channels = self._calc_widths(self.channels, 2.0)
         self.conv_units = self._calc_depths(self.conv_units, 3.1)
         print('Widths:', self.channels)
