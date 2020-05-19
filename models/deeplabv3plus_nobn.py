@@ -16,7 +16,7 @@ class DeepLabV3PlusResNet(SegNet, ResNet):  # No BN model
         self.aspp_dilations = [6, 12, 18]
         self.aspp_level_feature = False
 
-    def _build_model_seg(self, d_backbone, **kwargs):
+    def _build_model_seg(self, d_backbone):
         d = dict()
 
         blocks = self.feature_blocks

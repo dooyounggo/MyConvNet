@@ -7,7 +7,7 @@ class UNet(SegNet):
         self.channels = [64, 128, 256, 512]
         self.is_bn = True
 
-    def _build_model(self, **kwargs):
+    def _build_model(self):
         d = dict()
 
         x = self.X
@@ -23,7 +23,7 @@ class UNet(SegNet):
 
         return d
 
-    def _build_model_seg(self, d_backbone, **kwargs):
+    def _build_model_seg(self, d_backbone):
         d = dict()
 
         x = d_backbone['block_{}'.format(self._curr_block - 1)]
@@ -111,7 +111,7 @@ class UNetA(UNet):  # Addition instead of concatenation
 
 
 class UNetS(UNetA):  # U-Net with depthwise separable convolutions
-    def _build_model(self, **kwargs):
+    def _build_model(self):
         d = dict()
 
         x = self.X

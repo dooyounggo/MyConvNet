@@ -14,7 +14,7 @@ class GCN(SegNet, ResNet):     # Global Convolutional Networks
         self.conv_units = [1, 1, 1, 1]
         self.deconv_method = 'UPSAMPLING'    # Upsampling: bilinear up-sampling, conv: transposed convolution
 
-    def _build_model_seg(self, d_backbone, **kwargs):
+    def _build_model_seg(self, d_backbone):
         d = dict()
 
         cc = self.conv_channels
@@ -149,8 +149,8 @@ class SCN(GCN, EffNet):  # Separable Convolution Networks: GCN with separable co
         self.conv_units = [1, 1, 1, 1]
         self.deconv_method = 'UPSAMPLING'  # Upsampling: bilinear up-sampling, conv: transposed convolution
 
-    def _build_model(self, **kwargs):
-        d = EffNet._build_model(self, **kwargs)
+    def _build_model(self):
+        d = EffNet._build_model(self)
         return d
 
     def _mb_conv_unit(self, x, kernel, stride, out_channels, multiplier, d, drop_rate=0.0, name='res_unit'):

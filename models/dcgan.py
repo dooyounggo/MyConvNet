@@ -3,7 +3,7 @@ from generative.gan import GAN
 
 
 class DCGAN(GAN):
-    def _build_model(self, **kwargs):
+    def _build_model(self):
         d = dict()
         x = self.X
         self._num_blocks = 4
@@ -32,7 +32,7 @@ class DCGAN(GAN):
 
         return d
 
-    def _build_model_g(self, **kwargs):
+    def _build_model_g(self):
         d = dict()
         self._curr_block = self.num_blocks
 

@@ -42,7 +42,7 @@ def quantize(model, images, ckpt_dir, save_dir, overwrite=False, saved_model=Tru
     with tf.device('/{}:0'.format(model.compute_device)):
         input_tensor = tf.placeholder(dtype=tf.float32, shape=([None] + list(model.input_size)), name='input')
         model.X = input_tensor
-        d = model._build_model(**kwargs)
+        d = model._build_model()
         output_tensor = d['pred']
 
     output_tensors = [output_tensor]

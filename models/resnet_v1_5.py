@@ -11,11 +11,11 @@ class ResNet(ConvNet):  # Base model. ResNet-18 (v1.5: stride = 2 at 3x3 convolu
 
         self.erase_relu = kwargs.get('erase_relu', False)
 
-    def _build_model(self, **kwargs):
-        d = dict()
+        self.initial_drop_rate = kwargs.get('initial_drop_rate', 0.0)
+        self.final_drop_rate = kwargs.get('final_drop_rate', 0.0)
 
-        initial_drop_rate = kwargs.get('initial_drop_rate', 0.0)
-        final_drop_rate = kwargs.get('final_drop_rate', 0.0)
+    def _build_model(self):
+        d = dict()
 
         X_input = self.X
 
@@ -45,7 +45,7 @@ class ResNet(ConvNet):  # Base model. ResNet-18 (v1.5: stride = 2 at 3x3 convolu
 
         for i in range(1, self.num_blocks):
             self._curr_block = i
-            dr = initial_drop_rate + (final_drop_rate - initial_drop_rate)*i/(self.num_blocks - 1)
+            dr = self.initial_drop_rate + (self.final_drop_rate - self.initial_drop_rate)*i/(self.num_blocks - 1)
             print('block {} drop rate = {:.3f}'.format(i, dr))
             for j in range(res_units[i]):
                 if j > 0:
@@ -117,12 +117,9 @@ class ResNet(ConvNet):  # Base model. ResNet-18 (v1.5: stride = 2 at 3x3 convolu
 
 class ResNetBot(ResNet):  # ResNet with bottlenecks. ResNet-50
     def _init_params(self, **kwargs):
+        super()._init_params(**kwargs)
         self.channels = [64, 256, 512, 1024, 2048]
-        self.kernels = [7, 3, 3, 3, 3]
-        self.strides = [2, 1, 2, 2, 2]
         self.res_units = [None, 3, 4, 6, 3]
-
-        self.erase_relu = False
 
     def _res_unit(self, x, kernel, stride, out_channels, d, drop_rate=0.0, name='res_unit'):
         in_channels = x.get_shape()[1] if self.channel_first else x.get_shape()[-1]

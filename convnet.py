@@ -164,7 +164,7 @@ class ConvNet(object):
         pass
 
     @abstractmethod
-    def _build_model(self, **kwargs):
+    def _build_model(self):
         """
         Build model.
         This should be implemented.
@@ -316,7 +316,7 @@ class ConvNet(object):
                             with tf.name_scope('gpu{}/cast/'.format(i)):
                                 self.X = tf.cast(self.X, dtype=self.dtype)
                         with tf.name_scope('nn'):
-                            self.d = self._build_model(**kwargs)
+                            self.d = self._build_model()
                         if self.dtype is not tf.float32:
                             with tf.name_scope('gpu{}/cast/'.format(i)):
                                 self.d['logits'] = tf.cast(self.d['logits'], dtype=tf.float32)

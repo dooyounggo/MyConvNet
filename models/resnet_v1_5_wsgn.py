@@ -14,11 +14,11 @@ class ResNet(ConvNet):  # Base model. ResNet-50 with weight standardization and 
 
         self.erase_relu = kwargs.get('erase_relu', False)
 
-    def _build_model(self, **kwargs):
-        d = dict()
+        self.initial_drop_rate = kwargs.get('initial_drop_rate', 0.0)
+        self.final_drop_rate = kwargs.get('final_drop_rate', 0.0)
 
-        initial_drop_rate = kwargs.get('initial_drop_rate', 0.0)
-        final_drop_rate = kwargs.get('final_drop_rate', 0.0)
+    def _build_model(self):
+        d = dict()
 
         X_input = self.X
 
@@ -51,7 +51,7 @@ class ResNet(ConvNet):  # Base model. ResNet-50 with weight standardization and 
 
         for i in range(1, self.num_blocks):
             self._curr_block = i
-            dr = initial_drop_rate + (final_drop_rate - initial_drop_rate)*i/(self.num_blocks - 1)
+            dr = self.initial_drop_rate + (self.final_drop_rate - self.initial_drop_rate)*i/(self.num_blocks - 1)
             print('block {} drop rate = {:.3f}'.format(i, dr))
             for j in range(res_units[i]):
                 if j > 0:

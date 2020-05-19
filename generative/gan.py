@@ -63,11 +63,11 @@ class GAN(ConvNet):
                                 self.X = tf.cast(self.X, dtype=self.dtype)
                                 self.Y = tf.cast(self.Y, dtype=self.dtype)
                         with tf.name_scope('nn'):
-                            d_real = self._build_model(**kwargs)
-                            self.d = self._build_model_g(**kwargs)
+                            d_real = self._build_model()
+                            self.d = self._build_model_g()
                             self.X = self.d['generate']
                             tf.get_variable_scope().reuse_variables()
-                            d_fake = self._build_model(**kwargs)
+                            d_fake = self._build_model()
                             self._num_blocks += self.num_blocks_g
                         if self.dtype is not tf.float32:
                             with tf.name_scope('gpu{}/cast/'.format(i)):
@@ -100,7 +100,7 @@ class GAN(ConvNet):
                 self.debug_images_0 = self.pred
 
     @abstractmethod
-    def _build_model_g(self, **kwargs):
+    def _build_model_g(self):
         """
         Build model of generator networks.
         This should be implemented.

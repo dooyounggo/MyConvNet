@@ -3,11 +3,8 @@ from models.resnet_v1_5 import ResNet
 
 
 class ResNetID(ResNet):  # ResNet with identity connections (ResNet-v2) and stochastic depth
-    def _build_model(self, **kwargs):
+    def _build_model(self):
         d = dict()
-
-        initial_drop_rate = kwargs.get('initial_drop_rate', 0.0)
-        final_drop_rate = kwargs.get('final_drop_rate', 0.0)
 
         X_input = self.X
 
@@ -37,7 +34,7 @@ class ResNetID(ResNet):  # ResNet with identity connections (ResNet-v2) and stoc
 
         for i in range(1, self.num_blocks):
             self._curr_block = i
-            dr = initial_drop_rate + (final_drop_rate - initial_drop_rate)*i/(self.num_blocks - 1)
+            dr = self.initial_drop_rate + (self.final_drop_rate - self.initial_drop_rate)*i/(self.num_blocks - 1)
             print('block {} drop rate = {:.3f}'.format(i, dr))
             for j in range(res_units[i-1]):
                 if j > 0:
@@ -110,9 +107,8 @@ class ResNetID(ResNet):  # ResNet with identity connections (ResNet-v2) and stoc
 
 class ResNetBot(ResNetID):  # ResNet with bottlenecks. ResNet-50
     def _init_params(self, **kwargs):
+        super()._init_params(**kwargs)
         self.channels = [64, 256, 512, 1024, 2048]
-        self.kernels = [7, 3, 3, 3, 3]
-        self.strides = [2, 1, 2, 2, 2]
         self.res_units = [3, 4, 6, 3]
 
     def _res_unit(self, x, kernel, stride, out_channels, d, drop_rate=0.0, name='res_unit'):
