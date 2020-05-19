@@ -89,7 +89,7 @@ def quantize(model, images, ckpt_dir, save_dir, overwrite=False, saved_model=Tru
             for dotname in dotfile_names:
                 (dotgraph,) = pydot.graph_from_dot_file(os.path.join(str(tflite_graphviz_dir), dotname + '.dot'))
                 dotgraph.write_svg(os.path.join(str(tflite_graphviz_dir), dotname + '.svg'))
-        print('Done. \n')
+        print('Done.\n')
     else:
         print('The tflite model already exists.')
 
@@ -109,7 +109,7 @@ def quantize(model, images, ckpt_dir, save_dir, overwrite=False, saved_model=Tru
         converter.dump_graphviz_dir = None  # No graphviz for the quantized model since the results are identical.
         tflite_model_quant = converter.convert()
         tflite_model_quant_file.write_bytes(tflite_model_quant)
-        print('Done. \n')
+        print('Done.\n')
     else:
         print('The quantized tflite model already exists.')
 
@@ -122,7 +122,7 @@ def quantize(model, images, ckpt_dir, save_dir, overwrite=False, saved_model=Tru
         builder = tf.saved_model.builder.SavedModelBuilder(saved_model_dir)
         builder.add_meta_graph_and_variables(sess, tags=tf.saved_model.SERVING, strip_default_attrs=True)
         builder.save()
-        print('Done. \n')
+        print('Done.\n')
 
     return tflite_model_file, tflite_model_quant_file
 
