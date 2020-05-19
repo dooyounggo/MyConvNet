@@ -17,7 +17,7 @@ class ConvNet(object):
         :param input_shape: list or tuple, network input size.
         :param num_classes: int, number of classes.
         :param loss_weights: list or tuple, weighting factors for softmax losses.
-        :param kwargs: dict, extra arguments containing hyperparameters.
+        :param kwargs: dict, (hyper)parameters.
         """
         graph = tf.get_default_graph()
         config = tf.ConfigProto()
