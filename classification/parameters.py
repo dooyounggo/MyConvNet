@@ -3,6 +3,7 @@ Setup basic hyperparameters
 """
 
 import os
+import argparse
 import numpy as np
 import tensorflow.compat.v1 as tf
 import matplotlib.pyplot as plt
@@ -104,7 +105,43 @@ class Parameters(object):
 
     d['cutmix'] = False  # CutMix augmentation
 
-    def __init__(self):
+    def __init__(self, parser=None):
+        if parser is None:
+            parser = argparse.ArgumentParser()
+        _, unknown_args = parser.parse_known_args()
+
+        is_arg = False
+        arg_name = ''
+        for arg in unknown_args:
+            if is_arg and not arg.startswith('--'):
+                arg = arg.strip()
+                is_string = False
+                if arg.lower() == 'true':
+                    arg = True
+                elif arg.lower() == 'false':
+                    arg = False
+                elif arg.isdigit() or arg.lstrip('+-').isdigit():
+                    arg = int(arg)
+                elif arg.replace('.', '').isdigit() or arg.replace('.', '').lstrip('+-').isdigit():
+                    arg = float(arg)
+                elif ''.join(arg.split('e')).replace('.', '').replace('-', '').isdigit():
+                    arg = float(arg)
+                else:
+                    is_string = True
+                self.d[arg_name] = arg
+                is_arg = False
+
+                if is_string:
+                    print(f'"{arg_name}"', '=', f'"{arg}"')
+                else:
+                    print(f'"{arg_name}"', '=', arg)
+            else:
+                if arg.startswith('--'):
+                    arg_name = arg.lstrip('-')
+                    is_arg = True
+                elif arg.startswith('-'):
+                    raise ValueError('Argument names must start with "--" ({}).'.format(arg))
+
         print('Training directory: ', self.train_dir)
         print('Test directory: ', self.test_dir)
         print('Transfer learning directory: ', self.transfer_dir)
