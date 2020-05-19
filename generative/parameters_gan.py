@@ -142,6 +142,12 @@ class Parameters(object):
     d['rand_posterization'] = (8, 8)  # Lower and upper bounds of posterization bits
 
     def __init__(self, parser=None):
+        print('Training directory: ', self.train_dir)
+        print('Test directory: ', self.test_dir)
+        print('Transfer learning directory: ', self.transfer_dir)
+        print('Data save directory: ', self.save_dir)
+        print()
+
         if parser is None:
             parser = argparse.ArgumentParser()
         _, unknown_args = parser.parse_known_args()
@@ -167,12 +173,7 @@ class Parameters(object):
                     is_arg = True
                 elif arg.startswith('-'):
                     raise ValueError(f'Argument names must start with "--" ({arg}).')
-
-        print('Training directory: ', self.train_dir)
-        print('Test directory: ', self.test_dir)
-        print('Transfer learning directory: ', self.transfer_dir)
-        print('Data save directory: ', self.save_dir)
-        print('')
+        print()
 
         os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
         os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(str(num) for num
