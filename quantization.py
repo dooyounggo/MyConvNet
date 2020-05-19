@@ -491,7 +491,7 @@ def write_quantization_params(model_file, model_file_quant, tensor_list=None, sh
                     else:
                         quant_scale = np.mean(quant_scale, axis=(0, 1, 2))
                 else:
-                    raise (ValueError, 'Invalid tensor dimension: {}'.format(dim))
+                    raise ValueError('Invalid tensor dimension: {}'.format(dim))
                 with open(main_name_quant + '.quant', mode='wb') as f:
                     f.write(np.reshape(quant_scale, (np.prod(quant_scale.shape))).tobytes())
             else:

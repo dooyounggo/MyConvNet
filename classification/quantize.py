@@ -17,7 +17,7 @@ if __name__ == '__main__':
     parser.add_argument('--num_repr_data', '-n', '--num_data', '--num_images', help='Number of representative images',
                         type=str, default='1000', metavar='')
 
-    args = parser.parse_args()
+    args, _ = parser.parse_known_args()
     overwrite = args.overwrite
     if overwrite.lower().strip() == 'true' or overwrite.strip() == '1':
         overwrite = True
@@ -40,7 +40,7 @@ if __name__ == '__main__':
         write_tensors = True
     num_repr_data = int(args.num_repr_data)
 
-    Param = Parameters()
+    Param = Parameters(parser=parser)
     model_to_load = Param.d['model_to_load']
     idx_start = 0
     idx_end = 50000
