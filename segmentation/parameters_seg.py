@@ -4,6 +4,7 @@ Setup basic hyperparameters
 
 import os
 import argparse
+import ast
 import numpy as np
 import tensorflow.compat.v1 as tf
 import matplotlib.pyplot as plt
@@ -114,23 +115,13 @@ class Parameters(object):
         arg_name = ''
         for arg in unknown_args:
             if is_arg and not arg.startswith('--'):
-                arg = arg.strip()
-                is_string = False
-                if arg.lower() == 'true':
-                    arg = True
-                elif arg.lower() == 'false':
-                    arg = False
-                elif arg.isdigit() or arg.lstrip('+-').isdigit():
-                    arg = int(arg)
-                elif arg.replace('.', '').isdigit() or arg.replace('.', '').lstrip('+-').isdigit():
-                    arg = float(arg)
-                elif ''.join(arg.split('e')).replace('.', '').replace('-', '').isdigit():
-                    arg = float(arg)
-                else:
+                try:
+                    arg = ast.literal_eval(arg)
+                    is_string = False
+                except ValueError:
                     is_string = True
                 self.d[arg_name] = arg
                 is_arg = False
-
                 if is_string:
                     print(f'"{arg_name}"', '=', f'"{arg}"')
                 else:
