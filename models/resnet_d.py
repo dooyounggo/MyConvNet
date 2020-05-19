@@ -6,13 +6,15 @@ class ResNetD(ConvNet):  # Base model. ResNet-D-50
     def _init_params(self, **kwargs):
         self.channels = [64, 256, 512, 1024, 2048]
         self.kernels = [3, 3, 3, 3, 3]
-        self.strides = [2, 2, 2, 2, 2]
+        self.strides = [2, 1, 2, 2, 2]
         self.res_units = [None, 3, 4, 6, 3]
 
-        self.activation_type = 'relu'
-        self.striding_kernel_offset = 0
-        self.erase_max_pool = True
-        self.erase_relu = True
+        self.erase_relu = kwargs.get('erase_relu', True)
+        self.activation_type = kwargs.get('activation_type', 'relu')
+        self.striding_kernel_offset = kwargs.get('striding_kernel_offset', 0)
+        self.erase_max_pool = kwargs.get('erase_max_pool', False)
+        if self.erase_max_pool:
+            self.strides[1] = 2
 
     def _build_model(self, **kwargs):
         d = dict()

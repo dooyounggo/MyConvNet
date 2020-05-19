@@ -12,7 +12,7 @@ class ResNet(ConvNet):  # Base model. ResNet-50 with weight standardization and 
         self.dilations = [None, 1, 1, 1, 1]
         self.multi_grid = [1, 2, 4]
 
-        self.erase_relu = False
+        self.erase_relu = kwargs.get('erase_relu', False)
 
     def _build_model(self, **kwargs):
         d = dict()

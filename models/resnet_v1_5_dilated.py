@@ -11,7 +11,7 @@ class ResNetDilated(ConvNet):  # Dilated ResNet-50
         self.dilations = [None, 1, 1, 1, 2]
         self.multi_grid = [1, 2, 4]
 
-        self.erase_relu = False
+        self.erase_relu = kwargs.get('erase_relu', False)
 
     def _build_model(self, **kwargs):
         d = dict()

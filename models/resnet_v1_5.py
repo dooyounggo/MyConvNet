@@ -9,7 +9,7 @@ class ResNet(ConvNet):  # Base model. ResNet-18 (v1.5: stride = 2 at 3x3 convolu
         self.strides = [2, 1, 2, 2, 2]
         self.res_units = [None, 2, 2, 2, 2]    # Number of residual units starting from the 1st block
 
-        self.erase_relu = False
+        self.erase_relu = kwargs.get('erase_relu', False)
 
     def _build_model(self, **kwargs):
         d = dict()
