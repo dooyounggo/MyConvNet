@@ -189,7 +189,7 @@ class Parameters(object):
                     arg_name = arg.lstrip('-')
                     is_arg = True
                 elif arg.startswith('-'):
-                    raise ValueError('Argument names must start with "--" ({}).'.format(arg))
+                    raise ValueError(f'Argument names must start with "--" ({arg}).')
 
         print('Training directory: ', self.train_dir)
         print('Test directory: ', self.test_dir)
