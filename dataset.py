@@ -234,7 +234,7 @@ class DataSet(object):
             elif interpolation_method == 'bicubic':
                 interpolation = cv2.INTER_CUBIC
             else:
-                raise(ValueError, 'Interpolation method of {} is not supported.'.format(self.resize_interpolation))
+                raise ValueError('Interpolation method of {} is not supported.'.format(self.resize_interpolation))
             image = self._resize_function(image, self.image_size, interpolation=interpolation)
 
         if not isinstance(label_dir, str):  # No label
@@ -255,7 +255,7 @@ class DataSet(object):
                         line = f.readline()
                     label = int(line.rstrip())
                 else:
-                    raise(ValueError, 'Label file extension of {} is not supported for {}'.format(ext, self.task_type))
+                    raise ValueError('Label file extension of {} is not supported for {}'.format(ext, self.task_type))
                 label = np.array(label, dtype=np.float32)
 
             elif self.task_type == DataSet.IMAGE_SEGMENTATION:
@@ -265,10 +265,10 @@ class DataSet(object):
                     label = self._resize_function(label, self.image_size, interpolation=cv2.INTER_NEAREST)
                     label = np.round(label[..., 0]*255)
                 else:
-                    raise(ValueError, 'Label file extension of {} is not supported for {}'.format(ext, self.task_type))
+                    raise ValueError('Label file extension of {} is not supported for {}'.format(ext, self.task_type))
 
             else:
-                raise(ValueError, '{} task is not supported'.format(self.task_type))
+                raise ValueError('{} task is not supported'.format(self.task_type))
 
         return image, label
 
@@ -309,7 +309,7 @@ class DataSet(object):
                                            max_attempts=max_attempts, min_object_size=min_object_size,
                                            pad_value=pad_value)
         else:
-            raise(ValueError, 'Resize type of {} is not supported.'.format(self.resize_method))
+            raise ValueError('Resize type of {} is not supported.'.format(self.resize_method))
 
         image = image[..., 0:self.image_size[-1]]
         return image
