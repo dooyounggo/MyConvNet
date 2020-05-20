@@ -32,7 +32,7 @@ class ResNetD(ConvNet):  # Base model. ResNet-D-50
         len_c = len(channels)
         len_k = len(kernels)
         len_s = len(strides)
-        len_r = len(res_units) + 1
+        len_r = len(res_units)
         self._num_blocks = min([len_c, len_k, len_s, len_r])
 
         with tf.variable_scope('block_0'):
