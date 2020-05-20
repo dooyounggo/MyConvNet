@@ -3,11 +3,10 @@ Setup various hyperparameters
 """
 
 import os
-import argparse
-import ast
 import numpy as np
 import tensorflow.compat.v1 as tf
 import matplotlib.pyplot as plt
+from initialization import init_params
 from dataset import DataSet
 from subsets.cityscapes import read_subset
 from models.deeplabv3plus_nobn import DeepLabV3PlusResNet as ConvNet
@@ -162,47 +161,7 @@ class Parameters(object):
         print('Data save directory: ', self.save_dir)
         print()
 
-        if parser is None:
-            parser = argparse.ArgumentParser()
-        _, unknown_args = parser.parse_known_args()
-
-        is_arg = False
-        arg_name = ''
-        for arg in unknown_args:
-            if is_arg and not arg.startswith('--'):
-                try:
-                    arg = ast.literal_eval(arg)
-                    is_string = False
-                except ValueError:
-                    is_string = True
-                self.d[arg_name] = arg
-                is_arg = False
-                if is_string:
-                    print(f'"{arg_name}"', '=', f'"{arg}"')
-                else:
-                    print(f'"{arg_name}"', '=', arg)
-            else:
-                if arg.startswith('--'):
-                    arg_name = arg.lstrip('-')
-                    is_arg = True
-                elif arg.startswith('-'):
-                    raise ValueError(f'Argument names must start with "--" ({arg}).')
-        print()
-
-        os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
-        os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(str(num) for num
-                                                      in range(self.d['gpu_offset'],
-                                                               self.d['num_gpus'] + self.d['gpu_offset']))
-        # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-        os.environ['TF_GPU_THREAD_MODE'] = 'gpu_private'
-        os.environ['TF_GPU_THREAD_COUNT'] = str(self.d['num_gpus'])
-        os.environ['TF_USE_CUDNN_BATCHNORM_SPATIAL_PERSISTENT'] = '1'
-        os.environ['TF_ENABLE_WINOGRAD_NONFUSED'] = '1'
-        os.environ['TF_SYNC_ON_FINISH'] = '0'
-        # os.environ["OMP_NUM_THREADS"] = str(self.d['num_parallel_calls'])
-        # os.environ["KMP_BLOCKTIME"] = '0'
-        # os.environ["KMP_SETTINGS"] = '1'
-        # os.environ["KMP_AFFINITY"] = 'granularity=fine,verbose,compact,1,0'
+        init_params(self.d, parser=parser)
 
     @property
     def root_dir(self):
