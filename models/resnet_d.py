@@ -9,7 +9,7 @@ class ResNetD(ConvNet):  # Base model. ResNet-D-50
         self.strides = [2, 1, 2, 2, 2]
         self.res_units = [None, 3, 4, 6, 3]
 
-        self.erase_relu = kwargs.get('erase_relu', True)
+        self.erase_relu = kwargs.get('erase_relu', False)
         self.activation_type = kwargs.get('activation_type', 'relu')
         self.striding_kernel_offset = kwargs.get('striding_kernel_offset', 0)
         self.erase_max_pool = kwargs.get('erase_max_pool', False)
