@@ -15,6 +15,7 @@ class ResNetD(ConvNet):  # Base model. ResNet-D-50
         self.erase_max_pool = kwargs.get('erase_max_pool', False)
         if self.erase_max_pool:
             self.strides[1] = 2
+        self.identity_skip_only = kwargs.get('identity_skip_only', False)
 
         self.initial_drop_rate = kwargs.get('initial_drop_rate', 0.0)
         self.final_drop_rate = kwargs.get('final_drop_rate', 0.0)
@@ -102,12 +103,14 @@ class ResNetD(ConvNet):  # Base model. ResNet-D-50
             stride = [stride[0], stride[0]]
 
         with tf.variable_scope(name):
+            skip = None
             if in_channels == out_channels:
                 if stride[0] > 1 | stride[1] > 1:
-                    skip = self.avg_pool(x, stride, stride, padding='SAME')
+                    if not self.identity_skip_only:
+                        skip = self.avg_pool(x, stride, stride, padding='SAME')
                 else:
                     skip = x
-            else:
+            elif not self.identity_skip_only:
                 with tf.variable_scope('conv_skip'):
                     skip = self.avg_pool(x, stride, stride, padding='SAME')
                     skip = self.conv_layer(skip, 1, 1, out_channels, padding='SAME', biased=False, verbose=True)
