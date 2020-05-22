@@ -50,14 +50,13 @@ Some scripts may not support command-line execution.
 - Batch statistics of multiple devices are updated successively.
 - Check out [REFERENCES.md](https://github.com/dooyounggo/MyConvNet/blob/master/REFERENCES.md) for papers and code references.
 
-### Packages
+### Packages (Installed with conda)
 - Python: 3.7
 - tensorflow-gpu: 1.14.0 or 1.15.0 (cudatoolkit: 10.0, cudnn: 7.6.5)
 - numpy: 1.17.4
-- matplotlib: 3.1.1
 - scikit-image: 0.15.0
-- scikit-learn: 0.22
-- opencv-python: 4.1.2.30
+- matplotlib: 3.1.1
+- opencv-python: 4.1.2.30 (installed with pip)
 - pydot: 1.4.1 (graphviz: 2.40.1)
 
 ### TODO
