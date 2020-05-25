@@ -84,7 +84,7 @@ def quantize(model, images, ckpt_dir, save_dir, overwrite=False, saved_model=Tru
         converter.dump_graphviz_dir = str(tflite_graphviz_dir)
         tflite_model = converter.convert()
         tflite_model_file.write_bytes(tflite_model)
-        if os.name != 'nt':  # Conversion from dot to svg is not supported on Windows due to UnicodeDecodeError.
+        if os.name != 'nt':  # Conversion from dot to svg is not available on Windows due to UnicodeDecodeError.
             dotfile_names = ['toco_AT_IMPORT', 'toco_AFTER_TRANSFORMATIONS', 'toco_AFTER_ALLOCATION']
             for dotname in dotfile_names:
                 (dotgraph,) = pydot.graph_from_dot_file(os.path.join(str(tflite_graphviz_dir), dotname + '.dot'))
@@ -213,11 +213,20 @@ def evaluate_quantized_model(model_file, model_quant_file, test_set, evaluator, 
             results_quant_float = results_quant.astype(np.float32)
         is_different = np.logical_not(np.isclose(results, results_quant_float, rtol=1.e-4, atol=0))
     else:
-        is_different = np.not_equal(np.argmax(results, axis=-1), np.argmax(results_quant, axis=-1))
+        if argmax_output:
+            is_different = np.not_equal(results, results_quant)
+        else:
+            is_different = np.not_equal(np.argmax(results, axis=-1), np.argmax(results_quant, axis=-1))
 
+    with open(os.path.join(os.path.split(str(model_file))[0], evaluator.name.replace(' ', '_') + '.txt'), 'w') as f:
+        f.write('Accuracy Before Quantization: {:.4f}'.format(accuracy))
+        f.write('Accuracy After Quantization:  {:.4f}'.format(accuracy_quant))
+        f.write('Number of Different Results: {}/{}'.format(np.sum(is_different, dtype=np.uint64),
+                                                            np.prod(is_different.shape)))
     print('\nAccuracy Before Quantization: {:.4f}'.format(accuracy))
     print('Accuracy After Quantization:  {:.4f}'.format(accuracy_quant))
-    print('Number of Different Results: {}/{}'.format(np.sum(is_different), np.prod(is_different.shape)))
+    print('Number of Different Results: {}/{}'.format(np.sum(is_different, dtype=np.uint64),
+                                                      np.prod(is_different.shape)))
 
 
 def load_function(idx, image, gt_label, w_lock, r_lock, session, iterator, interpreter, **kwargs):
@@ -497,3 +506,4 @@ def write_quantization_params(model_file, model_file_quant, tensor_list=None, sh
             else:
                 with open(main_name_quant + '.quant', mode='wb') as f:
                     f.write(np.array(scale).tobytes())
+    print('Done.')
