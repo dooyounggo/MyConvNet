@@ -219,10 +219,10 @@ def evaluate_quantized_model(model_file, model_quant_file, test_set, evaluator, 
             is_different = np.not_equal(np.argmax(results, axis=-1), np.argmax(results_quant, axis=-1))
 
     with open(os.path.join(os.path.split(str(model_file))[0], evaluator.name.replace(' ', '_') + '.txt'), 'w') as f:
-        f.write('Accuracy Before Quantization: {:.4f}'.format(accuracy))
-        f.write('Accuracy After Quantization:  {:.4f}'.format(accuracy_quant))
-        f.write('Number of Different Results: {}/{}'.format(np.sum(is_different, dtype=np.uint64),
-                                                            np.prod(is_different.shape)))
+        f.write('Accuracy Before Quantization: {:.4f}\n'.format(accuracy))
+        f.write('Accuracy After Quantization:  {:.4f}\n'.format(accuracy_quant))
+        f.write('Number of Different Results: {}/{}\n'.format(np.sum(is_different, dtype=np.uint64),
+                                                              np.prod(is_different.shape)))
     print('\nAccuracy Before Quantization: {:.4f}'.format(accuracy))
     print('Accuracy After Quantization:  {:.4f}'.format(accuracy_quant))
     print('Number of Different Results: {}/{}'.format(np.sum(is_different, dtype=np.uint64),
