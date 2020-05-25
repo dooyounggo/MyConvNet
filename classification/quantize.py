@@ -64,6 +64,8 @@ if __name__ == '__main__':
     # Initialize
     Param.d['half_precision'] = False
     Param.d['channel_first'] = False
+    Param.d['initial_drop_rate'] = 0.0
+    Param.d['final_drop_rate'] = 0.0
     model = ConvNet(Param.d['input_size'], test_set.num_classes, loss_weights=None, **Param.d)
     evaluator = Evaluator()
 
