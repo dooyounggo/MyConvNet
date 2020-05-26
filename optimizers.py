@@ -35,9 +35,9 @@ class Optimizer(object):
         assert model.num_devices == train_set.num_shards, 'Number of devices mismatch between the model and dataset' \
                                                           ': {} vs. {}.'.format(model.num_devices,
                                                                                 train_set.num_shards)
-        assert model.devicve_offset == train_set.device_offset, 'Device offset mismatch between the model and dataset' \
-                                                                ': {} vs. {}.'.format(model.device_offset,
-                                                                                      train_set.device_offset)
+        assert model.device_offset == train_set.device_offset, 'Device offset mismatch between the model and dataset' \
+                                                               ': {} vs. {}.'.format(model.device_offset,
+                                                                                     train_set.device_offset)
 
         self.input_size = kwargs.get('input_size', [224, 224, 3])
         assert len(self.input_size) == 3, 'input_size must contain 3D size'
