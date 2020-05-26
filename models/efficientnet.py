@@ -47,8 +47,7 @@ class EfficientNet(ConvNet):
                 if strides[0] > 1:
                     k += self.striding_kernel_offset
                 x = self.conv_layer(X_input, k, strides[0], channels[0], padding='SAME', biased=False,
-                                    weight_initializer=self.conv_initializer)
-                print('block_0' + '/conv_0.shape', x.get_shape().as_list())
+                                    weight_initializer=self.conv_initializer, verbose=True)
                 d['block_0' + '/conv_0'] = x
                 x = self.batch_norm(x, shift=True, scale=True, scope='norm')
                 d['block_0' + '/conv_0' + '/norm'] = x
@@ -76,8 +75,7 @@ class EfficientNet(ConvNet):
         with tf.variable_scope('block_{}'.format(self._curr_block)):
             with tf.variable_scope('conv_0'):
                 x = self.conv_layer(x, 1, 1, self.channels[-1], padding='SAME', biased=False, depthwise=False,
-                                    weight_initializer=self.conv_initializer)
-                print('block_{}'.format(self._curr_block) + '/conv_0.shape', x.get_shape().as_list())
+                                    weight_initializer=self.conv_initializer, verbose=True)
                 d['logits' + '/conv_0'] = x
                 x = self.batch_norm(x, shift=True, scale=True, scope='norm')
                 d['logits' + '/conv_0' + '/norm'] = x
@@ -125,8 +123,7 @@ class EfficientNet(ConvNet):
             with tf.variable_scope('conv_0'):
                 if multiplier > 1:
                     x = self.conv_layer(x, 1, 1, in_channels*multiplier, padding='SAME', biased=False, depthwise=False,
-                                        weight_initializer=self.conv_initializer)
-                    print(name + '/conv_0.shape', x.get_shape().as_list())
+                                        weight_initializer=self.conv_initializer, verbose=True)
                     d[name + '/conv_0'] = x
                     x = self.batch_norm(x, shift=True, scale=True, scope='norm')
                     d[name + '/conv_0' + '/norm'] = x
@@ -134,10 +131,8 @@ class EfficientNet(ConvNet):
                     d[name + '/conv_0' + '/swish'] = x
 
             with tf.variable_scope('conv_1'):
-                x = self.conv_layer(x, kernel, stride, in_channels*multiplier,
-                                    padding='SAME', biased=False, depthwise=True,
-                                    weight_initializer=self.conv_initializer)
-                print(name + '/conv_1.shape', x.get_shape().as_list())
+                x = self.conv_layer(x, kernel, stride, in_channels*multiplier, padding='SAME', biased=False,
+                                    depthwise=True, weight_initializer=self.conv_initializer, verbose=True)
                 d[name + '/conv_1'] = x
                 x = self.batch_norm(x, shift=True, scale=True, scope='norm')
                 d[name + '/conv_1' + '/norm'] = x
@@ -150,8 +145,7 @@ class EfficientNet(ConvNet):
 
             with tf.variable_scope('conv_2'):
                 x = self.conv_layer(x, 1, 1, out_channels, padding='SAME', biased=False, depthwise=False,
-                                    weight_initializer=self.conv_initializer)
-                print(name + '/conv_2.shape', x.get_shape().as_list())
+                                    weight_initializer=self.conv_initializer, verbose=True)
                 d[name + '/conv_2'] = x
                 x = self.batch_norm(x, shift=True, scale=True, zero_scale_init=skip is not None, scope='norm')
                 d[name + '/conv_2' + '/norm'] = x
