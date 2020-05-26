@@ -22,8 +22,10 @@ if __name__ == '__main__':
                        resize_method=Param.d['resize_type_test'], resize_randomness=Param.d['resize_random_test'],
                        **Param.d)
 
-    image_mean = np.load(os.path.join(Param.save_dir, 'img_mean.npy')).astype(np.float32)    # load mean image
-    Param.d['image_mean'] = image_mean
+    image_mean_file = os.path.join(Param.save_dir, 'img_mean.npy')
+    if os.path.isfile(image_mean_file):
+        image_mean = np.load(image_mean_file).astype(np.float32)    # load mean image
+        Param.d['image_mean'] = image_mean
     Param.d['monte_carlo'] = False
     Param.d['channel_first'] = False
 

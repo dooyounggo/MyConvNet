@@ -20,8 +20,10 @@ if __name__ == '__main__':
                        from_memory=True,  # Data is numpy arrays
                        **Param.d)
 
-    image_mean = np.load(os.path.join(Param.save_dir, 'img_mean.npy')).astype(np.float32)    # load image mean
-    Param.d['image_mean'] = image_mean
+    image_mean_file = os.path.join(Param.save_dir, 'img_mean.npy')
+    if os.path.isfile(image_mean_file):
+        image_mean = np.load(image_mean_file).astype(np.float32)    # load mean image
+        Param.d['image_mean'] = image_mean
 
     # Initialize
     model = ConvNet(Param.d['input_size'], test_set.num_classes, loss_weights=None, **Param.d)
