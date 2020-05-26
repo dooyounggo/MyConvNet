@@ -16,6 +16,8 @@ class EfficientNetLite(ConvNet):
                                                                mode='fan_out',
                                                                distribution='uniform')
 
+        self.striding_kernel_offset = kwargs.get('striding_kernel_offset', 0)
+
         self.initial_drop_rate = kwargs.get('initial_drop_rate', 0.0)
         self.final_drop_rate = kwargs.get('final_drop_rate', 0.0)
 
@@ -58,12 +60,15 @@ class EfficientNetLite(ConvNet):
             dr = self.initial_drop_rate + (self.final_drop_rate - self.initial_drop_rate)*i/(self.num_blocks - 2)
             print('block {} drop rate = {:.3f}'.format(i, dr))
             for j in range(conv_units[i]):
+                k = kernels[i]
                 if j > 0:
                     s = 1
                 else:
                     s = strides[i]
-                x = self._mb_conv_unit(x, kernels[i], s, channels[i], multipliers[i], d,
-                                       drop_rate=dr, name='block_{}/mbconv_{}'.format(i, j))
+                    if s > 1:
+                        k += self.striding_kernel_offset
+                x = self._mb_conv_unit(x, k, s, channels[i], multipliers[i], d, drop_rate=dr,
+                                       name='block_{}/mbconv_{}'.format(i, j))
             d['block_{}'.format(self._curr_block)] = x
 
         self._curr_block += 1

@@ -74,7 +74,7 @@ class ResNetD(ConvNet):  # Base model. ResNet-D-50
                     s = 1
                 else:
                     s = strides[i]
-                    if s == 2:
+                    if s > 1:
                         k += self.striding_kernel_offset
                 x = self._res_unit(x, k, s, channels[i], d, drop_rate=dr, name='block_{}/res_{}'.format(i, j))
             d['block_{}'.format(i)] = x
