@@ -203,8 +203,8 @@ def evaluate_quantized_model(model_file, model_quant_file, test_set, evaluator, 
         results = results[..., np.newaxis]
         results_quant = results_quant[..., np.newaxis]
 
-    accuracy = evaluator.score(gt_label, results)
-    accuracy_quant = evaluator.score(gt_label, results_quant)
+    score = evaluator.score(gt_label, results)
+    score_quant = evaluator.score(gt_label, results_quant)
     if output_shape[-1] == 1:
         output_quant_details = output_details_quant['quantization']
         if output_quant_details[0] > 0.0:
@@ -219,12 +219,12 @@ def evaluate_quantized_model(model_file, model_quant_file, test_set, evaluator, 
             is_different = np.not_equal(np.argmax(results, axis=-1), np.argmax(results_quant, axis=-1))
 
     with open(os.path.join(os.path.split(str(model_file))[0], evaluator.name.replace(' ', '_') + '.txt'), 'w') as f:
-        f.write('Accuracy Before Quantization: {:.4f}\n'.format(accuracy))
-        f.write('Accuracy After Quantization:  {:.4f}\n'.format(accuracy_quant))
+        f.write('{} Before Quantization: {:.4f}\n'.format(evaluator.name, score))
+        f.write('{} After Quantization:  {:.4f}\n'.format(evaluator.name, score_quant))
         f.write('Number of Different Results: {}/{}\n'.format(np.sum(is_different, dtype=np.uint64),
                                                               np.prod(is_different.shape)))
-    print('\nAccuracy Before Quantization: {:.4f}'.format(accuracy))
-    print('Accuracy After Quantization:  {:.4f}'.format(accuracy_quant))
+    print('\n{} Before Quantization: {:.4f}'.format(evaluator.name, score))
+    print('{} After Quantization:  {:.4f}'.format(evaluator.name, score_quant))
     print('Number of Different Results: {}/{}'.format(np.sum(is_different, dtype=np.uint64),
                                                       np.prod(is_different.shape)))
 
