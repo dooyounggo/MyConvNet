@@ -52,7 +52,7 @@ class ConvNet(object):
 
         param_device = kwargs.get('param_device', None)
         if param_device is None:
-            dev = '/gpu:' if self.num_devices == 1 else '/cpu:'
+            dev = '/gpu:' if num_devices == 1 else '/cpu:'
             self._param_device = dev + str(self.device_offset)
         else:
             if 'gpu' in param_device.lower():
