@@ -19,6 +19,7 @@ class EfficientNet(ConvNet):
                                                                distribution='uniform')
 
         self.num_groups = 8
+        self.striding_kernel_offset = kwargs.get('striding_kernel_offset', 0)
 
         self.initial_drop_rate = kwargs.get('initial_drop_rate', 0.0)
         self.final_drop_rate = kwargs.get('final_drop_rate', 0.0)
@@ -43,7 +44,10 @@ class EfficientNet(ConvNet):
 
         with tf.variable_scope('block_0'):
             with tf.variable_scope('conv_0'):
-                x = self.conv_layer(X_input, kernels[0], strides[0], channels[0], padding='SAME', biased=False,
+                k = kernels[0]
+                if strides[0] > 1:
+                    k += self.striding_kernel_offset
+                x = self.conv_layer(X_input, k, strides[0], channels[0], padding='SAME', biased=False,
                                     ws=True, weight_initializer=self.conv_initializer)
                 print('block_0' + '/conv_0.shape', x.get_shape().as_list())
                 d['block_0' + '/conv_0'] = x
@@ -58,12 +62,15 @@ class EfficientNet(ConvNet):
             dr = self.initial_drop_rate + (self.final_drop_rate - self.initial_drop_rate)*i/(self.num_blocks - 2)
             print('block {} drop rate = {:.3f}'.format(i, dr))
             for j in range(conv_units[i]):
+                k = kernels[i]
                 if j > 0:
                     s = 1
                 else:
                     s = strides[i]
-                x = self._mb_conv_unit(x, kernels[i], s, channels[i], multipliers[i], d,
-                                       drop_rate=dr, name='block_{}/mbconv_{}'.format(i, j))
+                    if s > 1:
+                        k += self.striding_kernel_offset
+                x = self._mb_conv_unit(x, k, s, channels[i], multipliers[i], d, drop_rate=dr,
+                                       name='block_{}/mbconv_{}'.format(i, j))
             d['block_{}'.format(self._curr_block)] = x
 
         self._curr_block += 1

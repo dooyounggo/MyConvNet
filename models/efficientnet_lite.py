@@ -45,7 +45,10 @@ class EfficientNetLite(ConvNet):
 
         with tf.variable_scope('block_0'):
             with tf.variable_scope('conv_0'):
-                x = self.conv_layer(X_input, kernels[0], strides[0], channels[0], padding='SAME', biased=False,
+                k = kernels[0]
+                if strides[0] > 1:
+                    k += self.striding_kernel_offset
+                x = self.conv_layer(X_input, k, strides[0], channels[0], padding='SAME', biased=False,
                                     weight_initializer=self.conv_initializer)
                 print('block_0' + '/conv_0.shape', x.get_shape().as_list())
                 d['block_0' + '/conv_0'] = x
