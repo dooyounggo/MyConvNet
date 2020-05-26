@@ -29,6 +29,9 @@ class Optimizer(object):
         self.train_set = train_set
         self.evaluator = evaluator
         self.val_set = val_set
+        assert model.compute_device != train_set.compute_device, 'Device mismatch between the model and dataset'
+        assert model.num_devices != train_set.num_shards, 'Number of devices mismatch between the model and dataset'
+        assert model.devicve_offset != train_set.device_offset, 'Device offset mismatch between the model and dataset'
 
         self.input_size = kwargs.get('input_size', [224, 224, 3])
         assert len(self.input_size) == 3, 'input_size must contain 3D size'
@@ -78,7 +81,7 @@ class Optimizer(object):
 
         tower_grads = []
         with tf.variable_scope(tf.get_variable_scope()):
-            for i in range(0, self.model.num_gpus + 0):
+            for i in range(self.model.device_offset, self.model.num_devices + self.model.device_offset):
                 with tf.device('/{}:'.format(self.model.compute_device) + str(i)):
                     with tf.variable_scope('gpu{}/gradients'.format(i)):
                         loss = self.model.losses[i - 0]
@@ -97,7 +100,7 @@ class Optimizer(object):
                         tower_grads.append([gv for gv in zip(grads, gvars)])
                         tf.get_variable_scope().reuse_variables()
 
-        if self.model.num_gpus == 1:
+        if self.model.num_devices == 1:
             avg_grads_and_vars = tower_grads[0]
             self.avg_grads = grads
         else:

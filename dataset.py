@@ -76,16 +76,19 @@ class DataSet(object):
             self._num_classes = len(class_names)
         self._class_names = class_names
 
+        self._cpu_offset = kwargs.get('cpu_offset', 0)
+        self._gpu_offset = kwargs.get('gpu_offset', 0)
         num_gpus = kwargs.get('num_gpus', 1)
         if num_gpus == 0:  # No GPU available
             self._num_shards = 1
-            compute_device = 'cpu'
+            self._compute_device = 'cpu'
+            dev_offset = self.cpu_offset
         else:
             self._num_shards = num_gpus
-            compute_device = 'gpu'
+            self._compute_device = 'gpu'
+            dev_offset = 0
+        self._device_offset = dev_offset
 
-        self._cpu_offset = kwargs.get('cpu_offset', 0)
-        self._gpu_offset = kwargs.get('gpu_offset', 0)
         self._batch_size = kwargs.get('batch_size', 32)
         self._shuffle = kwargs.get('shuffle', True)
 
@@ -114,9 +117,9 @@ class DataSet(object):
                                                                                             (tf.float32, tf.float32))),
                                               num_parallel_calls=kwargs.get('num_parallel_calls', 4)//self.num_shards)
                     dataset = dataset.batch(batch_size_per_gpu)
-                    dataset = dataset.apply(tf.data.experimental.copy_to_device('/{}:{}'.format(compute_device,
-                                                                                                i + 0)))
-                    with tf.device('/{}:{}'.format(compute_device, i + 0)):
+                    dataset = dataset.apply(tf.data.experimental.copy_to_device('/{}:{}'.format(self.compute_device,
+                                                                                                i + dev_offset)))
+                    with tf.device('/{}:{}'.format(self.compute_device, i + dev_offset)):
                         dataset = dataset.prefetch(buffer_size=1)
                         self._datasets.append(dataset)
                         iterator = dataset.make_initializable_iterator()
@@ -151,6 +154,14 @@ class DataSet(object):
     @property
     def gpu_offset(self):
         return self._gpu_offset
+
+    @property
+    def compute_device(self):
+        return self._compute_device
+
+    @property
+    def device_offset(self):
+        return self._device_offset
 
     @property
     def batch_size(self):
