@@ -32,14 +32,14 @@ class DataSet(object):
     INTERPOLATION_BILINEAR = 'bilinear'
     INTERPOLATION_BICUBIC = 'bicubic'
 
-    def __init__(self, image_dirs, label_dirs=None, class_names=None, num_classes=None, out_size=None,
-                 task_type=None, resize_method=None, resize_randomness=False, from_memory=False, **kwargs):
+    def __init__(self, image_dirs, label_dirs=None, task_type=IMAGE_ONLY, class_names=None, num_classes=None,
+                 out_size=None, resize_method=None, resize_randomness=False, from_memory=False, **kwargs):
         """
         :param image_dirs: list or tuple, paths to images
         :param label_dirs: list or tuple, paths to labels. If None, fake labels are created.
+        :param task_type: string, type of the task for which the dataset is intended.
         :param class_names: list or tuple, names of each class. Used to count the number of classes.
         :param out_size: list or tuple, size of images to be used for training.
-        :param task_type: string, type of the task for which the dataset is intended.
         :param resize_method: string, resizing method for image preprocessing.
         :param resize_randomness: Bool, randomness of resize operations such as crop and padding.
         :param from_memory: Bool, if true, image_dirs and label_dirs must be numpy arrays.
