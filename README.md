@@ -55,6 +55,7 @@ Some scripts may not support command-line execution.
 - tensorflow-gpu: 1.14.0 or 1.15.0 (cudatoolkit: 10.0, cudnn: 7.6.5)
 - numpy: 1.17.4
 - scikit-image: 0.15.0
+- scikit-learn: 0.22
 - matplotlib: 3.1.1
 - opencv-python: 4.1.2.30 (installed with pip)
 - pydot: 1.4.1 (graphviz: 2.40.1)
