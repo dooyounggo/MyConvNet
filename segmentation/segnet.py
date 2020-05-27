@@ -82,7 +82,7 @@ class SegNet(ConvNet):
                         self.losses.append(self._build_loss(**kwargs))
                         self.preds.append(self.pred)
 
-                        self.bytes_in_use.append(tf_contrib.memory_stats.BytesInUse())
+                        # self.bytes_in_use.append(tf_contrib.memory_stats.BytesInUse())
 
         with tf.device(self.param_device):
             with tf.variable_scope('calc/'):
