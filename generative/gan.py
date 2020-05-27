@@ -20,14 +20,14 @@ class GAN(ConvNet):
                          None)
         self.losses_g = []
         with tf.variable_scope(tf.get_variable_scope()):
-            for i in range(self.gpu_offset, self.num_gpus + self.gpu_offset):
+            for i in range(self.device_offset, self.num_devices + self.device_offset):
                 self._curr_device = i
                 self._curr_block = 0
                 self._num_blocks = 1  # Total number of blocks
                 self._num_blocks_g = 1  # Number of generator blocks
                 self._curr_dependent_op = 0  # For ops with dependencies between GPUs such as BN
-                with tf.device('/gpu:' + str(i)):
-                    with tf.name_scope('gpu{}'.format(i)):
+                with tf.device('/{}:'.format(self.compute_device) + str(i)):
+                    with tf.name_scope('{}'.format(self.compute_device + str(i))):
                         handle = tf.placeholder(tf.string, shape=[], name='handle')  # Handle for the feedable iterator
                         self.handles.append(handle)
                         iterator = tf.data.Iterator.from_string_handle(handle, (tf.float32, tf.float32),
@@ -59,7 +59,7 @@ class GAN(ConvNet):
                             self.X = tf.transpose(self.X, perm=[0, 3, 1, 2])
 
                         if self.dtype is not tf.float32:
-                            with tf.name_scope('gpu{}/cast/'.format(i)):
+                            with tf.name_scope('{}/cast/'.format(self.compute_device + str(i))):
                                 self.X = tf.cast(self.X, dtype=self.dtype)
                                 self.Y = tf.cast(self.Y, dtype=self.dtype)
                         with tf.name_scope('nn'):
@@ -70,7 +70,7 @@ class GAN(ConvNet):
                             d_fake = self._build_model()
                             self._num_blocks += self.num_blocks_g
                         if self.dtype is not tf.float32:
-                            with tf.name_scope('gpu{}/cast/'.format(i)):
+                            with tf.name_scope('{}/cast/'.format(self.compute_device + str(i))):
                                 d_real['logits'] = tf.cast(d_real['logits'], dtype=tf.float32)
                                 d_fake['logits'] = tf.cast(d_fake['logits'], dtype=tf.float32)
                                 self.d['generate'] = tf.cast(self.d['generate'], dtype=tf.float32)

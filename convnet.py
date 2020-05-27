@@ -286,7 +286,7 @@ class ConvNet(object):
                 self._num_blocks = 1  # Total number of blocks
                 self._curr_dependent_op = 0  # For ops with dependencies between GPUs such as BN
                 with tf.device('/{}:'.format(self.compute_device) + str(i)):
-                    with tf.name_scope('gpu{}'.format(i)):
+                    with tf.name_scope('{}'.format(self.compute_device + str(i))):
                         handle = tf.placeholder(tf.string, shape=[], name='handle')  # Handle for the feedable iterator
                         self.handles.append(handle)
                         iterator = tf.data.Iterator.from_string_handle(handle, (tf.float32, tf.float32),
@@ -326,12 +326,12 @@ class ConvNet(object):
                             self.X = tf.transpose(self.X, perm=[0, 3, 1, 2])
 
                         if self.dtype is not tf.float32:
-                            with tf.name_scope('gpu{}/cast/'.format(i)):
+                            with tf.name_scope('{}/cast/'.format(self.compute_device + str(i))):
                                 self.X = tf.cast(self.X, dtype=self.dtype)
                         with tf.name_scope('nn'):
                             self.d = self._build_model()
                         if self.dtype is not tf.float32:
-                            with tf.name_scope('gpu{}/cast/'.format(i)):
+                            with tf.name_scope('{}/cast/'.format(self.compute_device + str(i))):
                                 self.d['logits'] = tf.cast(self.d['logits'], dtype=tf.float32)
                                 self.d['pred'] = tf.cast(self.d['pred'], dtype=tf.float32)
                         tf.get_variable_scope().reuse_variables()
