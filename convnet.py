@@ -144,6 +144,9 @@ class ConvNet(object):
 
         self._init_params(**kwargs)
         self._init_model(**kwargs)
+        self._flops = int(self._flops)
+        self._params = int(self._params)
+        self._nodes = int(self._nodes)
 
         if self.argmax_output:
             with tf.device(self.param_device):
@@ -157,16 +160,32 @@ class ConvNet(object):
 
         print('\nNumber of GPUs : {}'.format(self.num_devices))
         print('Total number of blocks: {}'.format(self.num_blocks))
-        print('\n# FLOPs : {:-15,}\n# Params: {:-15,}\n# Nodes : {:-15,}\n'.format(int(self.flops),
-                                                                                   int(self.params),
-                                                                                   int(self.nodes)))
+        print('\n# FLOPs : {:-15,}\n# Params: {:-15,}\n# Nodes : {:-15,}\n'.format(self.flops, self.params, self.nodes))
 
         info = sorted(self.layer_info, key=lambda layer: layer['flops'], reverse=True)
-        print('Most flops : {} ({})'.format(info[0]['name'], info[0]['flops']))
+        print('Most flops : {:-13,} ('.format(info[0]['flops']), end='')
+        for i in info:
+            if i['flops'] == info[0]['flops']:
+                print(i['name'] + ', ', end='')
+            else:
+                print(')')
+                break
         info.sort(key=lambda layer: layer['params'], reverse=True)
-        print('Most params: {} ({})'.format(info[0]['name'], info[0]['params']))
+        print('Most params: {:-13,} ('.format(info[0]['params']), end='')
+        for i in info:
+            if i['params'] == info[0]['params']:
+                print(i['name'] + ', ', end='')
+            else:
+                print(')')
+                break
         info.sort(key=lambda layer: layer['nodes'], reverse=True)
-        print('Most nodes : {} ({})'.format(info[0]['name'], info[0]['nodes']))
+        print('Most nodes : {:-13,} ('.format(info[0]['nodes']), end='')
+        for i in info:
+            if i['nodes'] == info[0]['nodes']:
+                print(i['name'] + ', ', end='')
+            else:
+                print(')\n')
+                break
 
     def _init_params(self, **kwargs):
         """
@@ -1340,9 +1359,9 @@ class ConvNet(object):
             self._flops += flops
             self._nodes += nodes
             self._layer_info.append({'name': tf.get_variable_scope().name + '/max_pool',
-                                     'flops': flops,
+                                     'flops': int(flops),
                                      'params': 0,
-                                     'nodes': nodes})
+                                     'nodes': int(nodes)})
 
         return tf.nn.max_pool(x, ksize=ksize, strides=strides, data_format=data_format, padding=padding)
 
@@ -1378,9 +1397,9 @@ class ConvNet(object):
             self._flops += flops
             self._nodes += nodes
             self._layer_info.append({'name': tf.get_variable_scope().name + '/avg_pool',
-                                     'flops': flops,
+                                     'flops': int(flops),
                                      'params': 0,
-                                     'nodes': nodes})
+                                     'nodes': int(nodes)})
 
         return tf.nn.avg_pool(x, ksize=ksize, strides=strides, data_format=data_format, padding=padding)
 
@@ -1463,9 +1482,9 @@ class ConvNet(object):
                     self._flops += flops
                     self._nodes += nodes
                     self._layer_info.append({'name': tf.get_variable_scope().name,
-                                             'flops': flops,
-                                             'params': params,
-                                             'nodes': nodes})
+                                             'flops': int(flops),
+                                             'params': int(params),
+                                             'nodes': int(nodes)})
                 if not tf.get_variable_scope().reuse:
                     self._params += params
                 return tf.nn.bias_add(convs, biases, data_format=data_format)
@@ -1474,9 +1493,9 @@ class ConvNet(object):
                     self._flops += flops
                     self._nodes += nodes
                     self._layer_info.append({'name': tf.get_variable_scope().name,
-                                             'flops': flops,
-                                             'params': params,
-                                             'nodes': nodes})
+                                             'flops': int(flops),
+                                             'params': int(params),
+                                             'nodes': int(nodes)})
                 if not tf.get_variable_scope().reuse:
                     self._params += params
                 return convs
@@ -1506,9 +1525,9 @@ class ConvNet(object):
                     self._flops += flops
                     self._nodes += nodes
                     self._layer_info.append({'name': tf.get_variable_scope().name,
-                                             'flops': flops,
-                                             'params': params,
-                                             'nodes': nodes})
+                                             'flops': int(flops),
+                                             'params': int(params),
+                                             'nodes': int(nodes)})
                 if not tf.get_variable_scope().reuse:
                     self._params += params
                 return tf.matmul(x, weights) + biases
@@ -1517,9 +1536,9 @@ class ConvNet(object):
                     self._flops += flops
                     self._nodes += nodes
                     self._layer_info.append({'name': tf.get_variable_scope().name,
-                                             'flops': flops,
-                                             'params': params,
-                                             'nodes': nodes})
+                                             'flops': int(flops),
+                                             'params': int(params),
+                                             'nodes': int(nodes)})
                 if not tf.get_variable_scope().reuse:
                     self._params += params
                 return tf.matmul(x, weights)
@@ -2019,9 +2038,9 @@ class ConvNet(object):
                     self._flops += flops
                     self._nodes += nodes
                     self._layer_info.append({'name': tf.get_variable_scope().name,
-                                             'flops': flops,
-                                             'params': params,
-                                             'nodes': nodes})
+                                             'flops': int(flops),
+                                             'params': int(params),
+                                             'nodes': int(nodes)})
                 if not tf.get_variable_scope().reuse:
                     self._params += params
                 return tf.nn.bias_add(convs, biases, data_format=data_format)
@@ -2030,9 +2049,9 @@ class ConvNet(object):
                     self._flops += flops
                     self._nodes += nodes
                     self._layer_info.append({'name': tf.get_variable_scope().name,
-                                             'flops': flops,
-                                             'params': params,
-                                             'nodes': nodes})
+                                             'flops': int(flops),
+                                             'params': int(params),
+                                             'nodes': int(nodes)})
                 if not tf.get_variable_scope().reuse:
                     self._params += params
                 return convs
