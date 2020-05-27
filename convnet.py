@@ -93,6 +93,8 @@ class ConvNet(object):
 
         self._flops = 0
         self._params = 0
+        self._nodes = 0
+        self._layer_info = []
 
         self.backbone_only = False
         self.dicts = []
@@ -155,7 +157,16 @@ class ConvNet(object):
 
         print('\nNumber of GPUs : {}'.format(self.num_devices))
         print('Total number of blocks: {}'.format(self.num_blocks))
-        print('\n# FLOPs : {:-15,}\n# Params: {:-15,}\n'.format(int(self.flops), int(self.params)))
+        print('\n# FLOPs : {:-15,}\n# Params: {:-15,}\n# Nodes : {:-15,}\n'.format(int(self.flops),
+                                                                                   int(self.params),
+                                                                                   int(self.nodes)))
+
+        info = sorted(self.layer_info, key=lambda layer: layer['flops'], reverse=True)
+        print('Most flops : {} ({})'.format(info[0]['name'], info[0]['flops']))
+        info.sort(key=lambda layer: layer['params'], reverse=True)
+        print('Most params: {} ({})'.format(info[0]['name'], info[0]['params']))
+        info.sort(key=lambda layer: layer['nodes'], reverse=True)
+        print('Most nodes : {} ({})'.format(info[0]['name'], info[0]['nodes']))
 
     def _init_params(self, **kwargs):
         """
@@ -240,6 +251,14 @@ class ConvNet(object):
     @property
     def params(self):
         return self._params
+
+    @property
+    def nodes(self):
+        return self._nodes
+
+    @property
+    def layer_info(self):
+        return self._layer_info
 
     @property
     def dropout_weights(self):
@@ -1315,8 +1334,15 @@ class ConvNet(object):
         else:
             out_size = [np.ceil(float(h - ksize[0] + 1)/stride[0]), np.ceil(float(w - ksize[1] + 1)/stride[1])]
 
+        flops = side_l[0]*side_l[1]*out_size[0]*out_size[1]*in_channels
+        nodes = out_size[0]*out_size[1]*in_channels
         if self._curr_device == self.device_offset:
-            self._flops += side_l[0]*side_l[1]*out_size[0]*out_size[1]*in_channels
+            self._flops += flops
+            self._nodes += nodes
+            self._layer_info.append({'name': tf.get_variable_scope().name + '/max_pool',
+                                     'flops': flops,
+                                     'params': 0,
+                                     'nodes': nodes})
 
         return tf.nn.max_pool(x, ksize=ksize, strides=strides, data_format=data_format, padding=padding)
 
@@ -1346,8 +1372,15 @@ class ConvNet(object):
         else:
             out_size = [np.ceil(float(h - ksize[0] + 1)/stride[0]), np.ceil(float(w - ksize[1] + 1)/stride[1])]
 
+        flops = side_l[0]*side_l[1]*out_size[0]*out_size[1]*in_channels
+        nodes = out_size[0]*out_size[1]*in_channels
         if self._curr_device == self.device_offset:
-            self._flops += side_l[0]*side_l[1]*out_size[0]*out_size[1]*in_channels
+            self._flops += flops
+            self._nodes += nodes
+            self._layer_info.append({'name': tf.get_variable_scope().name + '/avg_pool',
+                                     'flops': flops,
+                                     'params': 0,
+                                     'nodes': nodes})
 
         return tf.nn.avg_pool(x, ksize=ksize, strides=strides, data_format=data_format, padding=padding)
 
@@ -1398,10 +1431,9 @@ class ConvNet(object):
                 convs = tf.nn.depthwise_conv2d(x, weights, strides=conv_strides, padding=padding,
                                                data_format=data_format, rate=dilation)
 
-                if not tf.get_variable_scope().reuse:
-                    self._params += kernel[0]*kernel[1]*in_channels*channel_multiplier
-                if self._curr_device == self.device_offset:
-                    self._flops += out_size[0]*out_size[1]*kernel[0]*kernel[1]*in_channels*channel_multiplier
+                flops = out_size[0]*out_size[1]*kernel[0]*kernel[1]*in_channels*channel_multiplier
+                params = kernel[0]*kernel[1]*in_channels*channel_multiplier
+                nodes = out_size[0]*out_size[1]*in_channels*channel_multiplier
             else:
                 weights = self.weight_variable([kernel[0], kernel[1], in_channels, out_channels],
                                                initializer=weight_initializer,
@@ -1409,10 +1441,9 @@ class ConvNet(object):
                 convs = tf.nn.conv2d(x, weights, strides=conv_strides, padding=padding,
                                      data_format=data_format, dilations=conv_dilations)
 
-                if not tf.get_variable_scope().reuse:
-                    self._params += kernel[0]*kernel[1]*in_channels*out_channels
-                if self._curr_device == self.device_offset:
-                    self._flops += out_size[0]*out_size[1]*kernel[0]*kernel[1]*in_channels*out_channels
+                flops = out_size[0]*out_size[1]*kernel[0]*kernel[1]*in_channels*out_channels
+                params = kernel[0]*kernel[1]*in_channels*out_channels
+                nodes = out_size[0]*out_size[1]*out_channels
 
             if verbose:
                 print(tf.get_variable_scope().name + ': [{}, {}, {}], k=({}, {}), s=({}, {}), c={}'
@@ -1425,13 +1456,29 @@ class ConvNet(object):
             if biased:
                 biases = self.bias_variable(out_channels, initializer=bias_initializer)
 
-                if not tf.get_variable_scope().reuse:
-                    self._params += out_channels
-                if self._curr_device == self.device_offset:
-                    self._flops += out_size[0]*out_size[1]*out_channels
+                flops += out_size[0]*out_size[1]*out_channels
+                params += out_channels
 
+                if self._curr_device == self.device_offset:
+                    self._flops += flops
+                    self._nodes += nodes
+                    self._layer_info.append({'name': tf.get_variable_scope().name,
+                                             'flops': flops,
+                                             'params': params,
+                                             'nodes': nodes})
+                if not tf.get_variable_scope().reuse:
+                    self._params += params
                 return tf.nn.bias_add(convs, biases, data_format=data_format)
             else:
+                if self._curr_device == self.device_offset:
+                    self._flops += flops
+                    self._nodes += nodes
+                    self._layer_info.append({'name': tf.get_variable_scope().name,
+                                             'flops': flops,
+                                             'params': params,
+                                             'nodes': nodes})
+                if not tf.get_variable_scope().reuse:
+                    self._params += params
                 return convs
 
     def fc_layer(self, x, out_dim, biased=True, scope=None, ws=False,
@@ -1442,10 +1489,9 @@ class ConvNet(object):
         with tf.variable_scope(scope) if scope is not None else nullcontext():
             weights = self.weight_variable([in_dim, out_dim], initializer=weight_initializer, weight_standardization=ws)
 
-            if not tf.get_variable_scope().reuse:
-                self._params += in_dim*out_dim
-            if self._curr_device == self.device_offset:
-                self._flops += in_dim*out_dim
+            flops = in_dim*out_dim
+            params = in_dim*out_dim
+            nodes = out_dim
 
             if verbose:
                 print(tf.get_variable_scope().name + ': [{}, {}]'.format(in_dim, out_dim))
@@ -1453,13 +1499,29 @@ class ConvNet(object):
             if biased:
                 biases = self.bias_variable(out_dim, initializer=bias_initializer)
 
-                if not tf.get_variable_scope().reuse:
-                    self._params += out_dim
-                if self._curr_device == self.device_offset:
-                    self._flops += out_dim
+                flops += out_dim
+                params += out_dim
 
+                if self._curr_device == self.device_offset:
+                    self._flops += flops
+                    self._nodes += nodes
+                    self._layer_info.append({'name': tf.get_variable_scope().name,
+                                             'flops': flops,
+                                             'params': params,
+                                             'nodes': nodes})
+                if not tf.get_variable_scope().reuse:
+                    self._params += params
                 return tf.matmul(x, weights) + biases
             else:
+                if self._curr_device == self.device_offset:
+                    self._flops += flops
+                    self._nodes += nodes
+                    self._layer_info.append({'name': tf.get_variable_scope().name,
+                                             'flops': flops,
+                                             'params': params,
+                                             'nodes': nodes})
+                if not tf.get_variable_scope().reuse:
+                    self._params += params
                 return tf.matmul(x, weights)
 
     def batch_norm(self, x, scale=True, shift=True, zero_scale_init=False, epsilon=1e-3, scope='bn'):
@@ -1568,20 +1630,20 @@ class ConvNet(object):
             data_format = 'NCHW' if self.channel_first else 'NHWC'
             if update:
                 x, batch_mean, batch_var = self.cond(self.is_train,
-                                                   lambda: tf.nn.fused_batch_norm(x,
-                                                                                  gamma,
-                                                                                  beta,
-                                                                                  epsilon=epsilon,
-                                                                                  data_format=data_format,
-                                                                                  is_training=True),
-                                                   lambda: tf.nn.fused_batch_norm(x,
-                                                                                  gamma,
-                                                                                  beta,
-                                                                                  mean=mean,
-                                                                                  variance=var,
-                                                                                  epsilon=epsilon,
-                                                                                  data_format=data_format,
-                                                                                  is_training=False)
+                                                     lambda: tf.nn.fused_batch_norm(x,
+                                                                                    gamma,
+                                                                                    beta,
+                                                                                    epsilon=epsilon,
+                                                                                    data_format=data_format,
+                                                                                    is_training=True),
+                                                     lambda: tf.nn.fused_batch_norm(x,
+                                                                                    gamma,
+                                                                                    beta,
+                                                                                    mean=mean,
+                                                                                    variance=var,
+                                                                                    epsilon=epsilon,
+                                                                                    data_format=data_format,
+                                                                                    is_training=False)
                                                    )
                 update_rate = 1.0 - momentum
                 if self._curr_device == self.device_offset:
@@ -1816,8 +1878,8 @@ class ConvNet(object):
                     self._flops += h*w*in_channels
 
                 moving_mean, moving_var = self.cond(self.is_train,
-                                                  lambda: (mu, sigma),
-                                                  lambda: (mu_ema, sigma_ema))
+                                                    lambda: (mu, sigma),
+                                                    lambda: (mu_ema, sigma_ema))
 
             beta = self.cond(self.is_train, lambda: beta, lambda: beta_ema) if beta is not None else None
             gamma = self.cond(self.is_train, lambda: gamma, lambda: gamma_ema) if gamma is not None else None
@@ -1943,21 +2005,36 @@ class ConvNet(object):
             convs = tf.nn.conv2d_transpose(x, weights, output_shape=output_shape, strides=conv_strides,
                                            padding=padding, data_format=data_format, dilations=conv_dilations)
 
-            if not tf.get_variable_scope().reuse:
-                self._params += kernel[0]*kernel[1]*in_channels*out_channels
-            if self._curr_device == self.device_offset:
-                self._flops += out_size[0]*out_size[1]*kernel[0]*kernel[1]*in_channels*out_channels
+            flops = out_size[0]*out_size[1]*kernel[0]*kernel[1]*in_channels*out_channels
+            params = kernel[0]*kernel[1]*in_channels*out_channels
+            nodes = out_size[0]*out_size[1]*out_channels
 
             if biased:
                 biases = self.bias_variable(out_channels, initializer=bias_initializer)
 
-                if not tf.get_variable_scope().reuse:
-                    self._params += out_channels
-                if self._curr_device == self.device_offset:
-                    self._flops += out_size[0]*out_size[1]*out_channels
+                flops += out_size[0]*out_size[1]*out_channels
+                params += out_channels
 
+                if self._curr_device == self.device_offset:
+                    self._flops += flops
+                    self._nodes += nodes
+                    self._layer_info.append({'name': tf.get_variable_scope().name,
+                                             'flops': flops,
+                                             'params': params,
+                                             'nodes': nodes})
+                if not tf.get_variable_scope().reuse:
+                    self._params += params
                 return tf.nn.bias_add(convs, biases, data_format=data_format)
             else:
+                if self._curr_device == self.device_offset:
+                    self._flops += flops
+                    self._nodes += nodes
+                    self._layer_info.append({'name': tf.get_variable_scope().name,
+                                             'flops': flops,
+                                             'params': params,
+                                             'nodes': nodes})
+                if not tf.get_variable_scope().reuse:
+                    self._params += params
                 return convs
 
     def stochastic_depth(self, x, skip, drop_rate=0.0, name='drop'):
@@ -2015,7 +2092,7 @@ class ConvNet(object):
             x = x*self.sigmoid(x)
         return x
 
-    def grad_cam(self, logits, conv_layer, y=None):
+    def grad_cam(self, logits, target_layer, y=None):
         eps = 1e-4
         with tf.variable_scope('grad_cam'):
             if y is None:
@@ -2025,9 +2102,9 @@ class ConvNet(object):
                 logits_mask = y
             logits = logits_mask*logits
             axis = [2, 3] if self.channel_first else [1, 2]
-            channel_weights = tf.reduce_sum(tf.gradients(logits, conv_layer)[0], axis=axis, keepdims=True)
+            channel_weights = tf.reduce_sum(tf.gradients(logits, target_layer)[0], axis=axis, keepdims=True)
             axis = 1 if self.channel_first else -1
-            gcam = tf.nn.relu(tf.reduce_sum(channel_weights*conv_layer, axis=axis, keepdims=True))
+            gcam = tf.nn.relu(tf.reduce_sum(channel_weights*target_layer, axis=axis, keepdims=True))
             if self.dtype is not tf.float32:
                 gcam = tf.cast(gcam, dtype=tf.float32)
             if self.channel_first:
