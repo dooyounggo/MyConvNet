@@ -36,7 +36,7 @@ class GAN(ConvNet):
 
                         # FIXME: Fake label generation
                         self._broadcast_shape = [self.num_classes]  # num_classes is the size of the latent vector.
-                        self.Y = tf.map_fn(self.broadcast_nans, self.Y)  # Broadcasting for NaNs
+                        self.Y = tf.map_fn(self._broadcast_nans, self.Y)  # Broadcasting for NaNs
                         self.Y = tf.where(tf.is_nan(self.Y), tf.random_uniform(tf.shape(self.Y), -1.0, 1.0), self.Y)
 
                         self.X_in.append(self.X)
@@ -108,9 +108,6 @@ class GAN(ConvNet):
         """
         pass
 
-    def broadcast_nans(self, y):
-        return tf.broadcast_to(y, self._broadcast_shape)
-
     def _build_loss(self, **kwargs):
         ls_factor = kwargs.get('label_smoothing', 0.0)
 
@@ -127,8 +124,8 @@ class GAN(ConvNet):
             labels_real = tf.ones_like(self.logits_real, dtype=tf.float32)
             labels_fake = tf.zeros_like(self.logits_fake, dtype=tf.float32)
             if ls_factor > 0.0:
-                labels_real = self.label_smoothing(labels_real, ls_factor)
-                labels_fake = self.label_smoothing(labels_fake, ls_factor)
+                labels_real = self._label_smoothing(labels_real, ls_factor)
+                labels_fake = self._label_smoothing(labels_fake, ls_factor)
 
             losses_real = tf.nn.sigmoid_cross_entropy_with_logits(labels=labels_real, logits=self.logits_real)
             losses_fake = tf.nn.sigmoid_cross_entropy_with_logits(labels=labels_fake, logits=self.logits_fake)
@@ -138,11 +135,13 @@ class GAN(ConvNet):
 
         return loss_d, loss_g
 
-    def label_smoothing(self, label, ls_factor, name='label_smoothing'):
+    def _broadcast_nans(self, y):
+        return tf.broadcast_to(y, self._broadcast_shape)
+
+    def _label_smoothing(self, labels, ls_factor, name='label_smoothing'):
         with tf.variable_scope(name):
             ls_factor = tf.constant(ls_factor, dtype=tf.float32, name='label_smoothing_factor')
-            labels = label*(1.0 - ls_factor)  # One-sided smoothing
-
+            labels = labels*(1.0 - ls_factor)  # One-sided smoothing
         return labels
 
     def predict(self, dataset, verbose=False, return_images=True, **kwargs):
