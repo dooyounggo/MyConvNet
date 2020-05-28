@@ -451,11 +451,11 @@ class ConvNet(object):
                 valid_mask = tf.cast(valid_mask, dtype=tf.float32)
 
             if ls_factor > 0.0:
-                labels = self.label_smoothing(self.Y, ls_factor)
+                labels = self._label_smoothing(self.Y, ls_factor)
             else:
                 labels = self.Y
 
-            softmax_losses = tf.nn.softmax_cross_entropy_with_logits_v2(labels=labels, logits=self.logits, axis=-1)
+            softmax_losses = self._loss_fn(labels, self.logits, **kwargs)
             if focal_loss_factor > 0.0:
                 gamma = focal_loss_factor
                 with tf.variable_scope('focal_loss'):
@@ -472,14 +472,16 @@ class ConvNet(object):
             softmax_loss = tf.reduce_mean(batch_weights*valid_mask*softmax_losses)
 
             loss = softmax_loss + l1_reg_loss + l2_reg_loss
-
         return loss
 
-    def label_smoothing(self, label, ls_factor, name='label_smoothing'):
+    def _loss_fn(self, labels, logits, **kwargs):
+        softmax_losses = tf.nn.softmax_cross_entropy_with_logits_v2(labels=labels, logits=logits, axis=-1)
+        return softmax_losses
+
+    def _label_smoothing(self, labels, ls_factor, name='label_smoothing'):
         with tf.variable_scope(name):
             ls_factor = tf.constant(ls_factor, dtype=tf.float32, name='label_smoothing_factor')
-            labels = label*(1.0 - ls_factor) + ls_factor/self.num_classes
-
+            labels = labels*(1.0 - ls_factor) + ls_factor/self.num_classes
         return labels
 
     def predict(self, dataset, verbose=False, return_images=True, **kwargs):
@@ -1403,6 +1405,53 @@ class ConvNet(object):
 
         return tf.nn.avg_pool(x, ksize=ksize, strides=strides, data_format=data_format, padding=padding)
 
+    def conv_bn_act(self, x, kernel, stride, out_channels=None, padding='SAME', biased=False, depthwise=False,
+                    scope=None, dilation=(1, 1), ws=False, kernel_paddings=((0, 0), (0, 0)),
+                    weight_initializer=tf.initializers.he_normal(), bias_initializer=tf.initializers.zeros(),
+                    scale=True, shift=True, zero_scale_init=False, epsilon=1e-3, act_type='relu', act_params=None,
+                    verbose=False):
+        if not isinstance(kernel, (list, tuple)):
+            kernel = [kernel, kernel]
+        elif len(kernel) == 1:
+            kernel = [kernel[0], kernel[0]]
+        if not isinstance(stride, (list, tuple)):
+            stride = [stride, stride]
+        elif len(stride) == 1:
+            stride = [stride[0], stride[0]]
+        if not isinstance(dilation, (list, tuple)):
+            dilation = [dilation, dilation]
+        elif len(dilation) == 1:
+            dilation = [dilation[0], dilation[0]]
+
+        if self.channel_first:
+            _, in_channels, h, w = x.get_shape().as_list()
+        else:
+            _, h, w, in_channels = x.get_shape().as_list()
+
+        with tf.variable_scope(scope) if scope is not None else nullcontext():
+            x = self.conv_layer(x, kernel, stride, out_channels, padding=padding, biased=biased, depthwise=depthwise,
+                                dilation=dilation, ws=ws, kernel_paddings=kernel_paddings,
+                                weight_initializer=weight_initializer, bias_initializer=bias_initializer)
+            x = self.batch_norm(x, scale=scale, shift=shift, zero_scale_init=zero_scale_init, epsilon=epsilon)
+            x = self.activation(x, activation_type=act_type, params=act_params)
+
+            if verbose:
+                print(tf.get_variable_scope().name + ': [{}, {}, {}], k=({}, {}), s=({}, {}), c={}'
+                      .format(h, w, in_channels, kernel[0], kernel[1], stride[0], stride[1], out_channels), end='')
+                if padding.lower() == 'valid':
+                    print(', p=\"valid\"', end='')
+                if dilation[0] > 1 or dilation[1] > 1:
+                    print(', d=({}, {})'.format(dilation[0], dilation[1]), end='')
+                if depthwise:
+                    print(', depthwise.', end='')
+                else:
+                    print('.', end='')
+                if act_type is None:
+                    print(' + BN.')
+                else:
+                    print(' + BN, {}.'.format(act_type))
+        return x
+
     def conv_layer(self, x, kernel, stride, out_channels=None, padding='SAME', biased=True, depthwise=False, scope=None,
                    dilation=(1, 1), ws=False, kernel_paddings=((0, 0), (0, 0)),
                    weight_initializer=tf.initializers.he_normal(), bias_initializer=tf.initializers.zeros(),
@@ -1467,6 +1516,10 @@ class ConvNet(object):
             if verbose:
                 print(tf.get_variable_scope().name + ': [{}, {}, {}], k=({}, {}), s=({}, {}), c={}'
                       .format(h, w, in_channels, kernel[0], kernel[1], stride[0], stride[1], out_channels), end='')
+                if padding.lower() == 'valid':
+                    print(', p=\"valid\"', end='')
+                if dilation[0] > 1 or dilation[1] > 1:
+                    print(', d=({}, {})'.format(dilation[0], dilation[1]), end='')
                 if depthwise:
                     print(', depthwise.')
                 else:
@@ -2015,7 +2068,13 @@ class ConvNet(object):
 
         if verbose:
             print(tf.get_variable_scope().name + ': [{}, {}, {}], k=({}, {}), s=({}, {}), c={}'
-                  .format(h, w, in_channels, kernel[0], kernel[1], stride[0], stride[1], out_channels))
+                  .format(h, w, in_channels, kernel[0], kernel[1], stride[0], stride[1], out_channels), end='')
+            if padding.lower() == 'valid':
+                print(', p=\"valid\"', end='')
+            if dilation[0] > 1 or dilation[1] > 1:
+                print(', d=({}, {}).'.format(dilation[0], dilation[1]))
+            else:
+                print('.')
 
         with tf.variable_scope(scope) if scope is not None else nullcontext():
             weights = self.weight_variable([kernel[0], kernel[1], in_channels, out_channels],
