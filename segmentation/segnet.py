@@ -29,7 +29,7 @@ class SegNet(ConvNet):
 
                         # FIXME: Fake label generation
                         self._broadcast_shape = [tf.shape(self.X)[1], tf.shape(self.X)[2]]
-                        self.Y = tf.map_fn(self.broadcast_nans, self.Y)  # Broadcasting for NaNs
+                        self.Y = tf.map_fn(self._broadcast_nans, self.Y)  # Broadcasting for NaNs
                         self.Y = tf.where(tf.is_nan(self.Y), tf.zeros_like(self.Y), self.Y)
 
                         self.X_in.append(self.X)
@@ -105,15 +105,15 @@ class SegNet(ConvNet):
         """
         pass
 
-    def label_smoothing(self, label, ls_factor, name='label_smoothing'):
+    def _broadcast_nans(self, y):
+        return tf.broadcast_to(y, self._broadcast_shape)
+
+    def _label_smoothing(self, labels, ls_factor, name='label_smoothing'):
         with tf.variable_scope(name):
             ls_factor = tf.constant(ls_factor, dtype=tf.float32, name='label_smoothing_factor')
-            avg_labels = tf.nn.avg_pool2d(label, (5, 5), (1, 1), padding='SAME')
-            labels = (1.0 - ls_factor)*label + ls_factor*avg_labels
+            avg_labels = tf.nn.avg_pool2d(labels, (5, 5), (1, 1), padding='SAME')
+            labels = (1.0 - ls_factor)*labels + ls_factor*avg_labels
         return labels
-
-    def broadcast_nans(self, y):
-        return tf.broadcast_to(y, self._broadcast_shape)
 
     def cutmix(self, x, y):
         with tf.variable_scope('cutmix'):
