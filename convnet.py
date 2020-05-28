@@ -163,7 +163,7 @@ class ConvNet(object):
         print('\n# FLOPs : {:-15,}\n# Params: {:-15,}\n# Nodes : {:-15,}\n'.format(self.flops, self.params, self.nodes))
 
         info = sorted(self.layer_info, key=lambda layer: layer['flops'], reverse=True)
-        print('Most flops : {:-13,} ('.format(info[0]['flops']), end='')
+        print('Most FLOPs : {:-13,} ('.format(info[0]['flops']), end='')
         for i in info:
             if i['flops'] == info[0]['flops']:
                 print(i['name'] + ', ', end='')
@@ -171,7 +171,7 @@ class ConvNet(object):
                 print(')')
                 break
         info.sort(key=lambda layer: layer['params'], reverse=True)
-        print('Most params: {:-13,} ('.format(info[0]['params']), end='')
+        print('Most Params: {:-13,} ('.format(info[0]['params']), end='')
         for i in info:
             if i['params'] == info[0]['params']:
                 print(i['name'] + ', ', end='')
@@ -179,7 +179,7 @@ class ConvNet(object):
                 print(')')
                 break
         info.sort(key=lambda layer: layer['nodes'], reverse=True)
-        print('Most nodes : {:-13,} ('.format(info[0]['nodes']), end='')
+        print('Most Nodes : {:-13,} ('.format(info[0]['nodes']), end='')
         for i in info:
             if i['nodes'] == info[0]['nodes']:
                 print(i['name'] + ', ', end='')
