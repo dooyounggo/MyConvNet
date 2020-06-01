@@ -15,7 +15,7 @@ class DataSet(object):
     IMAGE_SEGMENTATION = 'image_segmentation'
     SEMANTIC_SEGMENTATION = IMAGE_SEGMENTATION
     DCGAN = 'deep_convolutional_gan'
-    # IMAGE_TO_IMAGE_TRANSLATION = 'image_to_image_translation'
+    IMAGE_TO_IMAGE_TRANSLATION = 'image_to_image_translation'
     # OBJECT_DETECTION = 'object_detection'
     # INSTANCE_SEGMENTAION = 'instance_segmentation'
     # MULTI_LABEL_IMAGE_CLASSIFICATION = 'multi-label_image_classification'
@@ -245,7 +245,7 @@ class DataSet(object):
             elif interpolation_method == 'bicubic':
                 interpolation = cv2.INTER_CUBIC
             else:
-                raise ValueError('Interpolation method of {} is not supported.'.format(self.resize_interpolation))
+                raise ValueError('Interpolation method \"{}\" is not supported.'.format(self.resize_interpolation))
             image = self._resize_function(image, self.image_size, interpolation=interpolation)
 
         if not isinstance(label_dir, str):  # No label
@@ -266,7 +266,7 @@ class DataSet(object):
                         line = f.readline()
                     label = int(line.rstrip())
                 else:
-                    raise ValueError('Label file extension of {} is not supported for {}'.format(ext, self.task_type))
+                    raise ValueError('Label file extension \".{}\" is not supported for {}'.format(ext, self.task_type))
                 label = np.array(label, dtype=np.float32)
 
             elif self.task_type == DataSet.IMAGE_SEGMENTATION:
@@ -276,10 +276,28 @@ class DataSet(object):
                     label = self._resize_function(label, self.image_size, interpolation=cv2.INTER_NEAREST)
                     label = np.round(label[..., 0]*255)
                 else:
-                    raise ValueError('Label file extension of {} is not supported for {}'.format(ext, self.task_type))
+                    raise ValueError('Label file extension \".{}\" is not supported for {}'.format(ext, self.task_type))
+
+            elif self.task_type == DataSet.IMAGE_TO_IMAGE_TRANSLATION:
+                ext = label_dir.split('.')[-1].lower()
+                if ext in sf.IMAGE_FORMATS:
+                    label = cv2.cvtColor(cv2.imread(image_dir), cv2.COLOR_BGR2RGB)
+                    interpolation_method = self.resize_interpolation.lower()
+                    if interpolation_method == 'nearest' or interpolation_method == 'nearest neighbor':
+                        interpolation = cv2.INTER_NEAREST
+                    elif interpolation_method == 'bilinear':
+                        interpolation = cv2.INTER_LINEAR
+                    elif interpolation_method == 'bicubic':
+                        interpolation = cv2.INTER_CUBIC
+                    else:
+                        raise ValueError('Interpolation method \"{}\" is not supported.'
+                                         .format(self.resize_interpolation))
+                    label = self._resize_function(label, self.image_size, interpolation=interpolation)
+                else:
+                    raise ValueError('Label file extension \".{}\" is not supported for {}'.format(ext, self.task_type))
 
             else:
-                raise ValueError('{} task is not supported'.format(self.task_type))
+                raise ValueError('\"{}\" task is not supported'.format(self.task_type))
 
         return image, label
 
