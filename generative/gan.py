@@ -99,6 +99,15 @@ class GAN(ConvNet):
                 self.debug_images_0 = self.pred
 
     @abstractmethod
+    def _build_model(self):
+        """
+        Build model of discriminator networks.
+        This should be implemented.
+        :return dict containing tensors. Must include 'logits' and 'pred' tensors.
+        """
+        pass
+
+    @abstractmethod
     def _build_model_g(self):
         """
         Build model of generator networks.
