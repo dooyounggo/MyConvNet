@@ -473,8 +473,9 @@ class NullEvaluator(Evaluator):
 
     def check_params(self, **kwargs):
         self.to_return = kwargs.get('to_return', 0.0)
-        self.score_name = kwargs.get('score_name', 'Null Score')
+        self.score_name = kwargs.get('score_name', 'Score')
         self.score_mode = kwargs.get('score_mode', 'max')
+        self._worst_score = kwargs.get('worst_score', 0.0)
 
     @property
     def name(self):
@@ -482,7 +483,7 @@ class NullEvaluator(Evaluator):
 
     @property
     def worst_score(self):
-        return 0.0
+        return self._worst_score
 
     @property
     def mode(self):
