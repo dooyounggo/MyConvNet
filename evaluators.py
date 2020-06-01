@@ -467,39 +467,6 @@ class MeanIoUEvaluator(Evaluator):
         return score
 
 
-class NullEvaluator(Evaluator):
-    Y_TRUE = 'return_y_true'
-    Y_PRED = 'return_y_pred'
-
-    def check_params(self, **kwargs):
-        self.to_return = kwargs.get('to_return', 0.0)
-        self.score_name = kwargs.get('score_name', 'Score')
-        self.score_mode = kwargs.get('score_mode', 'max')
-        self._worst_score = kwargs.get('worst_score', 0.0)
-
-    @property
-    def name(self):
-        return self.score_name
-
-    @property
-    def worst_score(self):
-        return self._worst_score
-
-    @property
-    def mode(self):
-        return self.score_mode
-
-    def score(self, y_true, y_pred):
-        if self.to_return == NullEvaluator.Y_TRUE:
-            score = y_true.mean()
-        elif self.to_return == NullEvaluator.Y_PRED:
-            score = y_pred.mean()
-        else:
-            score = self.to_return
-
-        return score
-
-
 def precision_and_recall(y_t, y_p, valid=None):     # Precision and recall.
     tp, fp, _, fn = conditions(y_t, y_p, valid)
     if tp == 0:
@@ -527,3 +494,61 @@ def conditions(y_t, y_p, valid=None):   # Number of true positives, false positi
     fn = np.sum(wrong*negative)
 
     return tp, fp, tn, fn
+
+
+class NullEvaluator(Evaluator):
+    Y_TRUE = 'return_y_true'
+    Y_PRED = 'return_y_pred'
+
+    def check_params(self, **kwargs):
+        self.to_return = kwargs.get('to_return', 0.0)
+        self.score_name = kwargs.get('score_name', 'Score')
+        self.score_mode = kwargs.get('score_mode', 'max')
+        self._worst_score = kwargs.get('worst_score', 0.0)
+
+    @property
+    def name(self):
+        return self.score_name
+
+    @property
+    def worst_score(self):
+        return self._worst_score
+
+    @property
+    def mode(self):
+        return self.score_mode
+
+    def score(self, y_true, y_pred):
+        if self.to_return == NullEvaluator.Y_TRUE:
+            score = np.mean(y_true)
+        elif self.to_return == NullEvaluator.Y_PRED:
+            score = np.mean(y_pred)
+        else:
+            score = self.to_return
+
+        return score
+
+
+class PSNREvaluator(Evaluator):
+    def check_params(self, **kwargs):
+        self.max_value = kwargs.get('max_value', 1.0)
+
+    @property
+    def name(self):
+        return 'PSNR'
+
+    @property
+    def worst_score(self):
+        return 0.0
+
+    @property
+    def mode(self):
+        return 'max'
+
+    def score(self, y_true, y_pred):
+        assert y_true.ndim == 4, 'y_true must be 4-dimensional ({} given)'.format(y_true.ndim)
+        assert y_pred.ndim == 4, 'y_pred must be 4-dimensional ({} given)'.format(y_pred.ndim)
+
+        mse = np.mean((y_true - y_pred)**2, axis=[1, 2, 3])
+        score = 10*np.log10(self.max_value**2/mse)
+        return np.mean(score)
