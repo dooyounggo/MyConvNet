@@ -618,7 +618,7 @@ class ConvNet(object):
             x = self.rand_noise(x, **kwargs)
             x = tf.clip_by_value(x, 0.0 - self.image_mean, 1.0 - self.image_mean)
             x = self.rand_solarization(x, **kwargs)
-        x = self.rand_posterization(x, **kwargs)  # Quantization
+            x = self.rand_posterization(x, **kwargs)
 
         if mask is None:
             return x
