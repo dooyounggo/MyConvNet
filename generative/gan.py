@@ -1,11 +1,10 @@
 """
-Build segmentation networks using TensorFlow low-level APIs.
+Build GAN using TensorFlow low-level APIs.
 """
 
 import time
 from abc import abstractmethod
 import tensorflow.compat.v1 as tf
-import tensorflow.contrib as tf_contrib
 import numpy as np
 from convnet import ConvNet
 
