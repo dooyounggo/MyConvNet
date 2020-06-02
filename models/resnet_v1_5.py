@@ -1,3 +1,7 @@
+"""
+ResNet
+https://arxiv.org/abs/1512.03385
+"""
 import tensorflow.compat.v1 as tf
 from convnet import ConvNet
 

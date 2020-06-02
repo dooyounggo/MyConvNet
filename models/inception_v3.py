@@ -1,3 +1,7 @@
+"""
+Inception-v3
+https://arxiv.org/abs/1512.00567
+"""
 import tensorflow.compat.v1 as tf
 from convnet import ConvNet
 

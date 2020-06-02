@@ -1,3 +1,7 @@
+"""
+ResNet-V2
+https://arxiv.org/abs/1603.05027
+"""
 import tensorflow as tf
 from models.resnet_v1_5 import ResNet
 

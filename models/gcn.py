@@ -1,3 +1,7 @@
+"""
+Global Convolutional Network
+https://arxiv.org/abs/1703.02719
+"""
 import tensorflow as tf
 from segmentation.segnet import SegNet
 from models.resnet_v2_d_cbam import ResNetCBAM50 as ResNet

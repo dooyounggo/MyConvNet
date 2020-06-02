@@ -1,3 +1,7 @@
+"""
+Deep Convolutional GAN
+https://arxiv.org/abs/1511.06434
+"""
 import tensorflow.compat.v1 as tf
 from generative.gan import GAN
 

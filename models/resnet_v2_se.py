@@ -1,3 +1,7 @@
+"""
+ResNet with Squeeze-and-Excitation
+https://arxiv.org/abs/1709.01507
+"""
 import tensorflow as tf
 from models.resnet_v2 import ResNetID
 

@@ -1,3 +1,7 @@
+"""
+EfficientNet
+https://arxiv.org/abs/1905.11946
+"""
 import tensorflow.compat.v1 as tf
 import numpy as np
 from convnet import ConvNet

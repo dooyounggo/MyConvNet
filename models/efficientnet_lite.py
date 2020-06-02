@@ -1,3 +1,7 @@
+"""
+EfficientNet-Lite
+https://blog.tensorflow.org/2020/03/higher-accuracy-on-vision-models-with-efficientnet-lite.html
+"""
 import tensorflow.compat.v1 as tf
 import numpy as np
 from convnet import ConvNet

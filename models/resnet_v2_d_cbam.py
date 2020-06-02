@@ -1,3 +1,7 @@
+"""
+ResNet with Convolutional Block Attention Modules
+https://arxiv.org/abs/1807.06521
+"""
 import tensorflow as tf
 from convnet import ConvNet
 
