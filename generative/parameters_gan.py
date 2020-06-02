@@ -19,14 +19,14 @@ import utils
 class Parameters(object):
     # FIXME: Directories
     _root_dir = os.path.dirname(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))  # FIXME
-    _train_dir = '/mnt/D/Dropbox/Project/Python/tfdatasets/ffhq_thumbnails/train'
+    _train_dir = os.path.join(_root_dir, 'tfdatasets/ffhq_thumbnails/train')
     _train_sample_size = None  # Data size. None for all files in train_dir
     _val_dir = None  # Can be None
     _val_sample_size = None
     _test_dir = None
     _test_sample_size = 1000
 
-    _save_dir = '/mnt/D/trained_models/DCGAN_FFHQ'
+    _save_dir = os.path.join(_root_dir, 'trained_models/DCGAN_FFHQ')
     _transfer_dir = None
     _checkpoint_dir = os.path.join(_root_dir, 'pretrained_models', 'resnet_v1_50', 'resnet_v1_50.ckpt')
 

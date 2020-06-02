@@ -26,7 +26,7 @@ class Parameters(object):
     _test_dir = os.path.join(_root_dir, 'tfdatasets/cub-200-2011/test')
     _test_sample_size = None
 
-    _save_dir = 'D:/trained_models/ResNet-50_CUB-200'
+    _save_dir = os.path.join(_root_dir, 'trained_models/ResNet-50_CUB-200')
     _transfer_dir = None
     _checkpoint_dir = os.path.join(_root_dir, 'pretrained_models', 'resnet_v1_50', 'resnet_v1_50.ckpt')
 
