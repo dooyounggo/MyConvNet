@@ -384,8 +384,10 @@ def resize_expand(image, out_size, interpolation=cv2.INTER_LINEAR, random=False)
 
 
 def resize_with_crop_or_pad(image, out_size, random=False, pad_value=0.0, *args, **kwargs):
-    image = crop(image, out_size, random=random)
-    image = zero_pad(image, out_size, random=random, pad_value=pad_value)
+    if image.shape[0] > out_size[0] or image.shape[1] > out_size[1]:
+        image = crop(image, out_size, random=random)
+    if image.shape[0] < out_size[0] or image.shape[1] < out_size[1]:
+        image = zero_pad(image, out_size, random=random, pad_value=pad_value)
 
     return to_float(image)
 
