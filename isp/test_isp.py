@@ -47,28 +47,4 @@ if __name__ == '__main__':
 
     print(evaluator.name + ': {:.4f}'.format(test_score))
 
-    utils.plot_class_results(test_x, test_y_true, test_y_pred, fault=False, shuffle=False, class_names=class_names,
-                             save_dir=os.path.join(Param.save_dir, 'results_test/images'), start_idx=idx_start)
-    utils.plot_class_results(test_x, test_y_true, test_y_pred, fault=True, shuffle=False, class_names=class_names)
-
-    gcam = model.features(test_set, model.gcam, **Param.d)[0][..., 0]
-    cmap = plt.get_cmap('gnuplot2')
-    gcam = cmap(gcam)[..., 0:3]
-    gcam = np.clip(test_x + gcam, 0, 1)
-    # gcam = test_x*gcam[..., np.newaxis]
-
-    utils.plot_class_results(gcam, test_y_true, test_y_pred, fault=None, shuffle=False, class_names=class_names,
-                             save_dir=os.path.join(Param.save_dir, 'results_test/grad-cams'), start_idx=idx_start)
-
-    cm = utils.plot_confusion_matrix(test_y_true, test_y_pred, class_names=class_names, normalize=False)
-
-    fp = open(os.path.join(Param.save_dir, 'confusion_matrix.csv'), 'w', encoding='utf-8', newline='')
-    wrt = csv.writer(fp)
-    wrt.writerow(['id'] + list(class_names))
-    for i, line in enumerate(cm):
-        wrt.writerow([class_names[i]] + list(line))
-    fp.close()
-
-    plt.show()
-
     model.session.close()
