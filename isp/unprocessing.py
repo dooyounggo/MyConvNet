@@ -42,10 +42,8 @@ class Unprocessing(ConvNet):
                                                                                      tf.float32, tf.float32]),
                                                                              parallel_iterations=32, back_prop=False)
 
-                        bayer_img.set_shape([None, None, None, 4])
-                        noisy_img.set_shape([None, None, None, 4])
-                        noisy = process.process(noisy_img, metadata[2], metadata[3], metadata[0])
                         self.Y = process.process(bayer_img, metadata[2], metadata[3], metadata[0])
+                        noisy = process.process(noisy_img, metadata[2], metadata[3], metadata[0])
                         self.Xs.append(noisy)
                         self.Ys.append(self.Y)
 
