@@ -400,6 +400,7 @@ class ConvNet(object):
                 self.gcam = tf.concat(self.gcams, axis=0, name='grad_cam')
 
                 self.input_images = tf.concat(self.X_in, axis=0, name='x_in')
+                self.input_labels = tf.concat(self.Y_in, axis=0, name='y_in')
                 self.debug_images_0 = tf.clip_by_value(self.gcam/2 + self.X_all, 0, 1)
                 self.debug_images_1 = tf.clip_by_value(self.gcam*self.X_all, 0, 1)
 
