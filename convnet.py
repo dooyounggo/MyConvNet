@@ -359,13 +359,12 @@ class ConvNet(object):
                         self.Ys.append(self.Y)
 
                         self.X *= self.scale_factor  # Scale images
-
                         if self.channel_first:
                             self.X = tf.transpose(self.X, perm=[0, 3, 1, 2])
-
                         if self.dtype is not tf.float32:
                             with tf.name_scope('{}/cast/'.format(self.compute_device + str(i))):
                                 self.X = tf.cast(self.X, dtype=self.dtype)
+
                         with tf.name_scope('nn'):
                             self.d = self._build_model()
                         if self.dtype is not tf.float32:
@@ -374,8 +373,6 @@ class ConvNet(object):
                                 self.d['pred'] = tf.cast(self.d['pred'], dtype=tf.float32)
                         tf.get_variable_scope().reuse_variables()
 
-                        self.dicts.append(self.d)
-
                         if 'block_{}'.format(self.num_blocks - 1) in self.d:
                             self.gcams.append(self.grad_cam(self.d['logits'],
                                                             self.d['block_{}'.format(self.num_blocks - 1)],
@@ -383,6 +380,7 @@ class ConvNet(object):
                         else:
                             self.gcams.append(self.X)
 
+                        self.dicts.append(self.d)
                         self.logits = self.d['logits']
                         self.pred = self.d['pred']
                         self.preds.append(self.pred)
