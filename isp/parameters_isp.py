@@ -32,13 +32,12 @@ class Parameters(object):
 
     d = dict()
     # FIXME: Image pre-processing hyperparameters
-    d['image_size'] = (224, 224, 3)  # Processed image size
-    d['image_size_test'] = (256, 256, 3)  # If None, same as 'image_size'
-    d['resize_type'] = 'resize_expand'  # Resize types: 'resize', 'resize_expand', 'random_resized_crop', ...
+    d['image_size'] = (128, 128, 3)  # Processed image size
+    d['image_size_test'] = None  # If None, same as 'image_size'
+    d['resize_type'] = 'resize_with_crop_or_pad'  # Resize types: 'resize', 'resize_expand', 'random_resized_crop', ...
     d['resize_type_test'] = None  # If None, same as 'resize_type'
     d['resize_random'] = True  # Randomness of padding and crop operations
     d['resize_random_test'] = False
-    d['resize_interpolation'] = 'bilinear'  # Interpolation methods: 'nearest', 'bilinear', 'bicubic'
 
     d['input_size'] = (128, 128, 3)  # Network input size after augmentation
     d['image_mean'] = 0.5  # If None, it will be calculated and it may take some time
@@ -82,6 +81,8 @@ class Parameters(object):
 
     d['zero_pad_ratio'] = 0.0  # Zero padding ratio = (zero_padded_image_size - nn_input_size)/nn_input_size
 
+    d['rand_blur_stddev'] = 0.5  # Maximum sigma for Gaussian blur
+
     d['rand_affine'] = True  # Bool
     d['rand_scale'] = (1.0, 1.0)  # Minimum and maximum scaling factors (x/y)
     d['rand_ratio'] = (1.0, 1.0)  # Minimum and maximum pixel aspect ratios (x/y)
@@ -92,7 +93,7 @@ class Parameters(object):
     d['rand_x_reflect'] = True  # Bool
     d['rand_y_reflect'] = False  # Bool
 
-    d['rand_crop'] = True  # Bool
+    d['rand_crop'] = False  # Bool
     d['rand_crop_scale'] = (0.25, 1.75)  # Scale*input_size patch is cropped from an image
     d['rand_crop_ratio'] = (3/4, 4/3)
 
