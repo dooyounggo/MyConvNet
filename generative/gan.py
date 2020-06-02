@@ -96,6 +96,7 @@ class GAN(ConvNet):
                 self.loss_g = tf.reduce_mean(self.losses_g, name='mean_loss_g')
 
                 self.input_images = tf.concat(self.X_in, axis=0, name='x_in')
+                self.input_labels = tf.concat(self.Y_in, axis=0, name='y_in')
                 self.debug_images_0 = self.pred
 
     @abstractmethod
