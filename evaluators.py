@@ -549,6 +549,6 @@ class PSNREvaluator(Evaluator):
         assert y_true.ndim == 4, 'y_true must be 4-dimensional ({} given)'.format(y_true.ndim)
         assert y_pred.ndim == 4, 'y_pred must be 4-dimensional ({} given)'.format(y_pred.ndim)
 
-        mse = np.mean((y_true - y_pred)**2, axis=[1, 2, 3])
+        mse = np.mean((y_true - y_pred)**2, axis=(1, 2, 3))
         score = 10*np.log10(self.max_value**2/mse)
         return np.mean(score)
