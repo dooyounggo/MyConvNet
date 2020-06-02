@@ -2138,7 +2138,7 @@ class ConvNet(object):
                 return self.relu(x, name=activation_type)
             elif act == 'relu6':
                 return self.relu6(x, name=activation_type)
-            elif act == 'lrelu':
+            elif act == 'lrelu' or act == 'leaky_relu':
                 return self.lrelu(x, alpha=params, name=activation_type)
             elif act == 'tanh':
                 return self.tanh(x, name=activation_type)
@@ -2155,7 +2155,9 @@ class ConvNet(object):
     def relu6(self, x, name='relu6'):
         return tf.nn.relu6(x, name=name)
 
-    def lrelu(self, x, alpha=0.2, name='lrelu'):
+    def lrelu(self, x, alpha=None, name='lrelu'):
+        if alpha is None:
+            alpha = 0.2
         return tf.nn.leaky_relu(x, alpha=alpha, name=name)
 
     def tanh(self, x, name='tanh'):
