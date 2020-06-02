@@ -43,7 +43,9 @@ class Unprocessing(ConvNet):
                                                                              parallel_iterations=32, back_prop=False)
 
                         self.Y = process.process(bayer_img, metadata[2], metadata[3], metadata[0])
+                        self.Y.set_shape([None] + list(self.input_size))
                         noisy = process.process(noisy_img, metadata[2], metadata[3], metadata[0])
+                        noisy.set_shape([None] + list(self.input_size))
                         self.Xs.append(noisy)
                         self.Ys.append(self.Y)
 
@@ -66,6 +68,7 @@ class Unprocessing(ConvNet):
 
                         self.dicts.append(self.d)
                         self.pred = process.process(self.d['pred'], metadata[2], metadata[3], metadata[0])
+                        self.pred.set_shape([None] + list(self.input_size))
                         self.preds.append(self.pred)
                         self.losses.append(self._build_loss(**kwargs))
 
