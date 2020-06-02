@@ -50,15 +50,15 @@ def demosaic(bayer_images):
     red = tf.image.resize_bilinear(red, shape)
 
     green_red = bayer_images[Ellipsis, 1:2]
-    green_red = tf.image.flip_left_right(green_red)
+    green_red = tf.reverse(green_red, axis=2)
     green_red = tf.image.resize_bilinear(green_red, shape)
-    green_red = tf.image.flip_left_right(green_red)
+    green_red = tf.reverse(green_red, axis=2)
     green_red = tf.space_to_depth(green_red, 2)
 
     green_blue = bayer_images[Ellipsis, 2:3]
-    green_blue = tf.image.flip_up_down(green_blue)
+    green_blue = tf.reverse(green_blue, axis=1)
     green_blue = tf.image.resize_bilinear(green_blue, shape)
-    green_blue = tf.image.flip_up_down(green_blue)
+    green_blue = tf.reverse(green_blue, axis=1)
     green_blue = tf.space_to_depth(green_blue, 2)
 
     green_at_red = (green_red[Ellipsis, 0] + green_blue[Ellipsis, 0]) / 2
@@ -72,9 +72,9 @@ def demosaic(bayer_images):
     green = tf.depth_to_space(tf.stack(green_planes, axis=-1), 2)
 
     blue = bayer_images[Ellipsis, 3:4]
-    blue = tf.image.flip_up_down(tf.image.flip_left_right(blue))
+    blue = tf.reverse(tf.reverse(blue, axis=2), axis=1)
     blue = tf.image.resize_bilinear(blue, shape)
-    blue = tf.image.flip_up_down(tf.image.flip_left_right(blue))
+    blue = tf.reverse(tf.reverse(blue, axis=2), axis=1)
 
     rgb_images = tf.concat([red, green, blue], axis=-1)
     return rgb_images
