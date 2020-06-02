@@ -53,14 +53,13 @@ class GAN(ConvNet):
                         self.Ys.append(self.Y)
 
                         self.X *= self.scale_factor  # Scale images
-
                         if self.channel_first:
                             self.X = tf.transpose(self.X, perm=[0, 3, 1, 2])
-
                         if self.dtype is not tf.float32:
                             with tf.name_scope('{}/cast/'.format(self.compute_device + str(i))):
                                 self.X = tf.cast(self.X, dtype=self.dtype)
                                 self.Y = tf.cast(self.Y, dtype=self.dtype)
+
                         with tf.name_scope('nn'):
                             d_real = self._build_model()
                             self.d = self._build_model_g()
