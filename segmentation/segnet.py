@@ -56,13 +56,12 @@ class SegNet(ConvNet):
                         self.Ys.append(self.Y)
 
                         self.X *= self.scale_factor  # Scale images
-
                         if self.channel_first:
                             self.X = tf.transpose(self.X, perm=[0, 3, 1, 2])
-
                         if self.dtype is not tf.float32:
                             with tf.name_scope('{}/cast/'.format(self.compute_device + str(i))):
                                 self.X = tf.cast(self.X, dtype=self.dtype)
+
                         with tf.name_scope('nn'):
                             self.backbone_only = True
                             d_backbone = self._build_model()
