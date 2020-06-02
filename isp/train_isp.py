@@ -72,6 +72,6 @@ if __name__ == '__main__':
     optimizer = Optimizer(model, train_set, evaluator, val_set=val_set, **Param.d)
 
     train_results = optimizer.train(save_dir=Param.save_dir, transfer_dir=Param.transfer_dir,
-                                    details=True, verbose=True, show_each_step=False, **Param.d)
+                                    details=True, verbose=True, show_each_step=False, show_percentage=False, **Param.d)
 
     model.session.close()
