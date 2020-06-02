@@ -660,3 +660,17 @@ class RMSPropOptimizer(Optimizer):
         optimizer = tf.train.RMSPropOptimizer(self.learning_rate, decay=decay, momentum=momentum, epsilon=eps)
 
         return optimizer
+
+
+class AdamOptimizer(Optimizer):
+    def _optimizer(self, **kwargs):
+        momentum = kwargs.get('momentum', 0.9)
+        decay = 0.999
+        eps = 0.001
+        gradient_threshold = kwargs.get('gradient_threshold', None)
+        print('Optimizer: Adam. Initial learning rate: {:.6f}. Gradient threshold: {}'
+              .format(self.init_learning_rate, gradient_threshold))
+
+        optimizer = tf.train.AdamOptimizer(self.learning_rate, beta1=momentum, beta2=decay, epsilon=eps)
+
+        return optimizer
