@@ -21,7 +21,7 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True, shuffle=True, val_onl
         if not os.path.isdir(train_dir) and os.path.isfile(train_dir + '.tar'):
             train_tar = tarfile.open(train_dir + '.tar', 'r:')
             print('Extracting train_large_places365standard.tar ...')
-            train_tar.extractall()
+            train_tar.extractall(path=subset_dir)
             print('Extraction complete.')
             train_tar.close()
 
@@ -74,7 +74,7 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True, shuffle=True, val_onl
         if not os.path.isdir(test_dir) and os.path.isfile(test_dir + '.tar'):
             test_tar = tarfile.open(test_dir + '.tar', 'r:')
             print('Extracting test_large.tar ...')
-            test_tar.extractall()
+            test_tar.extractall(path=subset_dir)
             print('Extraction complete.')
             test_tar.close()
         if not os.path.exists(os.path.join(destination_dir, 'test')):
@@ -98,7 +98,7 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True, shuffle=True, val_onl
     if not os.path.isdir(val_dir) and os.path.isfile(val_dir + '.tar'):
         val_tar = tarfile.open(val_dir + '.tar', 'r:')
         print('Extracting val_large.tar ...')
-        val_tar.extractall()
+        val_tar.extractall(path=subset_dir)
         print('Extraction complete.')
         val_tar.close()
     if not os.path.exists(os.path.join(destination_dir, 'validation')):
