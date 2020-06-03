@@ -70,7 +70,8 @@ class DataSet(object):
         self._from_memory = from_memory
 
         if class_names is None:
-            assert num_classes is not None, 'Either class_names or num_classes must be provided.'
+            if self.task_type in [DataSet.IMAGE_CLASSIFICATION, DataSet.IMAGE_SEGMENTATION, DataSet.DCGAN]:
+                assert num_classes is not None, 'Either class_names or num_classes must be provided.'
             self._num_classes = num_classes
         else:
             self._num_classes = len(class_names)
