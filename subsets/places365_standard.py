@@ -134,9 +134,9 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True, shuffle=True, val_onl
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--data', '--subset_dir', help='Path to original data', type=str,
-                        default='./datasets/ILSVRC2012_CLS')
+                        default='./datasets/Places365')
     parser.add_argument('--dest', '--destination_dir', help='Path to processed data', type=str,
-                        default='./tfdatasets/ilsvrc2012_cls')
+                        default='./tfdatasets/places365')
     parser.add_argument('--copy', help='Whether to copy images instead of moving them', type=str, default='True')
     parser.add_argument('--shuffle', help='Whether to shuffle training images', type=str, default='True')
     parser.add_argument('--val_only', help='Whether to process validation images only', type=str, default='False')
