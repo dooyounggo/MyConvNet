@@ -1121,7 +1121,7 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True, shuffle=True, val_onl
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data', '--subset_dir', help='Path to raw data', type=str,
+    parser.add_argument('--data', '--subset_dir', help='Path to original data', type=str,
                         default='./datasets/ILSVRC2012_CLS')
     parser.add_argument('--dest', '--destination_dir', help='Path to processed data', type=str,
                         default='./tfdatasets/ilsvrc2012_cls')
@@ -1144,7 +1144,7 @@ if __name__ == '__main__':
     else:
         val_only = False
 
-    print('\nPath to raw data:       \"{}\"'.format(subset_dir))
+    print('\nPath to original data:       \"{}\"'.format(subset_dir))
     print('Path to processed data: \"{}\"'.format(destination_dir))
     print('copy = {}, shuffle = {}, val_only = {}'.format(copy, shuffle, val_only))
 

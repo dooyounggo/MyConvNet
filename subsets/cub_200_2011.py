@@ -99,7 +99,7 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True, shuffle=False):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data', '--subset_dir', help='Path to raw data', type=str,
+    parser.add_argument('--data', '--subset_dir', help='Path to original data', type=str,
                         default='./datasets/CUB_200_2011')
     parser.add_argument('--dest', '--destination_dir', help='Path to processed data', type=str,
                         default='./tfdatasets/cub_200_2011')
@@ -120,7 +120,7 @@ if __name__ == '__main__':
     else:
         shuffle = False
 
-    print('\nPath to raw data:       \"{}\"'.format(subset_dir))
+    print('\nPath to original data:       \"{}\"'.format(subset_dir))
     print('Path to processed data: \"{}\"'.format(destination_dir))
     print('copy = {}, shuffle = {}'.format(copy, shuffle))
 
