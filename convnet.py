@@ -163,7 +163,7 @@ class ConvNet(object):
                     self.pred = self.pred[..., tf.newaxis]
 
         for blk in self.block_list:
-            if len(tf.get_collection('block_{}_variables'.format(blk))) == 0:
+            if not tf.get_collection('block_{}_variables'.format(blk)):
                 self._block_list.remove(blk)
         self._num_blocks = len(self.block_list)
 
