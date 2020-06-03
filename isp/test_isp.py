@@ -1,5 +1,4 @@
 from isp.parameters_isp import *
-import csv
 
 
 if __name__ == '__main__':
@@ -46,5 +45,9 @@ if __name__ == '__main__':
     test_score = evaluator.score(test_y_true, test_y_pred)
 
     print(evaluator.name + ': {:.4f}'.format(test_score))
+
+    utils.imshow_subplot(test_x, num_rows=3, num_cols=3, figure_title='Noisy Images')
+    utils.imshow_subplot(test_y_true, num_rows=3, num_cols=3, figure_title='GT Images')
+    utils.imshow_subplot(test_y_pred, num_rows=3, num_cols=3, figure_title='Denoised Images')
 
     model.session.close()
