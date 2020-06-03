@@ -21,7 +21,7 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True, shuffle=True, val_onl
         if not os.path.isdir(train_dir) and os.path.isfile(train_dir + '.tar'):
             train_tar = tarfile.open(train_dir + '.tar', 'r:')
             print('Extracting train_large_places365standard.tar ...')
-            train_tar.extractall(path=train_dir)
+            train_tar.extractall()
             print('Extraction complete.')
             train_tar.close()
 
@@ -72,11 +72,11 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True, shuffle=True, val_onl
         print(')')
 
         if not os.path.isdir(test_dir) and os.path.isfile(test_dir + '.tar'):
-            val_tar = tarfile.open(test_dir + '.tar', 'r:')
+            test_tar = tarfile.open(test_dir + '.tar', 'r:')
             print('Extracting test_large.tar ...')
-            val_tar.extractall(path=test_dir)
+            test_tar.extractall()
             print('Extraction complete.')
-            val_tar.close()
+            test_tar.close()
         if not os.path.exists(os.path.join(destination_dir, 'test')):
             os.makedirs(os.path.join(destination_dir, 'test'))
         test_fnames = os.listdir(test_dir)
@@ -88,7 +88,7 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True, shuffle=True, val_onl
             if i % 1000 == 0:
                 print('Saving test data: {:8,}/{}...'.format(i, num_examples))
 
-            img_dir = os.path.join(val_dir, fname)
+            img_dir = os.path.join(test_dir, fname)
             ext = img_dir.split('.')[-1]
             if copy:
                 shutil.copy2(img_dir, os.path.join(destination_dir, 'test', '{:010d}.{}'.format(i, ext)))
@@ -98,7 +98,7 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True, shuffle=True, val_onl
     if not os.path.isdir(val_dir) and os.path.isfile(val_dir + '.tar'):
         val_tar = tarfile.open(val_dir + '.tar', 'r:')
         print('Extracting val_large.tar ...')
-        val_tar.extractall(path=val_dir)
+        val_tar.extractall()
         print('Extraction complete.')
         val_tar.close()
     if not os.path.exists(os.path.join(destination_dir, 'validation')):
