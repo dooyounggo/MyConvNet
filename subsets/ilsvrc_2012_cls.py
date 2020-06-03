@@ -1098,7 +1098,7 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True, shuffle=True, val_onl
         val_infos = f.readlines()
     for i, (fname, info) in enumerate(zip(val_fnames, val_infos)):
         if i % 1000 == 0:
-            print('Saving validation data: {:8,}/{}...'.format(i, num_examples))
+            print('Saving validation data: {:8,}/{:,}...'.format(i, num_examples))
 
         img_dir = os.path.join(val_dir, fname)
         ext = img_dir.split('.')[-1]
