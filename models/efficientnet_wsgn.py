@@ -43,6 +43,7 @@ class EfficientNet(ConvNet):
         len_m = len(multipliers)
         self._num_blocks = min([len_c, len_k, len_s, len_r, len_m])
 
+        self._curr_block = 0
         with tf.variable_scope('block_0'):
             with tf.variable_scope('conv_0'):
                 k = kernels[0]

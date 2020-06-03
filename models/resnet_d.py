@@ -40,6 +40,7 @@ class ResNetD(ConvNet):  # Base model. ResNet-D-50
         len_r = len(res_units)
         self._num_blocks = min([len_c, len_k, len_s, len_r])
 
+        self._curr_block = 0
         with tf.variable_scope('block_0'):
             with tf.variable_scope('conv_0'):
                 k = kernels[0] + self.striding_kernel_offset

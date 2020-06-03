@@ -19,6 +19,10 @@ class ConvNet(object):
         :param loss_weights: list or tuple, weighting factors for softmax losses.
         :param kwargs: dict, (hyper)parameters.
         """
+        self._block_list = []
+        self._num_blocks = 0
+        self._curr_block = None  # Use this instance to group variables into blocks (block None: always trainable)
+
         graph = tf.get_default_graph()
         config = tf.ConfigProto()
         config.intra_op_parallelism_threads = kwargs.get('num_parallel_calls', 0)
@@ -158,8 +162,13 @@ class ConvNet(object):
                     self.pred = tf.math.argmax(self.pred, axis=-1, output_type=tf.int32)
                     self.pred = self.pred[..., tf.newaxis]
 
-        print('\nNumber of GPUs : {}'.format(self.num_devices))
-        print('Total number of blocks: {}'.format(self.num_blocks))
+        for blk in self.block_list:
+            if len(tf.get_collection('block_{}_variables'.format(blk))) == 0:
+                self._block_list.remove(blk)
+        self._num_blocks = len(self.block_list)
+
+        print('\nNumber of computing devices : {}'.format(self.num_devices))
+        print('Total number of variable blocks: {} {}'.format(self.num_blocks, self.block_list))
         print('\n# FLOPs : {:-15,}\n# Params: {:-15,}\n# Nodes : {:-15,}\n'.format(self.flops, self.params, self.nodes))
 
         info = sorted(self.layer_info, key=lambda layer: layer['flops'], reverse=True)
@@ -186,6 +195,15 @@ class ConvNet(object):
             else:
                 print(')\n')
                 break
+
+    def __setattr__(self, key, value):
+        if key == '_curr_block':
+            self.__dict__[key] = value
+            if value not in self.block_list:
+                self._block_list.append(value)
+            self._num_blocks = len(self.block_list)
+        else:
+            super(ConvNet, self).__setattr__(key, value)
 
     def _init_params(self, **kwargs):
         """
@@ -260,6 +278,10 @@ class ConvNet(object):
         return self._device_offset
 
     @property
+    def block_list(self):
+        return tuple(self._block_list)
+
+    @property
     def num_blocks(self):
         return self._num_blocks
 
@@ -320,8 +342,7 @@ class ConvNet(object):
         with tf.variable_scope(tf.get_variable_scope()):
             for i in range(self.device_offset, self.num_devices + self.device_offset):
                 self._curr_device = i
-                self._curr_block = 0
-                self._num_blocks = 1  # Total number of blocks
+                self._curr_block = None
                 self._curr_dependent_op = 0  # For ops with dependencies between GPUs such as BN
                 with tf.device('/{}:'.format(self.compute_device) + str(i)):
                     with tf.name_scope('{}'.format(self.compute_device + str(i))):

@@ -21,8 +21,7 @@ class GAN(ConvNet):
         with tf.variable_scope(tf.get_variable_scope()):
             for i in range(self.device_offset, self.num_devices + self.device_offset):
                 self._curr_device = i
-                self._curr_block = 0
-                self._num_blocks = 1  # Total number of blocks
+                self._curr_block = None
                 self._num_blocks_g = 1  # Number of generator blocks
                 self._curr_dependent_op = 0  # For ops with dependencies between GPUs such as BN
                 with tf.device('/{}:'.format(self.compute_device) + str(i)):
@@ -66,7 +65,6 @@ class GAN(ConvNet):
                             self.X = self.d['generate']
                             tf.get_variable_scope().reuse_variables()
                             d_fake = self._build_model()
-                            self._num_blocks += self.num_blocks_g
                         if self.dtype is not tf.float32:
                             with tf.name_scope('{}/cast/'.format(self.compute_device + str(i))):
                                 d_real['logits'] = tf.cast(d_real['logits'], dtype=tf.float32)

@@ -12,6 +12,7 @@ class UNet(SegNet):
         x = self.X
 
         encoder_channels = self.channels
+        self._curr_block = 0
         for i, c in enumerate(encoder_channels):
             with tf.variable_scope('block_{}'.format(self._curr_block)):
                 if i > 0:

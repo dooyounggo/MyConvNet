@@ -35,6 +35,7 @@ class ResNet(ConvNet):  # Base model. ResNet-50 with weight standardization and 
         len_d = len(dilation)
         self._num_blocks = min([len_c, len_k, len_s, len_r, len_d])
 
+        self._curr_block = 0
         with tf.variable_scope('block_0'):
             with tf.variable_scope('conv_0'):
                 x = self.conv_layer(X_input, kernels[0], strides[0], channels[0], padding='SAME', biased=False,
