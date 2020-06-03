@@ -30,22 +30,22 @@ if __name__ == '__main__':
     train_size = len(image_dirs)
     if Param.val_dir is None:
         val_size = int(train_size*0.1) if Param.val_sample_size is None else Param.val_sample_size
-        val_set = DataSet(image_dirs[:val_size], label_dirs[:val_size], class_names=class_names,
+        val_set = DataSet(image_dirs[:val_size], label_dirs[:val_size],
                           out_size=Param.d['image_size_test'], task_type=DataSet.IMAGE_ONLY,
                           resize_method=Param.d['resize_type_test'], resize_randomness=Param.d['resize_random_test'],
                           **Param.d)
-        train_set = DataSet(image_dirs[val_size:], label_dirs[val_size:], class_names=class_names,
+        train_set = DataSet(image_dirs[val_size:], label_dirs[val_size:],
                             out_size=Param.d['image_size'], task_type=DataSet.IMAGE_ONLY,
                             resize_method=Param.d['resize_type'], resize_randomness=Param.d['resize_random'],
                             **Param.d)
     else:
         image_dirs_val, label_dirs_val, _ = read_subset(Param.val_dir, shuffle=Param.d['shuffle'],
                                                         sample_size=Param.val_sample_size)
-        val_set = DataSet(image_dirs_val, label_dirs_val, class_names=class_names,
+        val_set = DataSet(image_dirs_val, label_dirs_val,
                           out_size=Param.d['image_size_test'], task_type=DataSet.IMAGE_ONLY,
                           resize_method=Param.d['resize_type_test'], resize_randomness=Param.d['resize_random_test'],
                           **Param.d)
-        train_set = DataSet(image_dirs, label_dirs, class_names=class_names,
+        train_set = DataSet(image_dirs, label_dirs,
                             out_size=Param.d['image_size'], task_type=DataSet.IMAGE_ONLY,
                             resize_method=Param.d['resize_type'], resize_randomness=Param.d['resize_random'],
                             **Param.d)
