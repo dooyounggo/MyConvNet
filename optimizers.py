@@ -211,15 +211,13 @@ class Optimizer(object):
 
             var_list = []
             if blocks_to_load is None:
-                for i in range(self.model.num_blocks):
-                    var_list += tf.get_collection('block_{}_variables'.format(i))
-                    var_list += tf.get_collection('block_{}_ema_variables'.format(i))
-                var_list += tf.get_collection('block_{}_variables'.format(None))
-                var_list += tf.get_collection('block_{}_ema_variables'.format(None))
+                for blk in self.model.block_list:
+                    var_list += tf.get_collection('block_{}_variables'.format(blk))
+                    var_list += tf.get_collection('block_{}_ema_variables'.format(blk))
             else:
-                for i in blocks_to_load:
-                    var_list += tf.get_collection('block_{}_variables'.format(i))
-                    var_list += tf.get_collection('block_{}_ema_variables'.format(i))
+                for blk in blocks_to_load:
+                    var_list += tf.get_collection('block_{}_variables'.format(blk))
+                    var_list += tf.get_collection('block_{}_ema_variables'.format(blk))
 
             variables_not_loaded = []
             if load_moving_average:
