@@ -532,10 +532,11 @@ class NullEvaluator(Evaluator):
 class PSNREvaluator(Evaluator):
     def check_params(self, **kwargs):
         self.max_value = kwargs.get('max_value', 1.0)
+        self.max_score = kwargs.get('max_score', 100)
 
     @property
     def name(self):
-        return 'PSNR'
+        return 'Peak Signal-to-Noise Ratio'
 
     @property
     def worst_score(self):
@@ -551,4 +552,5 @@ class PSNREvaluator(Evaluator):
 
         mse = np.mean((y_true - y_pred)**2, axis=(1, 2, 3))
         score = 10*np.log10(self.max_value**2/mse)
+        score = np.where(np.isinf(score), self.max_score*np.ones_like(score), score)
         return np.mean(score)
