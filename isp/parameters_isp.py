@@ -81,7 +81,7 @@ class Parameters(object):
 
     d['zero_pad_ratio'] = 0.0  # Zero padding ratio = (zero_padded_image_size - nn_input_size)/nn_input_size
 
-    d['rand_blur_stddev'] = 0.5  # Maximum sigma for Gaussian blur
+    d['rand_blur_stddev'] = 1.0  # Maximum sigma for Gaussian blur
 
     d['rand_affine'] = True  # Bool
     d['rand_scale'] = (1.0, 1.0)  # Minimum and maximum scaling factors (x/y)
