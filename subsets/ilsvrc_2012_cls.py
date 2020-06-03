@@ -1080,7 +1080,6 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True, shuffle=True, val_onl
             wrt = csv.writer(f)
             wrt.writerow([str(label)])
             f.close()
-            i += 1
 
     if not os.path.isdir(val_dir) and os.path.isfile(val_dir + '.tar'):
         val_tar = tarfile.open(val_dir + '.tar', 'r:')
@@ -1114,7 +1113,6 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True, shuffle=True, val_onl
         wrt = csv.writer(f)
         wrt.writerow([str(class_idx)])
         f.close()
-        i += 1
 
     print('\nDone')
 
