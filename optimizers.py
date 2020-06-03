@@ -487,10 +487,17 @@ class Optimizer(object):
                                           eval_loss, eval_score, self.init_learning_rate*self.curr_multiplier,
                                           time.time() - start_time))
                     if len(eval_losses) > 0:
+                        if self.model.num_classes is None:
+                            loss_thres = min(eval_losses)*2
+                        else:
+                            if self.model.num_classes > 1:
+                                loss_thres = max([2*np.log(self.model.num_classes), min(eval_losses)*2])
+                            else:
+                                loss_thres = min(eval_losses)*2
                         plot_learning_curve(train_losses, train_scores,
                                             eval_losses=eval_losses, eval_scores=eval_scores,
                                             name=self.evaluator.name,
-                                            loss_threshold=max([2*np.log(self.model.num_classes), min(eval_losses)*2]),
+                                            loss_threshold=loss_thres,
                                             mode=self.evaluator.mode, img_dir=save_dir, annotations=annotations,
                                             start_step=start, validation_frequency=val_freq)
 
@@ -506,9 +513,16 @@ class Optimizer(object):
                                   '|Elapsed time: {:5.0f} sec'
                                   .format(self.curr_epoch, self.num_epochs, step_loss, step_score,
                                           self.init_learning_rate*self.curr_multiplier, time.time() - start_time))
+                    if self.model.num_classes is None:
+                        loss_thres = min(train_losses)*2
+                    else:
+                        if self.model.num_classes > 1:
+                            loss_thres = max([2*np.log(self.model.num_classes), min(train_losses)*2])
+                        else:
+                            loss_thres = min(train_losses)*2
                     plot_learning_curve(train_losses, train_scores, eval_losses=None, eval_scores=None,
                                         name=self.evaluator.name,
-                                        loss_threshold=max([2*np.log(self.model.num_classes), min(train_losses)*2]),
+                                        loss_threshold=loss_thres,
                                         mode=self.evaluator.mode, img_dir=save_dir, annotations=annotations,
                                         start_step=start, validation_frequency=val_freq)
 
