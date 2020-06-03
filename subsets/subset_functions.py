@@ -134,6 +134,18 @@ def read_subset_seg(subset_dir, shuffle=False, sample_size=None, image_dir=None,
     return image_dirs, label_dirs
 
 
+def recursive_search(dirs, file_list):
+    for path in dirs:
+        if os.path.isdir(path):
+            sub_dirs = os.listdir(path)
+            if sub_dirs:
+                sub_dirs.sort()
+                sub_dirs = [os.path.join(path, sd) for sd in sub_dirs]
+                recursive_search(sub_dirs, file_list)
+        else:
+            file_list.append(path)
+
+
 def random_resized_crop(image, out_size, interpolation=cv2.INTER_LINEAR, random=True, scale=(1.0, 1.0),
                         ratio=(1.0, 1.0), max_attempts=10, min_object_size=None, padding=True, pad_value=0.0):
 
