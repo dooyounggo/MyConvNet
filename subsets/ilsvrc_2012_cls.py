@@ -1126,7 +1126,7 @@ if __name__ == '__main__':
     parser.add_argument('--dest', '--destination_dir', help='Path to processed data', type=str,
                         default='./tfdatasets/ilsvrc2012_cls')
     parser.add_argument('--copy', help='Whether to copy images instead of moving them', type=str, default='True')
-    parser.add_argument('--shuffle', help='Whether to shuffle training images', type=str, default='False')
+    parser.add_argument('--shuffle', help='Whether to shuffle training images', type=str, default='True')
     parser.add_argument('--val_only', help='Whether to process validation images only', type=str, default='False')
 
     args = parser.parse_args()
