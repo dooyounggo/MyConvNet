@@ -15,123 +15,119 @@ IMAGE_FORMATS = ('bmp', 'dib', 'jpeg', 'jpe', 'jp2', 'png', 'webp', 'pbm', 'pgm'
 def read_subset_cls(subset_dir, shuffle=False, sample_size=None, image_dir=None, label_dir=None):
     filenames = os.listdir(subset_dir)
     filenames.sort()
-    image_dirs = []
-    label_dirs = []
+    image_paths = []
+    label_paths = []
     for fname in filenames:
         ext = fname.split('.')[-1].lower()
         full_filename = os.path.join(subset_dir, fname)
         if ext == 'csv':
-            label_dirs.append(full_filename)
+            label_paths.append(full_filename)
         elif ext in ('jpeg', 'jpg', 'bmp'):
-            image_dirs.append(full_filename)
+            image_paths.append(full_filename)
 
     if image_dir is not None:
-        filenames = os.listdir(os.path.join(subset_dir, image_dir))
-        filenames.sort()
-        image_dirs = []
-        for fname in filenames:
+        full_filenames = []
+        recursive_search([image_dir], full_filenames)
+        image_paths = []
+        for fname in full_filenames:
             ext = fname.split('.')[-1].lower()
-            full_filename = os.path.join(subset_dir, image_dir, fname)
             if ext in IMAGE_FORMATS:
-                image_dirs.append(full_filename)
+                image_paths.append(fname)
 
     if label_dir is not None:
-        filenames = os.listdir(os.path.join(subset_dir, label_dir))
-        filenames.sort()
-        label_dirs = []
-        for fname in filenames:
+        full_filenames = []
+        recursive_search([label_dir], full_filenames)
+        label_paths = []
+        for fname in full_filenames:
             ext = fname.split('.')[-1].lower()
-            full_filename = os.path.join(subset_dir, label_dir, fname)
             if ext in ('csv', 'txt'):
-                label_dirs.append(full_filename)
+                label_paths.append(fname)
 
-    if len(label_dirs) == 0:
-        label_dirs = None
+    if len(label_paths) == 0:
+        label_paths = None
     else:
-        assert len(image_dirs) == len(label_dirs), \
-            'Number of examples mismatch: {} images vs. {} labels'.format(len(image_dirs), len(label_dirs))
+        assert len(image_paths) == len(label_paths), \
+            'Number of examples mismatch: {} images vs. {} labels'.format(len(image_paths), len(label_paths))
 
-    set_size = len(image_dirs)
+    set_size = len(image_paths)
     if sample_size is not None and sample_size < set_size:
         if shuffle:
             idx = np.random.choice(np.arange(set_size), size=sample_size, replace=False).astype(int)
-            image_dirs = list(np.array(image_dirs)[idx])
-            if label_dirs is not None:
-                label_dirs = list(np.array(label_dirs)[idx])
+            image_paths = list(np.array(image_paths)[idx])
+            if label_paths is not None:
+                label_paths = list(np.array(label_paths)[idx])
         else:
-            image_dirs = image_dirs[:sample_size]
-            if label_dirs is not None:
-                label_dirs = label_dirs[:sample_size]
+            image_paths = image_paths[:sample_size]
+            if label_paths is not None:
+                label_paths = label_paths[:sample_size]
     else:
         if shuffle:
             idx = np.arange(set_size)
             np.random.shuffle(idx)
-            image_dirs = list(np.array(image_dirs)[idx])
-            if label_dirs is not None:
-                label_dirs = list(np.array(label_dirs)[idx])
+            image_paths = list(np.array(image_paths)[idx])
+            if label_paths is not None:
+                label_paths = list(np.array(label_paths)[idx])
 
-    return image_dirs, label_dirs
+    return image_paths, label_paths
 
 
 def read_subset_seg(subset_dir, shuffle=False, sample_size=None, image_dir=None, label_dir=None):
     filenames = os.listdir(subset_dir)
     filenames.sort()
-    image_dirs = []
-    label_dirs = []
+    image_paths = []
+    label_paths = []
     for fname in filenames:
         ext = fname.split('.')[-1].lower()
         full_filename = os.path.join(subset_dir, fname)
         if ext == 'png':
-            label_dirs.append(full_filename)
+            label_paths.append(full_filename)
         elif ext in ('jpeg', 'jpg', 'bmp'):
-            image_dirs.append(full_filename)
+            image_paths.append(full_filename)
 
     if image_dir is not None:
-        filenames = os.listdir(os.path.join(subset_dir, image_dir))
-        filenames.sort()
-        image_dirs = []
-        for fname in filenames:
+        full_filenames = []
+        recursive_search([image_dir], full_filenames)
+        image_paths = []
+        for fname in full_filenames:
             ext = fname.split('.')[-1].lower()
-            full_filename = os.path.join(subset_dir, image_dir, fname)
             if ext in IMAGE_FORMATS:
-                image_dirs.append(full_filename)
+                image_paths.append(fname)
 
     if label_dir is not None:
-        filenames = os.listdir(os.path.join(subset_dir, label_dir))
-        filenames.sort()
-        label_dirs = []
-        for fname in filenames:
+        full_filenames = []
+        recursive_search([label_dir], full_filenames)
+        label_paths = []
+        for fname in full_filenames:
             ext = fname.split('.')[-1].lower()
-            full_filename = os.path.join(subset_dir, label_dir, fname)
             if ext in IMAGE_FORMATS:
-                label_dirs.append(full_filename)
+                label_paths.append(fname)
 
-    if len(label_dirs) == 0:
-        label_dirs = None
+    if len(label_paths) == 0:
+        label_paths = None
     else:
-        assert len(image_dirs) == len(label_dirs), \
-            'Number of examples mismatch: {} images vs. {} labels'.format(len(image_dirs), len(label_dirs))
+        assert len(image_paths) == len(label_paths), \
+            'Number of examples mismatch: {} images vs. {} labels'.format(len(image_paths), len(label_paths))
 
-    set_size = len(image_dirs)
+    set_size = len(image_paths)
     if sample_size is not None and sample_size < set_size:
         if shuffle:
             idx = np.random.choice(np.arange(set_size), size=sample_size, replace=False).astype(int)
-            image_dirs = list(np.array(image_dirs)[idx])
-            if label_dirs is not None:
-                label_dirs = list(np.array(label_dirs)[idx])
+            image_paths = list(np.array(image_paths)[idx])
+            if label_paths is not None:
+                label_paths = list(np.array(label_paths)[idx])
         else:
-            image_dirs = image_dirs[:sample_size]
-            if label_dirs is not None:
-                label_dirs = label_dirs[:sample_size]
+            image_paths = image_paths[:sample_size]
+            if label_paths is not None:
+                label_paths = label_paths[:sample_size]
     else:
         if shuffle:
             idx = np.arange(set_size)
             np.random.shuffle(idx)
-            image_dirs = list(np.array(image_dirs)[idx])
-            if label_dirs is not None:
-                label_dirs = list(np.array(label_dirs)[idx])
+            image_paths = list(np.array(image_paths)[idx])
+            if label_paths is not None:
+                label_paths = list(np.array(label_paths)[idx])
 
-    return image_dirs, label_dirs
+    return image_paths, label_paths
 
 
 def recursive_search(dirs, file_list):
