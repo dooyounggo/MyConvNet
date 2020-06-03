@@ -164,7 +164,7 @@ if __name__ == '__main__':
     else:
         shuffle = False
 
-    print('\nPath to original data:       \"{}\"'.format(subset_dir))
+    print('\nPath to original data:  \"{}\"'.format(subset_dir))
     print('Path to processed data: \"{}\"'.format(destination_dir))
     print('copy = {}, shuffle = {}'.format(copy, shuffle))
 
