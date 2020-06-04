@@ -64,15 +64,19 @@ class Parameters(object):
     d['num_epochs'] = 30
     d['base_learning_rate'] = 0.0016  # Learning rate = base_learning_rate*batch_size/256 (linear scaling rule)
     d['momentum'] = 0.9  # Momentum of optimizers
+    d['moving_average_decay'] = 0.99  # Decay rate of exponential moving average
+    d['batch_norm_decay'] = 0.99  # Decay rate of batch statistics
 
     d['learning_rate_decay_method'] = None  # None, 'step', 'exponential', 'polynomial', 'cosine' (default)
     d['learning_rate_decay_params'] = 0.0
+    d['learning_warmup_epoch'] = 1.0  # Linear warmup epoch
 
     d['max_to_keep'] = 5  # Maximum number of models to save
     d['score_threshold'] = 0.0  # Model is saved if its score is better by this threshold
 
     # FIXME: Regularization hyperparameters
     d['edge_loss_factor'] = 0.0
+    d['denoising_loss_factor'] = 1.0
     d['l1_reg'] = 0.0  # L1 regularization factor
     d['l2_reg'] = 0.0  # L2 regularization factor
 
