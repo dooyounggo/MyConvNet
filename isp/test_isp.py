@@ -50,10 +50,19 @@ if __name__ == '__main__':
     utils.imshow_subplot(test_y_true, num_rows=3, num_cols=3, figure_title='GT Images')
     utils.imshow_subplot(test_y_pred, num_rows=3, num_cols=3, figure_title='Denoised Images')
 
+    print('Saving test results ...', end='')
     save_dir = os.path.join(Param.save_dir, 'results_test')
+    noisy_dir = os.path.join(save_dir, 'noisy')
+    gt_dir = os.path.join(save_dir, 'ground_truth')
+    denoised_dir = os.path.join(save_dir, 'denoised')
+    os.makedirs(save_dir, exist_ok=True)
+    os.makedirs(noisy_dir, exist_ok=True)
+    os.makedirs(gt_dir, exist_ok=True)
+    os.makedirs(denoised_dir, exist_ok=True)
     for i, (x, y_t, y_p) in enumerate(zip(test_x, test_y_true, test_y_pred)):
-        cv2.imwrite(os.path.join(save_dir, 'noisy', f'{i:5d}.jpg'), x, [cv2.IMWRITE_JPEG_QUALITY, 100])
-        cv2.imwrite(os.path.join(save_dir, 'ground_truth', f'{i:5d}.jpg'), y_t, [cv2.IMWRITE_JPEG_QUALITY, 100])
-        cv2.imwrite(os.path.join(save_dir, 'denoised', f'{i:5d}.jpg'), y_p, [cv2.IMWRITE_JPEG_QUALITY, 100])
+        cv2.imwrite(os.path.join(noisy_dir, f'{i:5d}.jpg'), x, [cv2.IMWRITE_JPEG_QUALITY, 100])
+        cv2.imwrite(os.path.join(gt_dir, f'{i:5d}.jpg'), y_t, [cv2.IMWRITE_JPEG_QUALITY, 100])
+        cv2.imwrite(os.path.join(denoised_dir, f'{i:5d}.jpg'), y_p, [cv2.IMWRITE_JPEG_QUALITY, 100])
+    print('Done.')
 
     model.session.close()
