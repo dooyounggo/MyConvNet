@@ -94,11 +94,13 @@ class Unprocessing(ConvNet):
     def _build_loss(self, **kwargs):
         edge_loss_factor = kwargs.get('edge_loss_factor', 0.0)
         with tf.variable_scope('loss'):
-            loss = tf.losses.absolute_difference(self.Y, self.pred)
+            mask = tf.ones([1, self.input_size[0] - 4, self.input_size[1] - 4, 1])
+            mask = tf.pad(mask, [[0, 0], [2, 2], [2, 2], [0, 0]], constant_values=0.0)  # Mask distorted boundaries
+            loss = tf.losses.absolute_difference(mask*self.Y, mask*self.pred)
             if edge_loss_factor > 0.0:
                 edge_y = tf.nn.depthwise_conv2d(self.Y, self.sobel_filter, strides=[1, 1, 1, 1], padding='SAME')
                 edge_pred = tf.nn.depthwise_conv2d(self.pred, self.sobel_filter, strides=[1, 1, 1, 1], padding='SAME')
-                loss += edge_loss_factor*tf.losses.mean_squared_error(edge_y, edge_pred)
+                loss += edge_loss_factor*tf.losses.mean_squared_error(mask*edge_y, mask*edge_pred)
         return loss
 
     @abstractmethod
