@@ -52,7 +52,7 @@ Some scripts may not support command-line execution.
 
 ### Packages (Installed with conda)
 - Python: 3.7
-- tensorflow-gpu: 1.14.0 or 1.15.0 (cudatoolkit: 10.0, cudnn: 7.6.5)
+- tensorflow-gpu: >= 1.14.0 (cudatoolkit: 10.0, cudnn: 7.6.5)
 - numpy: 1.17.4
 - scikit-image: 0.15.0
 - scikit-learn: 0.22
