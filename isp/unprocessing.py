@@ -14,6 +14,14 @@ class Unprocessing(ConvNet):
     def _init_model(self, **kwargs):
         output_shapes = ([None, None, None, self.input_size[-1]],
                          None)
+        with tf.device(self.param_device):
+            with tf.variable_scope('calc/'):
+                with tf.variable_scope('sobel'):
+                    sobel_x = tf.constant([[1, 0, -1], [2, 0, -2], [1, 0, -1]], dtype=tf.float32)[..., None, None]
+                    sobel_y = tf.constant([[1, 2, 1], [0, 0, 0], [-1, -2, -1]], dtype=tf.float32)[..., None, None]
+                    sobel_x = tf.tile(sobel_x, [1, 1, 3, 1])
+                    sobel_y = tf.tile(sobel_y, [1, 1, 3, 1])
+                    self.sobel_filter = tf.concat([sobel_x, sobel_y], axis=-1)
         with tf.variable_scope(tf.get_variable_scope()):
             for i in range(self.device_offset, self.num_devices + self.device_offset):
                 self._curr_device = i
@@ -84,8 +92,13 @@ class Unprocessing(ConvNet):
                 self.debug_images_1 = self.pred
 
     def _build_loss(self, **kwargs):
+        edge_loss_factor = kwargs.get('edge_loss_factor', 0.0)
         with tf.variable_scope('loss'):
             loss = tf.losses.absolute_difference(self.Y, self.pred)
+            if edge_loss_factor > 0.0:
+                edge_y = tf.nn.depthwise_conv2d(self.Y, self.sobel_filter, strides=[1, 1, 1, 1], padding='SAME')
+                edge_pred = tf.nn.depthwise_conv2d(self.pred, self.sobel_filter, strides=[1, 1, 1, 1], padding='SAME')
+                loss += edge_loss_factor*tf.losses.mean_squared_error(edge_y, edge_pred)
         return loss
 
     @abstractmethod
