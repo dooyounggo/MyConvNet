@@ -1,5 +1,6 @@
 from isp.parameters_isp import *
 import cv2
+from subsets.subset_functions import to_int
 
 
 if __name__ == '__main__':
@@ -60,9 +61,9 @@ if __name__ == '__main__':
     os.makedirs(gt_dir, exist_ok=True)
     os.makedirs(denoised_dir, exist_ok=True)
     for i, (x, y_t, y_p) in enumerate(zip(test_x, test_y_true, test_y_pred)):
-        cv2.imwrite(os.path.join(noisy_dir, f'{i:5d}.jpg'), x, [cv2.IMWRITE_JPEG_QUALITY, 100])
-        cv2.imwrite(os.path.join(gt_dir, f'{i:5d}.jpg'), y_t, [cv2.IMWRITE_JPEG_QUALITY, 100])
-        cv2.imwrite(os.path.join(denoised_dir, f'{i:5d}.jpg'), y_p, [cv2.IMWRITE_JPEG_QUALITY, 100])
+        cv2.imwrite(os.path.join(noisy_dir, f'{i:5d}.jpg'), to_int(x), [cv2.IMWRITE_JPEG_QUALITY, 100])
+        cv2.imwrite(os.path.join(gt_dir, f'{i:5d}.jpg'), to_int(y_t), [cv2.IMWRITE_JPEG_QUALITY, 100])
+        cv2.imwrite(os.path.join(denoised_dir, f'{i:5d}.jpg'), to_int(y_p), [cv2.IMWRITE_JPEG_QUALITY, 100])
     print('Done.')
 
     model.session.close()
