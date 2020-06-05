@@ -67,7 +67,7 @@ class Parameters(object):
     d['moving_average_decay'] = 0.99  # Decay rate of exponential moving average
     d['batch_norm_decay'] = 0.99  # Decay rate of batch statistics
 
-    d['learning_rate_decay_method'] = None  # None, 'step', 'exponential', 'polynomial', 'cosine' (default)
+    d['learning_rate_decay_method'] = 'cosine'  # None, 'step', 'exponential', 'polynomial', 'cosine' (default)
     d['learning_rate_decay_params'] = 0.0
     d['learning_warmup_epoch'] = 1.0  # Linear warmup epoch
 
