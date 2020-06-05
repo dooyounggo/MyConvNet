@@ -653,24 +653,31 @@ class ConvNet(object):
                 max_stddev *= self.linear_schedule_multiplier
             elif scheduling < 0:
                 max_stddev *= 1.0 - self.linear_schedule_multiplier
-
-            row_base = -0.5*np.array([[7, 6, 5, 4, 3, 2, 1, 0, 1, 2, 3, 4, 5, 6, 7]], dtype=np.float32)**2
-            column_base = np.transpose(row_base)
-            row_base = tf.tile(tf.constant(row_base[:, :, np.newaxis, np.newaxis], dtype=tf.float32),
-                               multiples=(1, 1, self.input_size[-1], 1))
-            column_base = tf.tile(tf.constant(column_base[:, :, np.newaxis, np.newaxis], dtype=tf.float32),
-                                  multiples=(1, 1, self.input_size[-1], 1))
-
-            var = tf.random.uniform([], minval=0.0, maxval=max_stddev, dtype=tf.float32)**2
-            h_filt = tf.math.exp(column_base/var)
-            h_filt = h_filt/tf.reduce_sum(h_filt, axis=0, keepdims=True)
-            w_filt = tf.math.exp(row_base/var)
-            w_filt = w_filt/tf.reduce_sum(w_filt, axis=1, keepdims=True)
-
-            x = tf.nn.depthwise_conv2d(x, h_filt, strides=[1, 1, 1, 1], padding='SAME')
-            x = tf.nn.depthwise_conv2d(x, w_filt, strides=[1, 1, 1, 1], padding='SAME')
+            self.max_stddev = max_stddev
+            x = tf.map_fn(self.gaussian_blur_fn, x, parallel_iterations=32, back_prop=False)
 
         return x
+
+    def gaussian_blur_fn(self, image):
+        in_channels = image.get_shape().as_list()[-1]
+        row_base = -0.5 * np.array([[7, 6, 5, 4, 3, 2, 1, 0, 1, 2, 3, 4, 5, 6, 7]], dtype=np.float32)**2
+        column_base = np.transpose(row_base)
+        row_base = tf.tile(tf.constant(row_base[:, :, np.newaxis, np.newaxis], dtype=tf.float32),
+                           multiples=(1, 1, in_channels, 1))
+        column_base = tf.tile(tf.constant(column_base[:, :, np.newaxis, np.newaxis], dtype=tf.float32),
+                              multiples=(1, 1, in_channels, 1))
+
+        var = tf.random.uniform([], minval=0.0, maxval=self.max_stddev, dtype=tf.float32)**2
+        h_filt = tf.math.exp(column_base/var)
+        h_filt = h_filt/tf.reduce_sum(h_filt, axis=0, keepdims=True)
+        w_filt = tf.math.exp(row_base/var)
+        w_filt = w_filt/tf.reduce_sum(w_filt, axis=1, keepdims=True)
+
+        image = image[tf.newaxis, ...]
+        image = tf.nn.depthwise_conv2d(image, h_filt, strides=[1, 1, 1, 1], padding='SAME')
+        image = tf.nn.depthwise_conv2d(image, w_filt, strides=[1, 1, 1, 1], padding='SAME')
+
+        return image[0, ...]
 
     def affine_augment(self, x, mask=None, **kwargs):  # Scale, ratio, translation, rotation, shear, and reflection
         scheduling = kwargs.get('rand_affine_scheduling', False)
