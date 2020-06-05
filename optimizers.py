@@ -89,7 +89,7 @@ class Optimizer(object):
         with tf.variable_scope(tf.get_variable_scope()):
             for i in range(self.model.device_offset, self.model.num_devices + self.model.device_offset):
                 with tf.device('/{}:'.format(self.model.compute_device) + str(i)):
-                    with tf.variable_scope('gpu{}/gradients'.format(i)):
+                    with tf.variable_scope('{}/gradients'.format(self.model.compute_device + str(i))):
                         loss = self.model.losses[i - 0]
                         if loss_scaling_factor > 1.0:
                             loss *= loss_scaling_factor
