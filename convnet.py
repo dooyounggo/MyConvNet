@@ -654,18 +654,18 @@ class ConvNet(object):
             elif scheduling < 0:
                 max_stddev *= 1.0 - self.linear_schedule_multiplier
 
-            column_base = -0.5*np.array([[7, 6, 5, 4, 3, 2, 1, 0, 1, 2, 3, 4, 5, 6, 7]], dtype=np.float32)**2
-            row_base = np.transpose(column_base)
-            column_base = tf.tile(tf.constant(column_base[:, :, np.newaxis, np.newaxis], dtype=tf.float32),
-                                  multiples=(1, 1, self.input_size[-1], 1))
+            row_base = -0.5*np.array([[7, 6, 5, 4, 3, 2, 1, 0, 1, 2, 3, 4, 5, 6, 7]], dtype=np.float32)**2
+            column_base = np.transpose(row_base)
             row_base = tf.tile(tf.constant(row_base[:, :, np.newaxis, np.newaxis], dtype=tf.float32),
                                multiples=(1, 1, self.input_size[-1], 1))
-            pi = tf.constant(np.pi, dtype=tf.float32)
+            column_base = tf.tile(tf.constant(column_base[:, :, np.newaxis, np.newaxis], dtype=tf.float32),
+                                  multiples=(1, 1, self.input_size[-1], 1))
 
             var = tf.random.uniform([], minval=0.0, maxval=max_stddev, dtype=tf.float32)**2
-            denom = tf.math.sqrt(2*pi*var)
-            h_filt = tf.math.exp(column_base/var)/denom
-            w_filt = tf.math.exp(row_base/var)/denom
+            h_filt = tf.math.exp(column_base/var)
+            h_filt = h_filt/tf.reduce_sum(h_filt, axis=0, keepdims=True)
+            w_filt = tf.math.exp(row_base/var)
+            w_filt = w_filt/tf.reduce_sum(w_filt, axis=1, keepdims=True)
 
             x = tf.nn.depthwise_conv2d(x, h_filt, strides=[1, 1, 1, 1], padding='SAME')
             x = tf.nn.depthwise_conv2d(x, w_filt, strides=[1, 1, 1, 1], padding='SAME')
