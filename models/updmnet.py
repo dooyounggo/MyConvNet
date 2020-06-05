@@ -50,8 +50,12 @@ class UPDMNet(UnprocessingDemosaic):
             d['denoised'] = denoised
             if self.channel_first:
                 denoised = tf.transpose(denoised, perm=[0, 2, 3, 1])
+            if self.dtype is not tf.float32:
+                denoised = tf.cast(denoised, dtype=tf.float32)
             denoised_rgb = process.demosaic(denoised)
             denoised_rgb.set_shape([None] + list(self.input_size))
+            if self.dtype is not tf.float32:
+                denoised_rgb = tf.cast(denoised_rgb, dtype=self.dtype)
             if self.channel_first:
                 denoised_rgb = tf.transpose(denoised_rgb, perm=[0, 3, 1, 2])
 
