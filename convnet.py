@@ -2019,7 +2019,7 @@ class ConvNet(object):
 
         return x
 
-    def upsampling_2d_layer(self, x, scale=2, out_shape=None, align_corners=False,
+    def upsampling_2d_layer(self, x, scale=2, out_shape=None, align_corners=False, force_unaligned=False,
                             upsampling_method='bilinear', name='upsampling'):
         with tf.variable_scope(name):
             if self.channel_first:
@@ -2029,12 +2029,17 @@ class ConvNet(object):
             in_shape = x.get_shape()
             if out_shape is None:
                 out_shape = [in_shape[1]*scale, in_shape[2]*scale]
+            if force_unaligned:
+                align_corners = False
+                half_pixel_centers = False
+            else:
+                half_pixel_centers = not align_corners
             if upsampling_method.lower() == 'nearest' or upsampling_method.lower() == 'nearest_neighbor':
                 x = tf.image.resize_nearest_neighbor(x, out_shape, align_corners=align_corners,
-                                                     half_pixel_centers=not align_corners, name=name)
+                                                     half_pixel_centers=half_pixel_centers, name=name)
             elif upsampling_method.lower() == 'bilinear':
                 x = tf.image.resize_bilinear(x, out_shape, align_corners=align_corners,
-                                             half_pixel_centers=not align_corners, name=name)
+                                             half_pixel_centers=half_pixel_centers, name=name)
             else:
                 raise ValueError('Upsampling method of {} is not supported'.format(upsampling_method))
 
