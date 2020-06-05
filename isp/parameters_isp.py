@@ -8,7 +8,7 @@ import tensorflow.compat.v1 as tf
 import matplotlib.pyplot as plt
 from initialization import init_params
 from dataset import DataSet
-from subsets.ilsvrc_2012_cls import read_subset
+from subsets.places365_standard import read_subset
 from models.upinet import UPINet as ConvNet
 from optimizers import AdamOptimizer as Optimizer
 from evaluators import PSNREvaluator as Evaluator
