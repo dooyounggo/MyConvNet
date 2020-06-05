@@ -324,9 +324,9 @@ class Optimizer(object):
                                  max_outputs=4)
                 tf.summary.histogram('Image Histogram', self.model.X_all)
                 for blk in range(self.model.block_list):
-                    weights = tf.get_collection('block_{}_weight_variables'.format(i))
+                    weights = tf.get_collection('block_{}_weight_variables'.format(blk))
                     if len(weights) > 0:
-                        tf.summary.histogram('Block {} Weight Histogram'.format(i), weights[0])
+                        tf.summary.histogram('Block {} Weight Histogram'.format(blk), weights[0])
                 weights = tf.get_collection('weight_variables')
                 with tf.variable_scope('weights_l1'):
                     weights_l1 = tf.math.accumulate_n([tf.reduce_sum(tf.math.abs(w)) for w in weights])
