@@ -5,7 +5,6 @@ Reference: https://github.com/google-research/google-research/tree/master/unproc
 
 from abc import abstractmethod
 import tensorflow.compat.v1 as tf
-import numpy as np
 from convnet import ConvNet
 from isp import process, unprocess
 
