@@ -48,8 +48,12 @@ class UPDMNet(UnprocessingDemosaic):
             noisy_img = tf.gather(X_input, [0, 1, 2, 3], axis=channel_axis)
             denoised = x + noisy_img
             d['denoised'] = denoised
+            if self.channel_first:
+                denoised = tf.transpose(denoised, perm=[0, 2, 3, 1])
             denoised_rgb = process.demosaic(denoised)
             denoised_rgb.set_shape([None] + list(self.input_size))
+            if self.channel_first:
+                denoised_rgb = tf.transpose(denoised_rgb, perm=[0, 3, 1, 2])
 
         self._curr_block = 'demosaic'  # Demosaicing head
         with tf.variable_scope('block_{}'.format(self._curr_block)):
