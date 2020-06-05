@@ -323,7 +323,7 @@ class Optimizer(object):
                                  tf.cast(self.model.debug_images_1*255, dtype=tf.uint8),
                                  max_outputs=4)
                 tf.summary.histogram('Image Histogram', self.model.X_all)
-                for i in range(self.model.num_blocks):
+                for blk in range(self.model.block_list):
                     weights = tf.get_collection('block_{}_weight_variables'.format(i))
                     if len(weights) > 0:
                         tf.summary.histogram('Block {} Weight Histogram'.format(i), weights[0])
