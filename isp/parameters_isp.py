@@ -64,8 +64,8 @@ class Parameters(object):
     d['num_epochs'] = 150
     d['base_learning_rate'] = 0.0016  # Learning rate = base_learning_rate*batch_size/256 (linear scaling rule)
     d['momentum'] = 0.9  # Momentum of optimizers
-    d['moving_average_decay'] = 0.99  # Decay rate of exponential moving average
-    d['batch_norm_decay'] = 0.99  # Decay rate of batch statistics
+    d['moving_average_decay'] = 0.9999  # Decay rate of exponential moving average
+    d['batch_norm_decay'] = 0.999  # Decay rate of batch statistics
 
     d['learning_rate_decay_method'] = None  # None, 'step', 'exponential', 'polynomial', 'cosine' (default)
     d['learning_rate_decay_params'] = 0.0
