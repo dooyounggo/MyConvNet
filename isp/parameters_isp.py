@@ -61,7 +61,7 @@ class Parameters(object):
 
     d['num_gpus'] = 1
     d['batch_size'] = 16  # Total batch size (= batch_size_per_gpu*num_gpus)
-    d['num_epochs'] = 30
+    d['num_epochs'] = 150
     d['base_learning_rate'] = 0.0016  # Learning rate = base_learning_rate*batch_size/256 (linear scaling rule)
     d['momentum'] = 0.9  # Momentum of optimizers
     d['moving_average_decay'] = 0.99  # Decay rate of exponential moving average
