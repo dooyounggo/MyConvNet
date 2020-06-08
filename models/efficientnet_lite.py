@@ -167,26 +167,6 @@ class EfficientNetLite(ConvNet):
 
         return x
 
-    def _se_mask(self, x, reduction, name='se_mask'):
-        in_channels = x.get_shape()[1] if self.channel_first else x.get_shape()[-1]
-        axis = [2, 3] if self.channel_first else [1, 2]
-        with tf.variable_scope(name):
-            x = tf.reduce_mean(x, axis=axis, keepdims=True)
-
-            with tf.variable_scope('conv_0'):
-                x = self.conv_layer(x, 1, 1, in_channels//reduction,
-                                    weight_initializer=self.conv_initializer)
-
-            x = self.relu6(x, name='relu6')
-
-            with tf.variable_scope('conv_1'):
-                x = self.conv_layer(x, 1, 1, in_channels,
-                                    weight_initializer=self.conv_initializer)
-
-            x = self.sigmoid(x)
-
-        return x
-
     def _calc_widths(self, widths, coefficient):
         divisor = 8
         new_widths = []
