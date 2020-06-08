@@ -19,11 +19,11 @@ import utils
 class Parameters(object):
     # FIXME: Directories
     _root_dir = os.path.dirname(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))  # FIXME
-    _train_dir = os.path.join(_root_dir, 'tfdatasets/places365/train')
+    _train_dir = os.path.join(_root_dir, 'tfdatasets/places365/test')
     _train_sample_size = None  # Data size. None for all files in train_dir
     _val_dir = os.path.join(_root_dir, 'tfdatasets/places365/validation')  # Can be None
     _val_sample_size = 5000
-    _test_dir = os.path.join(_root_dir, 'tfdatasets/places365/test')
+    _test_dir = os.path.join(_root_dir, 'tfdatasets/places365/validation')
     _test_sample_size = 5000
 
     _save_dir = os.path.join(_root_dir, 'trained_models/UPINet_Places365')
