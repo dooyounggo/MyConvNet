@@ -192,7 +192,8 @@ class EDNMNet(UnprocessingDemosaic):
 
     def conv_unit(self, x, kernel, stride, out_channels, activation_type='lrelu', name='conv'):
         with tf.variable_scope(name):
-            x = self.conv_layer(x, kernel, stride, out_channels=out_channels, padding='SAME', biased=False, verbose=True)
+            x = self.conv_layer(x, kernel, stride, out_channels=out_channels,
+                                padding='SAME', biased=False, verbose=True)
             x = self.batch_norm(x)
             x = self.activation(x, activation_type=activation_type)
         return x
