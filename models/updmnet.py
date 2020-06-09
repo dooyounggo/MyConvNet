@@ -159,11 +159,7 @@ class EDNMNet(UnprocessingDemosaic):
             else:
                 x = features
             with tf.variable_scope('conv_0'):
-                x = self.conv_layer(x, 3, 1, padding='SAME', biased=False, depthwise=True, verbose=True)
-                x = self.batch_norm(x)
-                x = self.activation(x, activation_type=self.activation_type)
-            with tf.variable_scope('conv_1'):
-                x = self.conv_layer(x, 1, 1, out_channels=4, padding='SAME', biased=True, verbose=True)
+                x = self.conv_layer(x, 3, 1, out_channels=4, padding='SAME', biased=False, verbose=True)
                 x = self.tanh(x)
             noisy_img = bayer
             denoised = x + noisy_img
@@ -186,12 +182,9 @@ class EDNMNet(UnprocessingDemosaic):
             else:
                 x = features
             x = self.upsampling_2d_layer(x, scale=2, upsampling_method='bilinear')
+            x = tf.concat([x, denoised_rgb], axis=channel_axis)
             with tf.variable_scope('conv_0'):
-                x = self.conv_layer(x, 5, 1, padding='SAME', biased=False, depthwise=True, verbose=True)
-                x = self.batch_norm(x)
-                x = self.activation(x, activation_type=self.activation_type)
-            with tf.variable_scope('conv_1'):
-                x = self.conv_layer(x, 1, 1, out_channels=3, padding='SAME', biased=True, verbose=True)
+                x = self.conv_layer(x, 3, 1, out_channels=3, padding='SAME', biased=False, verbose=True)
                 x = self.tanh(x)
             d['pred'] = x + denoised_rgb
 
