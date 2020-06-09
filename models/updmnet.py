@@ -89,7 +89,7 @@ class EDNMNet(UnprocessingDemosaic):
         self.kernels = [3, 3, 5, 5]
         self.strides = [1, 2, 2, 2]
         self.conv_units = [1, 2, 3, 4]
-        self.multipliers = [3, 3, 6, 6]
+        self.multipliers = [1, 3, 6, 6]
 
         self.activation_type = kwargs.get('activation_type', 'lrelu')
         self.conv_initializer = tf.initializers.variance_scaling(mode='fan_out')
