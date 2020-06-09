@@ -9,7 +9,7 @@ from models.resnet_v1_5_dilated import ResNet101OS16 as ResNet
 
 class DeepLabV3PlusResNet(SegNet, ResNet):  # No BN model
     def _init_params(self, **kwargs):
-        super(ResNet, self)._init_params(**kwargs)
+        ResNet._init_params(self, **kwargs)
         self.feature_blocks = [4, 1]
         self.feature_channels = [256, 48]
         self.feature_gradients = [None, True]
@@ -21,7 +21,7 @@ class DeepLabV3PlusResNet(SegNet, ResNet):  # No BN model
         self.aspp_level_feature = False
 
     def _build_model(self):
-        return super(ResNet, self)._build_model()
+        return ResNet._build_model(self)
 
     def _build_model_seg(self, d_backbone):
         d = dict()
