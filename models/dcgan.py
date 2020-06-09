@@ -10,9 +10,9 @@ class DCGAN(GAN):
     def _build_model(self):
         d = dict()
         x = self.X
-        self._num_blocks = 4
+        self.num_blocks_d = 4
         channels = 64
-        for i in range(self.num_blocks):
+        for i in range(self.num_blocks_d):
             self._curr_block = i
             with tf.variable_scope('block_{}'.format(self._curr_block)):
                 if i == 0:
@@ -38,7 +38,7 @@ class DCGAN(GAN):
 
     def _build_model_g(self):
         d = dict()
-        self._curr_block = self.num_blocks
+        self._curr_block = self.num_blocks_d
 
         x = self.Y
         self._num_blocks_g = 5

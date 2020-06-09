@@ -15,8 +15,6 @@ class InceptionV3(ConvNet):  # Reference: https://github.com/pytorch/vision/blob
 
         X_input = self.X
 
-        self._num_blocks = 7
-
         self._curr_block = 0
         with tf.variable_scope(f'block_{self._curr_block}'):
             x = X_input

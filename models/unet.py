@@ -43,7 +43,6 @@ class UNet(SegNet):
             self._curr_block += 1
             encoder_block -= 1
 
-        self._num_blocks = self._curr_block
         self._curr_block = None
         with tf.variable_scope('logits'):
             x = self.conv_layer(x, 1, 1, self.num_classes, padding='SAME', verbose=True)

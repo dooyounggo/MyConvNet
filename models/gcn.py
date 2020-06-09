@@ -33,7 +33,6 @@ class GCN(SegNet, ResNet):     # Global Convolutional Networks
 
         assert self._curr_block == self._num_conv_blocks, 'The numbers of res and conv blocks must match'
         self._input_block = self._curr_block
-        self._num_blocks = self._curr_block + self._num_conv_blocks + 1
 
         self._curr_block += 1
         x = d_backbone['block_{}'.format(self._input_block)]

@@ -41,7 +41,7 @@ class EfficientNet(ConvNet):
         len_s = len(strides)
         len_r = len(conv_units)
         len_m = len(multipliers)
-        self._num_blocks = min([len_c, len_k, len_s, len_r, len_m])
+        num_blocks = min([len_c, len_k, len_s, len_r, len_m])
 
         self._curr_block = 0
         with tf.variable_scope('block_0'):
@@ -61,9 +61,9 @@ class EfficientNet(ConvNet):
                 d['block_0' + '/conv_0' + '/swish'] = x
             d['block_0'] = x
 
-        for i in range(1, self.num_blocks - 1):
+        for i in range(1, num_blocks - 1):
             self._curr_block = i
-            dr = self.initial_drop_rate + (self.final_drop_rate - self.initial_drop_rate)*i/(self.num_blocks - 2)
+            dr = self.initial_drop_rate + (self.final_drop_rate - self.initial_drop_rate)*i/(num_blocks - 2)
             print('block {} drop rate = {:.3f}'.format(i, dr))
             for j in range(conv_units[i]):
                 k = kernels[i]

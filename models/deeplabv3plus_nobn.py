@@ -4,12 +4,12 @@ https://arxiv.org/abs/1802.02611
 """
 import tensorflow.compat.v1 as tf
 from segmentation.segnet import SegNet
-from models.resnet_v1_5_dilated import ResNet50OS16 as ResNet
+from models.resnet_v1_5_dilated import ResNet101OS16 as ResNet
 
 
 class DeepLabV3PlusResNet(SegNet, ResNet):  # No BN model
     def _init_params(self, **kwargs):
-        ResNet._init_params(self, **kwargs)
+        super(ResNet, self)._init_params(**kwargs)
         self.feature_blocks = [4, 1]
         self.feature_channels = [256, 48]
         self.feature_gradients = [None, True]
@@ -19,6 +19,9 @@ class DeepLabV3PlusResNet(SegNet, ResNet):  # No BN model
 
         self.aspp_dilations = [6, 12, 18]
         self.aspp_level_feature = False
+
+    def _build_model(self):
+        return super(ResNet, self)._build_model()
 
     def _build_model_seg(self, d_backbone):
         d = dict()
@@ -31,7 +34,6 @@ class DeepLabV3PlusResNet(SegNet, ResNet):  # No BN model
 
         self._num_decoder_blocks = min([len(blocks), len(feature_channels), len(gradients),
                                         len(drop_rate_multipliers), len(kernels)])
-        self._num_blocks = self._curr_block + self._num_decoder_blocks + 1
 
         self._curr_block += 1
         feat = d_backbone['block_{}'.format(blocks[0])]
