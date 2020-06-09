@@ -182,12 +182,10 @@ class EDNMNet(UnprocessingDemosaic):
             else:
                 x = features
             x = self.upsampling_2d_layer(x, scale=2, upsampling_method='bilinear')
-            x = tf.concat([x, denoised_rgb], axis=channel_axis)
             with tf.variable_scope('conv_0'):
-                x = self.conv_layer(x, 3, 1, out_channels=3, padding='SAME', biased=True, verbose=True,
-                                    bias_initializer=tf.initializers.constant(0.5))
-                # x = self.tanh(x)
-            d['pred'] = x
+                x = self.conv_layer(x, 3, 1, out_channels=3, padding='SAME', biased=False, verbose=True)
+                x = self.tanh(x)
+            d['pred'] = x + denoised_rgb
 
         return d
 
