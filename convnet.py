@@ -20,7 +20,6 @@ class ConvNet(object):
         :param kwargs: dict, (hyper)parameters.
         """
         self._block_list = []
-        self._num_blocks = 0
         self._curr_block = None  # Use this instance to group variables into blocks (block None: always trainable)
 
         graph = tf.get_default_graph()
@@ -165,7 +164,7 @@ class ConvNet(object):
         for blk in self.block_list:
             if not tf.get_collection('block_{}_variables'.format(blk)):
                 self._block_list.remove(blk)
-        self._num_blocks = len(self.block_list)
+        self._set_num_blocks(len(self.block_list))
 
         print('\nNumber of computing devices : {}'.format(self.num_devices))
         print('Total number of variable blocks : {} {}'.format(self.num_blocks, self.block_list))
@@ -201,7 +200,9 @@ class ConvNet(object):
             self.__dict__[key] = value
             if value not in self.block_list:
                 self._block_list.append(value)
-            self._num_blocks = len(self.block_list)
+            self._set_num_blocks(len(self.block_list))
+        elif key == '_num_blocks':
+            raise KeyError('Cannot set _num_blocks manually.')
         else:
             super(ConvNet, self).__setattr__(key, value)
 
@@ -284,6 +285,9 @@ class ConvNet(object):
     @property
     def num_blocks(self):
         return self._num_blocks
+
+    def _set_num_blocks(self, num_blocks):
+        self.__dict__['_num_blocks'] = num_blocks
 
     @property
     def flops(self):
