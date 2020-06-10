@@ -151,15 +151,18 @@ class EDNMNet(UnprocessingDemosaic):
                 d['block_{}'.format(self._curr_block)] = x
             self._curr_block += 1
 
-        features = x
+        if self.strides[0] > 1:
+            with tf.variable_scope('block_{}'.format(self._curr_block)):
+                x = self.upsampling_2d_layer(x, scale=self.strides[0], upsampling_method='bilinear')
+                features = self.conv_unit(x, self.kernels[0], 1, self.channels[0],
+                                          activation_type=self.activation_type, name='conv_0')
+        else:
+            features = x
+
         self._curr_block = 'denoise'  # Denoising head
         with tf.variable_scope('block_{}'.format(self._curr_block)):
-            if self.strides[0] > 1:
-                x = self.upsampling_2d_layer(features, scale=self.strides[0], upsampling_method='bilinear')
-            else:
-                x = features
             with tf.variable_scope('conv_0'):
-                x = self.conv_layer(x, 3, 1, out_channels=4, padding='SAME', biased=False, verbose=True)
+                x = self.conv_layer(features, 1, 1, out_channels=4, padding='SAME', biased=False, verbose=True)
                 x = self.tanh(x)
             noisy_img = bayer
             denoised = x + noisy_img
@@ -177,13 +180,12 @@ class EDNMNet(UnprocessingDemosaic):
 
         self._curr_block = 'demosaic'  # Demosaicing head
         with tf.variable_scope('block_{}'.format(self._curr_block)):
-            if self.strides[0] > 1:
-                x = self.upsampling_2d_layer(features, scale=self.strides[0], upsampling_method='bilinear')
-            else:
-                x = features
-            x = self.upsampling_2d_layer(x, scale=2, upsampling_method='bilinear')
-            with tf.variable_scope('conv_0'):
-                x = self.conv_layer(x, 3, 1, out_channels=3, padding='SAME', biased=False, verbose=True)
+            x = self.upsampling_2d_layer(features, scale=2, upsampling_method='bilinear')
+            x = tf.concat([x, denoised_rgb], axis=channel_axis)
+            x = self.conv_unit(x, 3, 1, out_channels=self.channels[0]//2,
+                               activation_type=self.activation_type, name='conv_0')
+            with tf.variable_scope('conv_1'):
+                x = self.conv_layer(x, 1, 1, out_channels=3, padding='SAME', biased=False, verbose=True)
                 x = self.tanh(x)
             d['pred'] = x + denoised_rgb
 
