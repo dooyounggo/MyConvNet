@@ -43,7 +43,7 @@ class UPDMNet(UnprocessingDemosaic):
         with tf.variable_scope('block_{}'.format(self._curr_block)):
             with tf.variable_scope('conv_0'):
                 x = self.conv_layer(features, 3, 1, out_channels=4, padding='SAME', biased=True, verbose=True)
-                x = self.tanh(x)
+                # x = self.tanh(x)
             noisy_img = tf.gather(X_input, [0, 1, 2, 3], axis=channel_axis)
             denoised = x + noisy_img
             d['denoised'] = denoised
@@ -68,7 +68,7 @@ class UPDMNet(UnprocessingDemosaic):
                 x = self.activation(x, activation_type=self.activation_type)
             with tf.variable_scope('conv_1'):
                 x = self.conv_layer(x, 3, 1, out_channels=3, biased=True, verbose=True)
-                x = self.tanh(x)
+                # x = self.tanh(x)
             d['pred'] = x + denoised_rgb
 
         return d
@@ -163,7 +163,7 @@ class EDNMNet(UnprocessingDemosaic):
         with tf.variable_scope('block_{}'.format(self._curr_block)):
             with tf.variable_scope('conv_0'):
                 x = self.conv_layer(features, 1, 1, out_channels=4, padding='SAME', biased=False, verbose=True)
-                x = self.tanh(x)
+                # x = self.tanh(x)
             noisy_img = bayer
             denoised = x + noisy_img
             d['denoised'] = denoised
@@ -186,7 +186,7 @@ class EDNMNet(UnprocessingDemosaic):
                                activation_type=self.activation_type, name='conv_0')
             with tf.variable_scope('conv_1'):
                 x = self.conv_layer(x, 1, 1, out_channels=3, padding='SAME', biased=False, verbose=True)
-                x = self.tanh(x)
+                # x = self.tanh(x)
             d['pred'] = x + denoised_rgb
 
         return d
