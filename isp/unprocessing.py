@@ -98,12 +98,14 @@ class Unprocessing(ConvNet):
             mask = tf.pad(mask, [[0, 0], [2, 2], [2, 2], [0, 0]], constant_values=0.0)  # Mask distorted boundaries
             loss = tf.losses.absolute_difference(mask*self.Y, mask*self.pred)
             if edge_loss_l1_factor > 0.0 or edge_loss_l2_factor > 0.0:
+                tr = kwargs.get('edge_loss_true_ratio', 0.0)
                 edge_y = tf.nn.depthwise_conv2d(self.Y, self.sobel_filter, strides=[1, 1, 1, 1], padding='SAME')
                 edge_pred = tf.nn.depthwise_conv2d(self.pred, self.sobel_filter, strides=[1, 1, 1, 1], padding='SAME')
                 edge_y *= mask
                 edge_pred *= mask
-                loss += tf.losses.absolute_difference(edge_y, edge_pred, weights=edge_loss_l1_factor)
-                loss += tf.losses.mean_squared_error(edge_y, edge_pred, weights=edge_loss_l2_factor)
+                edge_l1 = tf.math.reduce_mean(((1.0 - tr) + tr*tf.math.abs(edge_y))*tf.math.abs(edge_y - edge_pred))
+                edge_l2 = tf.math.reduce_mean(((1.0 - tr) + tr*tf.math.abs(edge_y))*tf.math.pow(edge_y - edge_pred, 2))
+                loss += edge_l1*edge_loss_l1_factor + edge_l2*edge_loss_l2_factor
         return loss
 
     @abstractmethod
