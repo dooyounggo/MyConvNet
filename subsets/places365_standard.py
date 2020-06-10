@@ -12,7 +12,7 @@ import numpy as np
 import subsets.subset_functions as sf
 
 
-def save_as_tfdata(subset_dir, destination_dir, copy=True, shuffle=True, val_only=False):
+def save_as_tfdata(subset_dir, destination_dir, copy=True, shuffle=True, val_only=False, save_test=True):
     train_dir = os.path.join(subset_dir, 'train_large_places365standard')
     val_dir = os.path.join(subset_dir, 'val_large')
     test_dir = os.path.join(subset_dir, 'test_large')
@@ -71,6 +71,7 @@ def save_as_tfdata(subset_dir, destination_dir, copy=True, shuffle=True, val_onl
                 print(' ', end='')
         print(')')
 
+    if save_test:
         if not os.path.isdir(test_dir) and os.path.isfile(test_dir + '.tar'):
             test_tar = tarfile.open(test_dir + '.tar', 'r:')
             print('Extracting test_large.tar ...')
@@ -140,6 +141,7 @@ if __name__ == '__main__':
     parser.add_argument('--copy', help='Whether to copy images instead of moving them', type=str, default='True')
     parser.add_argument('--shuffle', help='Whether to shuffle training images', type=str, default='True')
     parser.add_argument('--val_only', help='Whether to process validation images only', type=str, default='False')
+    parser.add_argument('--save_test', help='Whether to save test images', type=str, default='True')
 
     args = parser.parse_args()
     subset_dir = args.data
@@ -155,6 +157,11 @@ if __name__ == '__main__':
         val_only = True
     else:
         val_only = False
+    save_test = args.save_test
+    if save_test.lower() == 'false' or save_test == '0':
+        save_test = False
+    else:
+        save_test = True
 
     print('\nPath to original data:  \"{}\"'.format(subset_dir))
     print('Path to processed data: \"{}\"'.format(destination_dir))
@@ -162,7 +169,7 @@ if __name__ == '__main__':
 
     answer = input('\nDo you want to proceed? (Y/N): ')
     if answer.lower() == 'y' or answer.lower() == 'yes':
-        save_as_tfdata(subset_dir, destination_dir, copy=copy, shuffle=shuffle, val_only=val_only)
+        save_as_tfdata(subset_dir, destination_dir, copy=copy, shuffle=shuffle, val_only=val_only, save_test=save_test)
 
 
 def read_subset(subset_dir, shuffle=False, sample_size=None):
