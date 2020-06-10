@@ -75,7 +75,7 @@ class Parameters(object):
     d['score_threshold'] = 0.0  # Model is saved if its score is better by this threshold
 
     # FIXME: Regularization hyperparameters
-    d['denoising_loss_factor'] = 1.0
+    d['denoising_loss_factor'] = 0.0
     d['edge_loss_l1_factor'] = 0.0
     d['edge_loss_l2_factor'] = 0.0
     d['edge_loss_true_ratio'] = 0.0
