@@ -20,7 +20,7 @@ class ConvNet(object):
         :param kwargs: dict, (hyper)parameters.
         """
         self._block_list = []
-        self._curr_block = None  # Use this instance to group variables into blocks (block None: always trainable)
+        self._curr_block = None  # Use this instance to group variables into blocks
 
         graph = tf.get_default_graph()
         config = tf.ConfigProto()
@@ -1273,7 +1273,7 @@ class ConvNet(object):
                         weight_standardization=False, paddings=((0, 0), (0, 0)), name='weights'):
         if self.blocks_to_train is None:
             trainable = True
-        elif self._curr_block is None or self._curr_block in self.blocks_to_train:
+        elif self._curr_block in self.blocks_to_train:
             trainable = True
         else:
             trainable = False
@@ -1323,7 +1323,7 @@ class ConvNet(object):
     def bias_variable(self, shape, initializer=tf.initializers.zeros(), name='biases'):
         if self.blocks_to_train is None:
             trainable = True
-        elif self._curr_block is None or self._curr_block in self.blocks_to_train:
+        elif self._curr_block in self.blocks_to_train:
             trainable = True
         else:
             trainable = False
@@ -1633,13 +1633,13 @@ class ConvNet(object):
         else:
             if self.blocks_to_train is None:
                 update = True
-            elif self._curr_block is None or self._curr_block in self.blocks_to_train:
+            elif self._curr_block in self.blocks_to_train:
                 update = True
             else:
                 update = False
         if self.blocks_to_train is None:
             trainable = True
-        elif self._curr_block is None or self._curr_block in self.blocks_to_train:
+        elif self._curr_block in self.blocks_to_train:
             trainable = True
         else:
             trainable = False
@@ -1782,7 +1782,7 @@ class ConvNet(object):
     def group_norm(self, x, num_groups=8, scale=True, shift=True, zero_scale_init=False, epsilon=1e-3, scope='gn'):
         if self.blocks_to_train is None:
             trainable = True
-        elif self._curr_block is None or self._curr_block in self.blocks_to_train:
+        elif self._curr_block in self.blocks_to_train:
             trainable = True
         else:
             trainable = False
@@ -1875,13 +1875,13 @@ class ConvNet(object):
         else:
             if self.blocks_to_train is None:
                 update = True
-            elif self._curr_block is None or self._curr_block in self.blocks_to_train:
+            elif self._curr_block in self.blocks_to_train:
                 update = True
             else:
                 update = False
         if self.blocks_to_train is None:
             trainable = True
-        elif self._curr_block is None or self._curr_block in self.blocks_to_train:
+        elif self._curr_block in self.blocks_to_train:
             trainable = True
         else:
             trainable = False
