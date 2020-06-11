@@ -181,11 +181,13 @@ class EDNMNet(UnprocessingDemosaic):
         self._curr_block = 'demosaic'  # Demosaicing head
         with tf.variable_scope('block_{}'.format(self._curr_block)):
             x = self.upsampling_2d_layer(features, scale=2, upsampling_method='bilinear')
-            x = tf.concat([x, denoised_rgb], axis=channel_axis)
-            x = self.conv_unit(x, 3, 1, out_channels=self.channels[0]//2,
-                               activation_type=self.activation_type, name='conv_0')
+            x = tf.concat([x, denoised_rgb - 0.5], axis=channel_axis)
+            with tf.variable_scope('conv_0'):
+                x = self.conv_layer(x, 3, 1, out_channels=self.channels[0]//2,
+                                    padding='SAME', biased=True, verbose=True)
+                x = self.activation(x, activation_type=self.activation_type)
             with tf.variable_scope('conv_1'):
-                x = self.conv_layer(x, 1, 1, out_channels=3, padding='SAME', biased=False, verbose=True)
+                x = self.conv_layer(x, 3, 1, out_channels=3, padding='SAME', biased=False, verbose=True)
                 # x = self.tanh(x)
             d['pred'] = x + denoised_rgb
 
