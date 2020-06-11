@@ -104,8 +104,8 @@ class EDNMNet(UnprocessingDemosaic):
         X_input = self.X
         x = X_input
         bayer = tf.gather(X_input, [0, 1, 2, 3], axis=channel_axis)
-        bayer_avg = bayer
-        bayer_max = bayer
+        bayer_avg = bayer - 0.5
+        bayer_max = bayer_avg
 
         self._curr_block = 0
         residuals = []
