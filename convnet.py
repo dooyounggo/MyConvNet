@@ -398,10 +398,12 @@ class ConvNet(object):
                                 self.d['pred'] = tf.cast(self.d['pred'], dtype=tf.float32)
                         tf.get_variable_scope().reuse_variables()
 
-                        if 'block_{}'.format(self.num_blocks - 1) in self.d:
-                            self.gcams.append(self.grad_cam(self.d['logits'],
-                                                            self.d['block_{}'.format(self.num_blocks - 1)],
-                                                            y=None))
+                        for blk in self.block_list[::-1]:
+                            if f'block_{blk}' in self.d:
+                                self.gcams.append(self.grad_cam(self.d['logits'],
+                                                                self.d[f'block_{blk}'],
+                                                                y=None))
+                                break
                         else:
                             self.gcams.append(self.X)
 
@@ -1392,6 +1394,7 @@ class ConvNet(object):
             self._flops += flops
             self._nodes += nodes
             self._layer_info.append({'name': tf.get_variable_scope().name + '/max_pool',
+                                     'shape': [None] + out_size + [in_channels],
                                      'flops': int(flops),
                                      'params': 0,
                                      'nodes': int(nodes)})
@@ -1430,6 +1433,7 @@ class ConvNet(object):
             self._flops += flops
             self._nodes += nodes
             self._layer_info.append({'name': tf.get_variable_scope().name + '/avg_pool',
+                                     'shape': [None] + out_size + [in_channels],
                                      'flops': int(flops),
                                      'params': 0,
                                      'nodes': int(nodes)})
@@ -1566,6 +1570,7 @@ class ConvNet(object):
                     self._flops += flops
                     self._nodes += nodes
                     self._layer_info.append({'name': tf.get_variable_scope().name,
+                                             'shape': [None] + out_size + [out_channels],
                                              'flops': int(flops),
                                              'params': int(params),
                                              'nodes': int(nodes)})
@@ -1577,6 +1582,7 @@ class ConvNet(object):
                     self._flops += flops
                     self._nodes += nodes
                     self._layer_info.append({'name': tf.get_variable_scope().name,
+                                             'shape': [None] + out_size + [out_channels],
                                              'flops': int(flops),
                                              'params': int(params),
                                              'nodes': int(nodes)})
@@ -1609,6 +1615,7 @@ class ConvNet(object):
                     self._flops += flops
                     self._nodes += nodes
                     self._layer_info.append({'name': tf.get_variable_scope().name,
+                                             'shape': [None, out_dim],
                                              'flops': int(flops),
                                              'params': int(params),
                                              'nodes': int(nodes)})
@@ -1620,6 +1627,7 @@ class ConvNet(object):
                     self._flops += flops
                     self._nodes += nodes
                     self._layer_info.append({'name': tf.get_variable_scope().name,
+                                             'shape': [None, out_dim],
                                              'flops': int(flops),
                                              'params': int(params),
                                              'nodes': int(nodes)})
@@ -2133,6 +2141,7 @@ class ConvNet(object):
                     self._flops += flops
                     self._nodes += nodes
                     self._layer_info.append({'name': tf.get_variable_scope().name,
+                                             'shape': [None] + out_size + [out_channels],
                                              'flops': int(flops),
                                              'params': int(params),
                                              'nodes': int(nodes)})
@@ -2144,6 +2153,7 @@ class ConvNet(object):
                     self._flops += flops
                     self._nodes += nodes
                     self._layer_info.append({'name': tf.get_variable_scope().name,
+                                             'shape': [None] + out_size + [out_channels],
                                              'flops': int(flops),
                                              'params': int(params),
                                              'nodes': int(nodes)})
