@@ -105,6 +105,7 @@ class Unprocessing(ConvNet):
                 edge_pred *= mask
                 edge_l1 = tf.math.reduce_mean(((1.0 - tr) + tr*tf.math.abs(edge_y))*tf.math.abs(edge_y - edge_pred))
                 edge_l2 = tf.math.reduce_mean(((1.0 - tr) + tr*tf.math.abs(edge_y))*tf.math.pow(edge_y - edge_pred, 2))
+                edge_l2 = tf.math.sqrt(edge_l2)
                 loss += edge_l1*edge_loss_l1_factor + edge_l2*edge_loss_l2_factor
         return loss
 
