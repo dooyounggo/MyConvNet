@@ -1,7 +1,6 @@
 from classification.parameters import *
 import quantization
 import argparse
-import multiprocessing as mp
 
 
 if __name__ == '__main__':
@@ -87,11 +86,11 @@ if __name__ == '__main__':
                         out_size=Param.d['image_size'], task_type=DataSet.IMAGE_CLASSIFICATION,
                         resize_method=Param.d['resize_type'], resize_randomness=Param.d['resize_random'],
                         **Param.d)
-
+    images = np.empty([len(image_dirs)] + list(Param.d['image_size']), dtype=np.float32)
     print('Loading representative images...', end=' ')
-    with mp.Pool(Param.d.get('num_parallel_calls', 4)) as pool:
-        images = pool.starmap(train_set._load_function, zip(image_dirs, label_dirs))
-    images = np.stack(images, axis=0)
+    for i, (idir, ldir) in enumerate(zip(image_dirs, label_dirs)):
+        img, _ = train_set._load_function(idir, ldir)
+        images[i] = img
     print('Done.')
     print('')
 
