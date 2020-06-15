@@ -262,14 +262,15 @@ class Optimizer(object):
             self.model.session.run(tf.global_variables_initializer())
             saver_transfer.restore(self.model.session, ckpt_to_load)
 
-            print('')
-            print('Variables have been initialized using the following checkpoint:')
-            print(ckpt_to_load)
-            print('The following variables in the checkpoint were not used:')
-            print(var_names)
-            print('The following variables do not exist in the checkpoint, so they were initialized randomly:')
-            print(variables_not_loaded)
-            print('')
+            if verbose:
+                print('')
+                print('Variables have been initialized using the following checkpoint:')
+                print(ckpt_to_load)
+                print('The following variables in the checkpoint were not used:')
+                print(var_names)
+                print('The following variables do not exist in the checkpoint, so they were initialized randomly:')
+                print(variables_not_loaded)
+                print('')
 
             pkl_file = os.path.join(transfer_dir, 'learning_curve-result-1.pkl')
             pkl_loaded = False
@@ -363,6 +364,7 @@ class Optimizer(object):
 
         if verbose:
             print('Running training loop...')
+            print('Batch size: {}'.format(self.batch_size))
             print('Number of training iterations: {}'.format(num_steps))
             print('Number of iterations per epoch: {}'.format(num_steps_per_epoch))
 
