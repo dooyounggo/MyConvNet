@@ -107,7 +107,25 @@ class Unprocessing(ConvNet):
                 edge_l2 = tf.math.reduce_mean(((1.0 - tr) + tr*tf.math.abs(edge_y))*tf.math.pow(edge_y - edge_pred, 2))
                 edge_l2 = tf.math.sqrt(edge_l2 + 1e-5)
                 loss += edge_l1*edge_loss_l1_factor + edge_l2*edge_loss_l2_factor
-        return loss
+
+            l1_factor = kwargs.get('l1_reg', 0e-8)
+            l2_factor = kwargs.get('l2_reg', 1e-4)
+            variables = tf.get_collection('weight_variables')
+            if kwargs.get('bias_norm_decay', False):
+                variables += tf.get_collection('bias_variables') + tf.get_collection('norm_variables')
+            with tf.variable_scope('l1_loss'):
+                if l1_factor > 0.0:
+                    l1_factor = tf.constant(l1_factor, dtype=tf.float32, name='L1_factor')
+                    l1_reg_loss = l1_factor * tf.accumulate_n([tf.reduce_sum(tf.math.abs(var)) for var in variables])
+                else:
+                    l1_reg_loss = tf.constant(0.0, dtype=tf.float32, name='0')
+            with tf.variable_scope('l2_loss'):
+                if l2_factor > 0.0:
+                    l2_factor = tf.constant(l2_factor, dtype=tf.float32, name='L2_factor')
+                    l2_reg_loss = l2_factor * tf.math.accumulate_n([tf.nn.l2_loss(var) for var in variables])
+                else:
+                    l2_reg_loss = tf.constant(0.0, dtype=tf.float32, name='0')
+        return loss + l1_reg_loss + l2_reg_loss
 
     @abstractmethod
     def _build_model(self):
