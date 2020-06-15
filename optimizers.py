@@ -365,6 +365,7 @@ class Optimizer(object):
         if verbose:
             print('Running training loop...')
             print('Batch size: {}'.format(self.batch_size))
+            print('Number of epochs: {}'.format(self.num_epochs))
             print('Number of training iterations: {}'.format(num_steps))
             print('Number of iterations per epoch: {}'.format(num_steps_per_epoch))
 
