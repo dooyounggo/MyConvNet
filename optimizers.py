@@ -321,7 +321,7 @@ class Optimizer(object):
                                  max_outputs=4)
                 for i, img in enumerate(self.model.debug_images):
                     tf.summary.image('Debug Images {}'.format(i),
-                                     tf.cast(img*255), dtype=tf.uint8,
+                                     tf.cast(img*255, dtype=tf.uint8),
                                      max_outputs=4)
 
                 tf.summary.histogram('Image Histogram', self.model.X_all)
