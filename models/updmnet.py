@@ -91,6 +91,7 @@ class EDNMNet(UnprocessingDemosaic):
         self.conv_units = [1, 2, 3, 4]
         self.multipliers = [1, 3, 6, 6]
 
+        self.use_bn = kwargs.get('use_bn', False)
         self.activation_type = kwargs.get('activation_type', 'lrelu')
         self.conv_initializer = tf.initializers.variance_scaling(mode='fan_out')
 
@@ -195,9 +196,10 @@ class EDNMNet(UnprocessingDemosaic):
 
     def conv_unit(self, x, kernel, stride, out_channels, activation_type='lrelu', name='conv'):
         with tf.variable_scope(name):
-            x = self.conv_layer(x, kernel, stride, out_channels=out_channels,
-                                padding='SAME', biased=False, verbose=True)
-            x = self.batch_norm(x)
+            x = self.conv_layer(x, kernel, stride, out_channels=out_channels, padding='SAME',
+                                biased=not self.use_bn, verbose=True)
+            if self.use_bn:
+                x = self.batch_norm(x)
             x = self.activation(x, activation_type=activation_type)
         return x
 
@@ -211,29 +213,32 @@ class EDNMNet(UnprocessingDemosaic):
             d[name + '/branch'] = skip
 
             with tf.variable_scope('conv_0'):
-                x = self.conv_layer(x, 1, 1, out_channels*multiplier, padding='SAME', biased=False,
+                x = self.conv_layer(x, 1, 1, out_channels*multiplier, padding='SAME', biased=not self.use_bn,
                                     depthwise=False, weight_initializer=self.conv_initializer, verbose=True)
                 d[name + '/conv_0'] = x
-                x = self.batch_norm(x, shift=True, scale=True, scope='norm')
-                d[name + '/conv_0' + '/norm'] = x
+                if self.use_bn:
+                    x = self.batch_norm(x, shift=True, scale=True, scope='norm')
+                    d[name + '/conv_0' + '/norm'] = x
                 x = self.activation(x, activation_type=activation_type)
                 d[name + '/conv_0' + activation_type] = x
 
             with tf.variable_scope('conv_1'):
-                x = self.conv_layer(x, kernel, stride, out_channels*multiplier, padding='SAME', biased=False,
+                x = self.conv_layer(x, kernel, stride, out_channels*multiplier, padding='SAME', biased=not self.use_bn,
                                     depthwise=True, weight_initializer=self.conv_initializer, verbose=True)
                 d[name + '/conv_1'] = x
-                x = self.batch_norm(x, shift=True, scale=True, scope='norm')
-                d[name + '/conv_1' + '/norm'] = x
+                if self.use_bn:
+                    x = self.batch_norm(x, shift=True, scale=True, scope='norm')
+                    d[name + '/conv_1' + '/norm'] = x
                 x = self.activation(x, activation_type=activation_type)
                 d[name + '/conv_1' + activation_type] = x
 
             with tf.variable_scope('conv_2'):
-                x = self.conv_layer(x, 1, 1, out_channels, padding='SAME', biased=False, depthwise=False,
+                x = self.conv_layer(x, 1, 1, out_channels, padding='SAME', biased=not self.use_bn, depthwise=False,
                                     weight_initializer=self.conv_initializer, verbose=True)
                 d[name + '/conv_2'] = x
-                x = self.batch_norm(x, shift=True, scale=True, zero_scale_init=skip is not None, scope='norm')
-                d[name + '/conv_2' + '/norm'] = x
+                if self.use_bn:
+                    x = self.batch_norm(x, shift=True, scale=True, zero_scale_init=skip is not None, scope='norm')
+                    d[name + '/conv_2' + '/norm'] = x
 
             if skip is not None:
                 x += skip
