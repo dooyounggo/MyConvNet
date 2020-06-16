@@ -21,6 +21,8 @@ class Unprocessing(ConvNet):
                     sobel_x = tf.tile(sobel_x, [1, 1, 3, 1])
                     sobel_y = tf.tile(sobel_y, [1, 1, 3, 1])
                     self.sobel_filter = tf.concat([sobel_x, sobel_y], axis=-1)
+        self.Y_edges = []
+        self.pred_edges = []
         with tf.variable_scope(tf.get_variable_scope()):
             for i in range(self.device_offset, self.num_devices + self.device_offset):
                 self._curr_device = i
@@ -89,6 +91,8 @@ class Unprocessing(ConvNet):
                 self.input_labels = self.input_images
                 self.debug_images.append(self.Y_all)
                 self.debug_images.append(self.pred)
+                self.debug_images.append(tf.concat(self.Y_edges, axis=0, name='edge_true'))
+                self.debug_images.append(tf.concat(self.pred_edges, axis=0, name='edge_pred'))
 
     def _build_loss(self, **kwargs):
         edge_loss_l1_factor = kwargs.get('edge_loss_l1_factor', 0.0)
@@ -103,6 +107,9 @@ class Unprocessing(ConvNet):
                 edge_pred = tf.nn.depthwise_conv2d(self.pred, self.sobel_filter, strides=[1, 1, 1, 1], padding='SAME')
                 edge_y *= mask
                 edge_pred *= mask
+                self.Y_edges.append(tf.math.sqrt(edge_y[..., :3] ** 2 + edge_y[..., 3:] ** 2))
+                self.pred_edges.append(tf.math.sqrt(edge_pred[..., :3] ** 2 + edge_pred[..., 3:] ** 2))
+
                 edge_l1 = tf.math.reduce_mean(((1.0 - tr) + tr*tf.math.abs(edge_y))*tf.math.abs(edge_y - edge_pred))
                 edge_l2 = tf.math.reduce_mean(((1.0 - tr) + tr*tf.math.abs(edge_y))*tf.math.pow(edge_y - edge_pred, 2))
                 edge_l2 = tf.math.sqrt(edge_l2 + 1e-5)
