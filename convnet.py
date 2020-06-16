@@ -141,7 +141,7 @@ class ConvNet(object):
         self.ema = tf.train.ExponentialMovingAverage(decay=self.moving_average_decay,
                                                      num_updates=self.global_step)
 
-        self.debug_value = self.linear_schedule_multiplier
+        self.debug_values = [self.linear_schedule_multiplier]
         self.debug_images = []
 
         self._init_params(**kwargs)

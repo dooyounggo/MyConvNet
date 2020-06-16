@@ -310,7 +310,9 @@ class Optimizer(object):
             with tf.variable_scope('summaries'):  # TensorBoard summaries
                 tf.summary.scalar('Loss', self.model.loss)
                 tf.summary.scalar('Learning Rate', self.learning_rate)
-                tf.summary.scalar('Debug Value', self.model.debug_value)
+                for i, val in self.model.debug_values:
+                    tf.summary.scalar('Debug Value {}'.format(i), val)
+
                 tf.summary.image('Input Images',
                                  tf.cast(self.model.input_images*255, dtype=tf.uint8),
                                  max_outputs=4)
@@ -321,6 +323,7 @@ class Optimizer(object):
                     tf.summary.image('Debug Images {}'.format(i),
                                      tf.cast(img*255), dtype=tf.uint8,
                                      max_outputs=4)
+
                 tf.summary.histogram('Image Histogram', self.model.X_all)
                 for blk in self.model.block_list:
                     weights = tf.get_collection('block_{}_weight_variables'.format(blk))
