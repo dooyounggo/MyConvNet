@@ -16,13 +16,13 @@ class UnprocessingDemosaic(Unprocessing):
         with tf.device(self.param_device):
             with tf.variable_scope('calc/'):
                 with tf.variable_scope('edge'):
-                    sobel_x = tf.constant([[1, 0, -1], [2, 0, -2], [1, 0, -1]], dtype=tf.float32)
-                    sobel_y = tf.constant([[1, 2, 1], [0, 0, 0], [-1, -2, -1]], dtype=tf.float32)
+                    # sobel_x = tf.constant([[1, 0, -1], [2, 0, -2], [1, 0, -1]], dtype=tf.float32)
+                    # sobel_y = tf.constant([[1, 2, 1], [0, 0, 0], [-1, -2, -1]], dtype=tf.float32)
+                    # sobel_x = tf.tile(sobel_x[..., tf.newaxis, tf.newaxis], [1, 1, 3, 1])
+                    # sobel_y = tf.tile(sobel_y[..., tf.newaxis, tf.newaxis], [1, 1, 3, 1])
+
                     bump_x = tf.constant([[-0.5, 1, -0.5], [-1, 2, -1], [-0.5, 1, -0.5]], dtype=tf.float32)
                     bump_y = tf.constant([[-0.5, -1, -0.5], [1, 2, 1], [-0.5, -1, -0.5]], dtype=tf.float32)
-
-                    sobel_x = tf.tile(sobel_x[..., tf.newaxis, tf.newaxis], [1, 1, 3, 1])
-                    sobel_y = tf.tile(sobel_y[..., tf.newaxis, tf.newaxis], [1, 1, 3, 1])
                     bump_x = tf.tile(bump_x[..., tf.newaxis, tf.newaxis], [1, 1, 3, 1])
                     bump_y = tf.tile(bump_y[..., tf.newaxis, tf.newaxis], [1, 1, 3, 1])
 
