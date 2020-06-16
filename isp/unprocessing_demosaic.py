@@ -112,8 +112,13 @@ class UnprocessingDemosaic(Unprocessing):
                 self.input_labels = self.input_images
                 self.debug_images.append(self.Y_all)
                 self.debug_images.append(self.pred)
-                self.debug_images.append(tf.concat(self.Y_edges, axis=0, name='edge_true'))
-                self.debug_images.append(tf.concat(self.pred_edges, axis=0, name='edge_pred'))
+
+                edge_true = tf.concat(self.Y_edges, axis=0, name='edge_true')
+                edge_pred = tf.concat(self.pred_edges, axis=0, name='edge_pred')
+                self.debug_images.append(edge_true)
+                self.debug_images.append(edge_pred)
+                self.debug_images.append(tf.math.abs(self.Y_all - self.pred, name='image_diff')*5)
+                self.debug_images.append(tf.math.abs(edge_true - edge_pred, name='edge_diff')*5)
 
     def _build_loss(self, **kwargs):
         edge_loss_l1_factor = kwargs.get('edge_loss_l1_factor', 0.0)
@@ -159,13 +164,13 @@ class UnprocessingDemosaic(Unprocessing):
             with tf.variable_scope('l1_loss'):
                 if l1_factor > 0.0:
                     l1_factor = tf.constant(l1_factor, dtype=tf.float32, name='L1_factor')
-                    l1_reg_loss = l1_factor * tf.accumulate_n([tf.reduce_sum(tf.math.abs(var)) for var in variables])
+                    l1_reg_loss = l1_factor*tf.accumulate_n([tf.reduce_sum(tf.math.abs(var)) for var in variables])
                 else:
                     l1_reg_loss = tf.constant(0.0, dtype=tf.float32, name='0')
             with tf.variable_scope('l2_loss'):
                 if l2_factor > 0.0:
                     l2_factor = tf.constant(l2_factor, dtype=tf.float32, name='L2_factor')
-                    l2_reg_loss = l2_factor * tf.math.accumulate_n([tf.nn.l2_loss(var) for var in variables])
+                    l2_reg_loss = l2_factor*tf.math.accumulate_n([tf.nn.l2_loss(var) for var in variables])
                 else:
                     l2_reg_loss = tf.constant(0.0, dtype=tf.float32, name='0')
             return loss + l1_reg_loss + l2_reg_loss
