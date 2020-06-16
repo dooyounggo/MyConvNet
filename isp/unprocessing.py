@@ -107,8 +107,8 @@ class Unprocessing(ConvNet):
                 edge_pred = tf.nn.depthwise_conv2d(self.pred, self.sobel_filter, strides=[1, 1, 1, 1], padding='SAME')
                 edge_y *= mask
                 edge_pred *= mask
-                self.Y_edges.append(tf.math.sqrt(edge_y[..., :3] ** 2 + edge_y[..., 3:] ** 2))
-                self.pred_edges.append(tf.math.sqrt(edge_pred[..., :3] ** 2 + edge_pred[..., 3:] ** 2))
+                self.Y_edges.append(tf.math.sqrt(edge_y[..., :3]**2 + edge_y[..., 3:]**2)/4)
+                self.pred_edges.append(tf.math.sqrt(edge_pred[..., :3]**2 + edge_pred[..., 3:]**2)/4)
 
                 edge_l1 = tf.math.reduce_mean(((1.0 - tr) + tr*tf.math.abs(edge_y))*tf.math.abs(edge_y - edge_pred))
                 edge_l2 = tf.math.reduce_mean(((1.0 - tr) + tr*tf.math.abs(edge_y))*tf.math.pow(edge_y - edge_pred, 2))
