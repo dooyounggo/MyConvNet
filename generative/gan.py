@@ -94,7 +94,7 @@ class GAN(ConvNet):
 
                 self.input_images = tf.concat(self.X_in, axis=0, name='x_in')
                 self.input_labels = tf.concat(self.Y_in, axis=0, name='y_in')
-                self.debug_images_0 = self.pred
+                self.debug_images.append(self.pred)
 
     @abstractmethod
     def _build_model(self):

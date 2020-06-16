@@ -317,12 +317,10 @@ class Optimizer(object):
                 tf.summary.image('Augmented Input Images',
                                  tf.cast(self.model.X_all*255, dtype=tf.uint8),
                                  max_outputs=4)
-                tf.summary.image('Debug Images 0',
-                                 tf.cast(self.model.debug_images_0*255, dtype=tf.uint8),
-                                 max_outputs=4)
-                tf.summary.image('Debug Images 1',
-                                 tf.cast(self.model.debug_images_1*255, dtype=tf.uint8),
-                                 max_outputs=4)
+                for i, img in self.model.debug_images:
+                    tf.summary.image('Debug Images {}'.format(i),
+                                     tf.cast(img*255), dtype=tf.uint8,
+                                     max_outputs=4)
                 tf.summary.histogram('Image Histogram', self.model.X_all)
                 for blk in self.model.block_list:
                     weights = tf.get_collection('block_{}_weight_variables'.format(blk))

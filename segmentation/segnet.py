@@ -91,8 +91,8 @@ class SegNet(ConvNet):
 
                 self.input_images = tf.concat(self.X_in, axis=0, name='x_in')
                 self.input_labels = tf.concat(self.Y_in, axis=0, name='y_in')
-                self.debug_images_0 = self.seg_labels_to_images(self.Y_all)
-                self.debug_images_1 = self.seg_labels_to_images(self.pred)
+                self.debug_images.append(self.seg_labels_to_images(self.Y_all))
+                self.debug_images.append(self.seg_labels_to_images(self.pred))
 
     @abstractmethod
     def _build_model(self):

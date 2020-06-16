@@ -87,8 +87,8 @@ class Unprocessing(ConvNet):
 
                 self.input_images = tf.concat(self.X_in, axis=0, name='x_in')
                 self.input_labels = self.input_images
-                self.debug_images_0 = self.Y_all
-                self.debug_images_1 = self.pred
+                self.debug_images.append(self.Y_all)
+                self.debug_images.append(self.pred)
 
     def _build_loss(self, **kwargs):
         edge_loss_l1_factor = kwargs.get('edge_loss_l1_factor', 0.0)
