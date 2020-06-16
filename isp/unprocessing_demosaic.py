@@ -124,26 +124,29 @@ class UnprocessingDemosaic(Unprocessing):
             mask = tf.pad(mask, [[0, 0], [2, 2], [2, 2], [0, 0]], constant_values=0.0)  # Mask distorted boundaries
             loss = tf.losses.absolute_difference(mask*self.Y, mask*self.pred)
             if edge_loss_l1_factor > 0.0 or edge_loss_l2_factor > 0.0:
-                tr = kwargs.get('edge_loss_true_ratio', 0.0)
-                edge_y = tf.nn.depthwise_conv2d(self.Y, self.edge_filters, strides=[1, 1, 1, 1], padding='SAME')
-                edge_pred = tf.nn.depthwise_conv2d(self.pred, self.edge_filters, strides=[1, 1, 1, 1], padding='SAME')
-                edge_y *= mask
-                edge_pred *= mask
+                with tf.variable_scope('edge_loss'):
+                    tr = kwargs.get('edge_loss_true_ratio', 0.0)
+                    edge_y = tf.nn.depthwise_conv2d(self.Y, self.edge_filters,
+                                                    strides=[1, 1, 1, 1], padding='SAME')
+                    edge_pred = tf.nn.depthwise_conv2d(self.pred, self.edge_filters,
+                                                       strides=[1, 1, 1, 1], padding='SAME')
+                    edge_y *= mask
+                    edge_pred *= mask
 
-                num_filters = self.edge_filters.get_shape().as_list()[-1]
-                y_sum = 0
-                pred_sum = 0
-                for i in range(num_filters):
-                    y_sum += edge_y[..., i*3:(i + 1)*3]**2
-                    pred_sum += edge_pred[..., i*3:(i + 1)*3]**2
-                self.Y_edges.append(tf.math.sqrt(y_sum))
-                self.pred_edges.append(tf.math.sqrt(pred_sum))
+                    num_filters = self.edge_filters.get_shape().as_list()[-1]
+                    y_sum = 0
+                    pred_sum = 0
+                    for i in range(num_filters):
+                        y_sum += edge_y[..., i*3:(i + 1)*3]**2
+                        pred_sum += edge_pred[..., i*3:(i + 1)*3]**2
+                    self.Y_edges.append(tf.math.sqrt(y_sum))
+                    self.pred_edges.append(tf.math.sqrt(pred_sum))
 
-                true_edge = tf.math.sqrt(tf.math.reduce_sum(edge_y**2, axis=-1, keepdims=True))
-                edge_l1 = tf.math.reduce_mean(((1.0 - tr) + tr*true_edge)*tf.math.abs(edge_y - edge_pred))
-                edge_l2 = tf.math.reduce_mean(((1.0 - tr) + tr*true_edge)*tf.math.pow(edge_y - edge_pred, 2))
-                edge_l2 = tf.math.sqrt(edge_l2 + 1e-5)
-                loss += edge_l1*edge_loss_l1_factor + edge_l2*edge_loss_l2_factor
+                    true_edge = tf.math.sqrt(tf.math.reduce_sum(edge_y**2, axis=-1, keepdims=True))
+                    edge_l1 = tf.math.reduce_mean(((1.0 - tr) + tr*true_edge)*tf.math.abs(edge_y - edge_pred))
+                    edge_l2 = tf.math.reduce_mean(((1.0 - tr) + tr*true_edge)*tf.math.pow(edge_y - edge_pred, 2))
+                    edge_l2 = tf.math.sqrt(edge_l2 + 1e-5)
+                    loss += edge_l1*edge_loss_l1_factor + edge_l2*edge_loss_l2_factor
             if denoising_loss_factor > 0.0 and self.denoised is not None:
                 loss += tf.losses.absolute_difference(mask*self.Y_mosaic, mask*self.denoised,
                                                       weights=denoising_loss_factor)
