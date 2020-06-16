@@ -15,12 +15,18 @@ class Unprocessing(ConvNet):
                          None)
         with tf.device(self.param_device):
             with tf.variable_scope('calc/'):
-                with tf.variable_scope('sobel'):
-                    sobel_x = tf.constant([[1, 0, -1], [2, 0, -2], [1, 0, -1]], dtype=tf.float32)[..., None, None]
-                    sobel_y = tf.constant([[1, 2, 1], [0, 0, 0], [-1, -2, -1]], dtype=tf.float32)[..., None, None]
-                    sobel_x = tf.tile(sobel_x, [1, 1, 3, 1])
-                    sobel_y = tf.tile(sobel_y, [1, 1, 3, 1])
-                    self.sobel_filter = tf.concat([sobel_x, sobel_y], axis=-1)
+                with tf.variable_scope('edge'):
+                    sobel_x = tf.constant([[1, 0, -1], [2, 0, -2], [1, 0, -1]], dtype=tf.float32)
+                    sobel_y = tf.constant([[1, 2, 1], [0, 0, 0], [-1, -2, -1]], dtype=tf.float32)
+                    bump_x = tf.constant([[-0.5, 1, -0.5], [-1, 2, -1], [-0.5, 1, -0.5]], dtype=tf.float32)
+                    bump_y = tf.constant([[-0.5, -1, -0.5], [1, 2, 1], [-0.5, -1, -0.5]], dtype=tf.float32)
+
+                    sobel_x = tf.tile(sobel_x[..., tf.newaxis, tf.newaxis], [1, 1, 3, 1])
+                    sobel_y = tf.tile(sobel_y[..., tf.newaxis, tf.newaxis], [1, 1, 3, 1])
+                    bump_x = tf.tile(bump_x[..., tf.newaxis, tf.newaxis], [1, 1, 3, 1])
+                    bump_y = tf.tile(bump_y[..., tf.newaxis, tf.newaxis], [1, 1, 3, 1])
+
+                    self.edge_filter = tf.concat([bump_x, bump_y], axis=-1)
         self.Y_edges = []
         self.pred_edges = []
         with tf.variable_scope(tf.get_variable_scope()):
@@ -103,12 +109,12 @@ class Unprocessing(ConvNet):
             loss = tf.losses.absolute_difference(mask*self.Y, mask*self.pred)
             if edge_loss_l1_factor > 0.0 or edge_loss_l2_factor > 0.0:
                 tr = kwargs.get('edge_loss_true_ratio', 0.0)
-                edge_y = tf.nn.depthwise_conv2d(self.Y, self.sobel_filter, strides=[1, 1, 1, 1], padding='SAME')
-                edge_pred = tf.nn.depthwise_conv2d(self.pred, self.sobel_filter, strides=[1, 1, 1, 1], padding='SAME')
+                edge_y = tf.nn.depthwise_conv2d(self.Y, self.edge_filter, strides=[1, 1, 1, 1], padding='SAME')
+                edge_pred = tf.nn.depthwise_conv2d(self.pred, self.edge_filter, strides=[1, 1, 1, 1], padding='SAME')
                 edge_y *= mask
                 edge_pred *= mask
-                self.Y_edges.append(tf.math.sqrt(edge_y[..., :3]**2 + edge_y[..., 3:]**2)/4)
-                self.pred_edges.append(tf.math.sqrt(edge_pred[..., :3]**2 + edge_pred[..., 3:]**2)/4)
+                self.Y_edges.append(tf.math.sqrt(edge_y[..., 0:3]**2 + edge_y[..., 3:6]**2)/4)
+                self.pred_edges.append(tf.math.sqrt(edge_pred[..., 0:3]**2 + edge_pred[..., 3:6]**2)/4)
 
                 true_edge = tf.math.sqrt(tf.math.reduce_sum(edge_y**2, axis=-1, keepdims=True))
                 edge_l1 = tf.math.reduce_mean(((1.0 - tr) + tr*true_edge)*tf.math.abs(edge_y - edge_pred))
