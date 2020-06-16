@@ -165,7 +165,7 @@ class UnprocessingDemosaic(Unprocessing):
                     l2_reg_loss = l2_factor * tf.math.accumulate_n([tf.nn.l2_loss(var) for var in variables])
                 else:
                     l2_reg_loss = tf.constant(0.0, dtype=tf.float32, name='0')
-        return loss + l1_reg_loss + l2_reg_loss
+            return loss + l1_reg_loss + l2_reg_loss
 
     @abstractmethod
     def _build_model(self):
