@@ -110,8 +110,9 @@ class Unprocessing(ConvNet):
                 self.Y_edges.append(tf.math.sqrt(edge_y[..., :3]**2 + edge_y[..., 3:]**2)/4)
                 self.pred_edges.append(tf.math.sqrt(edge_pred[..., :3]**2 + edge_pred[..., 3:]**2)/4)
 
-                edge_l1 = tf.math.reduce_mean(((1.0 - tr) + tr*tf.math.abs(edge_y))*tf.math.abs(edge_y - edge_pred))
-                edge_l2 = tf.math.reduce_mean(((1.0 - tr) + tr*tf.math.abs(edge_y))*tf.math.pow(edge_y - edge_pred, 2))
+                true_edge = tf.math.sqrt(tf.math.reduce_sum(edge_y**2, axis=-1, keepdims=True))
+                edge_l1 = tf.math.reduce_mean(((1.0 - tr) + tr*true_edge)*tf.math.abs(edge_y - edge_pred))
+                edge_l2 = tf.math.reduce_mean(((1.0 - tr) + tr*true_edge)*tf.math.pow(edge_y - edge_pred, 2))
                 edge_l2 = tf.math.sqrt(edge_l2 + 1e-5)
                 loss += edge_l1*edge_loss_l1_factor + edge_l2*edge_loss_l2_factor
 
