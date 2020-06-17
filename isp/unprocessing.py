@@ -234,7 +234,6 @@ class Unprocessing(ConvNet):
 
             # Randomly creates image metadata.
             rgb2cam = unprocess.random_ccm()
-            cam2rgb = tf.matrix_inverse(rgb2cam)
             rgb_gain, red_gain, blue_gain = unprocess.random_gains()
 
             rgb2cam = tf.cond(self.is_train,
@@ -249,6 +248,8 @@ class Unprocessing(ConvNet):
             blue_gain = tf.cond(self.is_train,
                                 true_fn=lambda: blue_gain,
                                 false_fn=lambda: tf.where(tf.math.is_nan(self._blue_gain), blue_gain, self._blue_gain))
+
+            cam2rgb = tf.matrix_inverse(rgb2cam)
 
             # Approximately inverts global tone mapping.
             image = unprocess.inverse_smoothstep(image)
