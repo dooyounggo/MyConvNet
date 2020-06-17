@@ -103,8 +103,8 @@ class Unprocessing(ConvNet):
                 edge_pred = tf.concat(self.pred_edges, axis=0, name='edge_pred')
                 self.debug_images.append(edge_true)
                 self.debug_images.append(edge_pred)
-                self.debug_images.append(tf.math.abs(self.Y_all - self.pred, name='image_diff')*5)
-                self.debug_images.append(tf.math.abs(edge_true - edge_pred, name='edge_diff')*5)
+                self.debug_images.append(tf.math.abs(self.Y_all - self.pred, name='image_diff'))
+                self.debug_images.append(tf.math.abs(edge_true - edge_pred, name='edge_diff'))
 
     def _build_loss(self, **kwargs):
         edge_loss_l1_factor = kwargs.get('edge_loss_l1_factor', 0.0)
