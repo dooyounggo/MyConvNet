@@ -105,9 +105,9 @@ class Parameters(object):
     d['rand_crop_ratio'] = (3/4, 4/3)
 
     # FIXME: Unprocessing parameters for validation/test (set None to use random values)
-    d['color_correction_matrix'] = [[1.0234, -0.2969, -0.2266],
-                                    [-0.5625, 1.6328, -0.0469],
-                                    [-0.0703, 0.2188, 0.6406]]
+    d['color_correction_matrix'] = [[0.838, -0.263, -0.0639],
+                                    [-0.2887, 1.0725, 0.2496],
+                                    [-0.0627, 0.1427, 0.5438]]
     d['rgb_gain'] = 1.25
     d['red_gain'] = 2.15
     d['blue_gain'] = 1.7
