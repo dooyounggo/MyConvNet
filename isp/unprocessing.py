@@ -226,11 +226,12 @@ class Unprocessing(ConvNet):
 
             # Randomly creates image metadata.
             rgb2cam = unprocess.random_ccm()
+            cam2rgb = tf.matrix_inverse(rgb2cam)
+            rgb_gain, red_gain, blue_gain = unprocess.random_gains()
+
             rgb2cam = tf.cond(self.is_train,
                               true_fn=rgb2cam,
                               false_fn=tf.where(tf.math.is_nan(self._ccm), rgb2cam, self._ccm))
-            cam2rgb = tf.matrix_inverse(rgb2cam)
-            rgb_gain, red_gain, blue_gain = unprocess.random_gains()
             rgb_gain = tf.cond(self.is_train,
                                true_fn=rgb_gain,
                                false_fn=tf.where(tf.math.is_nan(self._rgb_gain), rgb_gain, self._rgb_gain))
