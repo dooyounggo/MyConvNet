@@ -180,7 +180,7 @@ class Unprocessing(ConvNet):
                     for i in range(len(filters)):
                         filters[i] = tf.tile(filters[i][..., tf.newaxis, tf.newaxis], [1, 1, 3, 1])
                     self.edge_filters = tf.concat(filters, axis=-1)
-                    
+
     def _make_debug_images(self):
         with tf.device(self.param_device):
             with tf.variable_scope('calc/'):
