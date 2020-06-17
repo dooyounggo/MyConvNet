@@ -13,6 +13,7 @@ class UnprocessingDemosaic(Unprocessing):
     def _init_model(self, **kwargs):
         output_shapes = ([None, None, None, self.input_size[-1]],
                          None)
+        self._init_unprocessing(**kwargs)
         self._make_filters()
         self.Y_edges = []
         self.pred_edges = []
