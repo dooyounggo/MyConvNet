@@ -509,11 +509,14 @@ class ConvNet(object):
             labels = labels*(1.0 - ls_factor) + ls_factor/self.num_classes
         return labels
 
-    def predict(self, dataset, verbose=False, return_images=True, **kwargs):
+    def predict(self, dataset, verbose=False, return_images=True, max_examples=None, **kwargs):
         batch_size = dataset.batch_size
         augment_test = kwargs.get('augment_test', False)
 
-        pred_size = dataset.num_examples
+        if max_examples is None:
+            pred_size = dataset.num_examples
+        else:
+            pred_size = min(max_examples, dataset.num_examples)
         num_steps = np.ceil(pred_size/batch_size).astype(int)
         monte_carlo = kwargs.get('monte_carlo', False)
 
@@ -560,11 +563,14 @@ class ConvNet(object):
 
         return _X, _Y_true, _Y_pred, _loss_pred
 
-    def features(self, dataset, tensors, **kwargs):  # Return any deep features
+    def features(self, dataset, tensors, max_examples=None, **kwargs):  # Return any deep features
         batch_size = dataset.batch_size
         augment_test = kwargs.get('augment_test', False)
 
-        pred_size = dataset.num_examples
+        if max_examples is None:
+            pred_size = dataset.num_examples
+        else:
+            pred_size = min(max_examples, dataset.num_examples)
         num_steps = np.ceil(pred_size/batch_size).astype(int)
         monte_carlo = kwargs.get('monte_carlo', False)
 
