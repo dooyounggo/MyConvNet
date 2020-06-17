@@ -105,14 +105,14 @@ class Parameters(object):
     d['rand_crop_ratio'] = (3/4, 4/3)
 
     # FIXME: Unprocessing parameters for validation/test (set None to use random values)
-    d['color_correction_matrix'] = [[0.838, -0.263, -0.0639],
-                                    [-0.2887, 1.0725, 0.2496],
-                                    [-0.0627, 0.1427, 0.5438]]
+    d['color_correction_matrix'] = [[ 0.7530, -0.2054, -0.0917],
+                                    [-0.4856,  1.3395,  0.1716],
+                                    [-0.0966,  0.1836,  0.6052]]
     d['rgb_gain'] = 1.25
     d['red_gain'] = 2.15
     d['blue_gain'] = 1.7
-    d['shot_noise'] = 1e-3
-    d['read_noise'] = 1e-5
+    d['shot_noise'] = 10**(-2.5)
+    d['read_noise'] = 10**(-4.0)
 
     def __init__(self, parser=None):
         print('Training directory: ', self.train_dir)
