@@ -596,6 +596,9 @@ class ConvNet(object):
 
         return features
 
+    def save_results(self, dataset, max_examples=None, **kwargs):
+        pass
+
     def cond(self, pred, true_fn, false_fn, name=None):
         if isinstance(pred, tf.Tensor):
             return tf.cond(pred, true_fn, false_fn, name=name)
