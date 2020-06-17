@@ -301,6 +301,5 @@ class Unprocessing(ConvNet):
         pred = pred.reshape([num_examples*self.input_size[0], self.input_size[1], -1])
         image = np.concatenate([noisy, gt, pred], axis=1)
 
-        image = cv2.cvtColor(to_int(image), cv2.COLOR_RGB2BGR)
-        cv2.imwrite(os.path.join(save_dir, 'epoch_{:03d}.jpg'.format(epoch)), image,
-                    [cv2.IMWRITE_JPEG_QUALITY, 100])
+        image = to_int(cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
+        cv2.imwrite(os.path.join(save_dir, 'epoch_{:03d}.jpg'.format(epoch)), image, [cv2.IMWRITE_JPEG_QUALITY, 100])
