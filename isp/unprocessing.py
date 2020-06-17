@@ -289,17 +289,23 @@ class Unprocessing(ConvNet):
 
     def save_results(self, dataset, save_dir, epoch, max_examples=None, **kwargs):
         os.makedirs(save_dir, exist_ok=True)
+        examples_per_image = kwargs.get('num_examples_per_image')
         if max_examples is None:
-            num_examples = min(8, dataset.num_examples)
+            num_examples = min(32, dataset.num_examples)
         else:
             num_examples = min(max_examples, dataset.num_examples)
+        num_images = num_examples//examples_per_image
 
         noisy, gt, pred, _ = self.predict(dataset, verbose=False, return_images=True, max_examples=num_examples,
                                           **kwargs)
-        noisy = noisy.reshape([num_examples*self.input_size[0], self.input_size[1], -1])
-        gt = gt.reshape([num_examples*self.input_size[0], self.input_size[1], -1])
-        pred = pred.reshape([num_examples*self.input_size[0], self.input_size[1], -1])
-        image = np.concatenate([noisy, gt, pred], axis=1)
+        for i in range(num_images):
+            sidx = i*examples_per_image
+            eidx = (i + 1)*examples_per_image
+            noisy_img = np.reshape(noisy[sidx:eidx], [examples_per_image*self.input_size[0], self.input_size[1], -1])
+            gt_img = np.reshape(gt[sidx:eidx], [examples_per_image*self.input_size[0], self.input_size[1], -1])
+            pred_img = np.reshape(pred[sidx:eidx], [examples_per_image*self.input_size[0], self.input_size[1], -1])
+            image = np.concatenate([noisy_img, gt_img, pred_img], axis=1)
 
-        image = to_int(cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
-        cv2.imwrite(os.path.join(save_dir, 'epoch_{:03d}.jpg'.format(epoch)), image, [cv2.IMWRITE_JPEG_QUALITY, 100])
+            image = to_int(cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
+            cv2.imwrite(os.path.join(save_dir, 'epoch_{:03d}_{:03d}.jpg'.format(epoch, i)), image,
+                        [cv2.IMWRITE_JPEG_QUALITY, 100])
