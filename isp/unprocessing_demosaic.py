@@ -6,7 +6,7 @@ Performs both denoising and demosaicing.
 from abc import abstractmethod
 import tensorflow.compat.v1 as tf
 from isp.unprocessing import Unprocessing
-from isp import process, unprocess
+from isp import process
 
 
 class UnprocessingDemosaic(Unprocessing):
