@@ -238,17 +238,17 @@ class Unprocessing(ConvNet):
             rgb_gain, red_gain, blue_gain = unprocess.random_gains()
 
             rgb2cam = tf.cond(self.is_train,
-                              true_fn=rgb2cam,
-                              false_fn=tf.where(tf.math.is_nan(self._ccm), rgb2cam, self._ccm))
+                              true_fn=lambda: rgb2cam,
+                              false_fn=lambda: tf.where(tf.math.is_nan(self._ccm), rgb2cam, self._ccm))
             rgb_gain = tf.cond(self.is_train,
-                               true_fn=rgb_gain,
-                               false_fn=tf.where(tf.math.is_nan(self._rgb_gain), rgb_gain, self._rgb_gain))
+                               true_fn=lambda: rgb_gain,
+                               false_fn=lambda: tf.where(tf.math.is_nan(self._rgb_gain), rgb_gain, self._rgb_gain))
             red_gain = tf.cond(self.is_train,
-                               true_fn=red_gain,
-                               false_fn=tf.where(tf.math.is_nan(self._red_gain), red_gain, self._red_gain))
+                               true_fn=lambda: red_gain,
+                               false_fn=lambda: tf.where(tf.math.is_nan(self._red_gain), red_gain, self._red_gain))
             blue_gain = tf.cond(self.is_train,
-                                true_fn=blue_gain,
-                                false_fn=tf.where(tf.math.is_nan(self._blue_gain), blue_gain, self._blue_gain))
+                                true_fn=lambda: blue_gain,
+                                false_fn=lambda: tf.where(tf.math.is_nan(self._blue_gain), blue_gain, self._blue_gain))
 
             # Approximately inverts global tone mapping.
             image = unprocess.inverse_smoothstep(image)
@@ -275,11 +275,11 @@ class Unprocessing(ConvNet):
         image, bayer_image, metadata = self.unprocess(image)
         shot_noise, read_noise = unprocess.random_noise_levels()
         shot_noise = tf.cond(self.is_train,
-                             true_fn=shot_noise,
-                             false_fn=tf.where(tf.math.is_nan(self._shot_noise), shot_noise, self._shot_noise))
+                             true_fn=lambda: shot_noise,
+                             false_fn=lambda: tf.where(tf.math.is_nan(self._shot_noise), shot_noise, self._shot_noise))
         read_noise = tf.cond(self.is_train,
-                             true_fn=read_noise,
-                             false_fn=tf.where(tf.math.is_nan(self._read_noise), read_noise, self._read_noise))
+                             true_fn=lambda: read_noise,
+                             false_fn=lambda: tf.where(tf.math.is_nan(self._read_noise), read_noise, self._read_noise))
         noisy_img = unprocess.add_noise(bayer_image, shot_noise, read_noise)
         variance = shot_noise*noisy_img + read_noise
 
