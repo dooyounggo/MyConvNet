@@ -141,6 +141,8 @@ class Unprocessing(ConvNet):
         rgb_gain = kwargs.get('rgb_gain', None)
         red_gain = kwargs.get('red_gain', None)
         blue_gain = kwargs.get('blue_gain', None)
+        shot_noise = kwargs.get('shot_noise', None)
+        read_noise = kwargs.get('read_noise', None)
         if ccm is None:
             ccm = [[np.nan, np.nan, np.nan],
                    [np.nan, np.nan, np.nan],
@@ -151,10 +153,16 @@ class Unprocessing(ConvNet):
             red_gain = np.nan
         if blue_gain is None:
             blue_gain = np.nan
+        if shot_noise is None:
+            shot_noise = np.nan
+        if read_noise is None:
+            read_noise = np.nan
         self._ccm = ccm
         self._rgb_gain = rgb_gain
         self._red_gain = red_gain
         self._blue_gain = blue_gain
+        self._shot_noise = shot_noise
+        self._read_noise = read_noise
 
     def _make_filters(self):
         with tf.device(self.param_device):
@@ -266,6 +274,12 @@ class Unprocessing(ConvNet):
     def unprocess_images(self, image):
         image, bayer_image, metadata = self.unprocess(image)
         shot_noise, read_noise = unprocess.random_noise_levels()
+        shot_noise = tf.cond(self.is_train,
+                             true_fn=shot_noise,
+                             false_fn=tf.where(tf.math.is_nan(self._shot_noise), shot_noise, self._shot_noise))
+        read_noise = tf.cond(self.is_train,
+                             true_fn=read_noise,
+                             false_fn=tf.where(tf.math.is_nan(self._read_noise), read_noise, self._read_noise))
         noisy_img = unprocess.add_noise(bayer_image, shot_noise, read_noise)
         variance = shot_noise*noisy_img + read_noise
 
