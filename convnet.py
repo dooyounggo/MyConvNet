@@ -552,7 +552,7 @@ class ConvNet(object):
                     _X[sidx:eidx] = X[:num_left]
                 _Y_true[sidx:eidx] = Y_true[:num_left]
                 _Y_pred[sidx:eidx] = Y_pred[:num_left]
-                _loss_pred[sidx:eidx] = loss_pred[:num_left]
+                _loss_pred[sidx:eidx] = loss_pred
             except tf.errors.OutOfRangeError:
                 if verbose:
                     print('The last iteration ({} data) has been ignored'.format(pred_size - i * batch_size))
