@@ -198,6 +198,7 @@ class Unprocessing(ConvNet):
         return image, noisy_img, variance, metadata
 
     def save_results(self, dataset, save_dir, epoch, max_examples=None, **kwargs):
+        os.makedirs(save_dir, exist_ok=True)
         if max_examples is None:
             num_examples = min(8, dataset.num_examples)
         else:
