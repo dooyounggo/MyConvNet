@@ -33,7 +33,8 @@ class DataSet(object):
     INTERPOLATION_BICUBIC = 'bicubic'
 
     def __init__(self, image_dirs, label_dirs=None, task_type=IMAGE_ONLY, class_names=None, num_classes=None,
-                 out_size=None, resize_method=None, resize_randomness=False, from_memory=False, **kwargs):
+                 out_size=None, resize_method=None, resize_randomness=False, shuffle_data=None, from_memory=False,
+                 **kwargs):
         """
         :param image_dirs: list or tuple, paths to images
         :param label_dirs: list or tuple, paths to labels. If None, fake labels are created.
@@ -67,6 +68,11 @@ class DataSet(object):
         self._resize_randomness = resize_randomness
         self._resize_interpolation = kwargs.get('resize_interpolation', 'bilinear')
 
+        if shuffle_data is None:
+            self._shuffle = kwargs.get('shuffle', True)
+        else:
+            self._shuffle = shuffle_data
+
         self._from_memory = from_memory
 
         if class_names is None:
@@ -91,7 +97,6 @@ class DataSet(object):
         self._device_offset = dev_offset
 
         self._batch_size = kwargs.get('batch_size', 32)
-        self._shuffle = kwargs.get('shuffle', True)
 
         self._parameters = kwargs
 
