@@ -33,6 +33,7 @@ if __name__ == '__main__':
         val_set = DataSet(image_dirs[:val_size], label_dirs[:val_size],
                           out_size=Param.d['image_size_test'], task_type=DataSet.IMAGE_ONLY,
                           resize_method=Param.d['resize_type_test'], resize_randomness=Param.d['resize_random_test'],
+                          shuffle_data=False,
                           **Param.d)
         train_set = DataSet(image_dirs[val_size:], label_dirs[val_size:],
                             out_size=Param.d['image_size'], task_type=DataSet.IMAGE_ONLY,
@@ -44,6 +45,7 @@ if __name__ == '__main__':
         val_set = DataSet(image_dirs_val, label_dirs_val,
                           out_size=Param.d['image_size_test'], task_type=DataSet.IMAGE_ONLY,
                           resize_method=Param.d['resize_type_test'], resize_randomness=Param.d['resize_random_test'],
+                          shuffle_data=False,
                           **Param.d)
         train_set = DataSet(image_dirs, label_dirs,
                             out_size=Param.d['image_size'], task_type=DataSet.IMAGE_ONLY,
