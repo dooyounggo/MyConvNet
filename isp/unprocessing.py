@@ -289,7 +289,7 @@ class Unprocessing(ConvNet):
 
     def save_results(self, dataset, save_dir, epoch, max_examples=None, **kwargs):
         os.makedirs(save_dir, exist_ok=True)
-        examples_per_image = kwargs.get('num_examples_per_image')
+        examples_per_image = kwargs.get('num_examples_per_image', 4)
         if max_examples is None:
             num_examples = min(32, dataset.num_examples)
         else:
