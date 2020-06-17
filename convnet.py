@@ -539,7 +539,7 @@ class ConvNet(object):
             _X = np.zeros([pred_size] + [4, 4, 3], dtype=np.float32)  # Dummy images
         _Y_true = np.zeros([pred_size] + self.pred.get_shape().as_list()[1:], dtype=np.float32)
         _Y_pred = np.zeros([pred_size] + self.pred.get_shape().as_list()[1:], dtype=np.float32)
-        _loss_pred = np.zeros(pred_size, dtype=np.float32)
+        _loss_pred = np.zeros(num_steps, dtype=np.float32)
         start_time = time.time()
         for i in range(num_steps):
             try:
@@ -552,7 +552,7 @@ class ConvNet(object):
                     _X[sidx:eidx] = X[:num_left]
                 _Y_true[sidx:eidx] = Y_true[:num_left]
                 _Y_pred[sidx:eidx] = Y_pred[:num_left]
-                _loss_pred[sidx:eidx] = loss_pred
+                _loss_pred[i] = loss_pred
             except tf.errors.OutOfRangeError:
                 if verbose:
                     print('The last iteration ({} data) has been ignored'.format(pred_size - i * batch_size))
