@@ -205,9 +205,9 @@ class Unprocessing(ConvNet):
 
         noisy, gt, pred, _ = self.predict(dataset, verbose=False, return_images=True, max_examples=num_examples,
                                           **kwargs)
-        noisy.reshape([num_examples*self.input_size[0], -1, -1])
-        gt.reshape([num_examples * self.input_size[0], -1, -1])
-        pred.reshape([num_examples * self.input_size[0], -1, -1])
+        noisy.reshape([num_examples*self.input_size[0]] + self.input_size[1:])
+        gt.reshape([num_examples*self.input_size[0]] + self.input_size[1:])
+        pred.reshape([num_examples*self.input_size[0]] + self.input_size[1:])
         image = np.concatenate([noisy, gt, pred], axis=1)
 
         cv2.imwrite(os.path.join(save_dir, 'epoch_{:03d}.jpg'.format(epoch)), to_int(image),
