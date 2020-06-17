@@ -425,7 +425,7 @@ class Optimizer(object):
 
                     curr_score = eval_score
 
-                    self.model.save_results(self.val_set, save_dir=os.path.join(save_dir, 'results'),
+                    self.model.save_results(self.val_set, os.path.join(save_dir, 'results'), self.curr_epoch,
                                             max_examples=kwargs.get('num_examples_to_save', None), **kwargs)
                 else:
                     curr_score = np.mean(step_scores) if show_each_step else step_scores/validation_frequency
