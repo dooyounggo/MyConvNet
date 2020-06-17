@@ -597,7 +597,7 @@ class ConvNet(object):
 
         return features
 
-    def save_results(self, dataset, save_dir, max_examples=None, **kwargs):
+    def save_results(self, dataset, save_dir, max_examples=None, **kwargs):  # Save intermediate results every epoch
         pass
 
     def cond(self, pred, true_fn, false_fn, name=None):
