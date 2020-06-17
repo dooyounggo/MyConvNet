@@ -307,5 +307,5 @@ class Unprocessing(ConvNet):
             image = np.concatenate([noisy_img, gt_img, pred_img], axis=1)
 
             image = to_int(cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
-            cv2.imwrite(os.path.join(save_dir, 'epoch_{:03d}_{:03d}.jpg'.format(epoch, i)), image,
-                        [cv2.IMWRITE_JPEG_QUALITY, 100])
+            cv2.imwrite(os.path.join(save_dir, 'epoch_{:03d}_{:03d}.png'.format(epoch, i)), image,
+                        [cv2.IMWRITE_PNG_COMPRESSION, 9])
