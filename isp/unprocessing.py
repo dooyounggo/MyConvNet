@@ -17,6 +17,7 @@ class Unprocessing(ConvNet):
     def _init_model(self, **kwargs):
         output_shapes = ([None, None, None, self.input_size[-1]],
                          None)
+        self._init_unprocessing(**kwargs)
         self._make_filters()
         self.Y_edges = []
         self.pred_edges = []
@@ -135,6 +136,26 @@ class Unprocessing(ConvNet):
                 l2_reg_loss = tf.constant(0.0, dtype=tf.float32, name='0')
         return loss + l1_reg_loss + l2_reg_loss
 
+    def _init_unprocessing(self, **kwargs):
+        ccm = kwargs.get('color_correction_matrix', None)
+        rgb_gain = kwargs.get('rgb_gain', None)
+        red_gain = kwargs.get('red_gain', None)
+        blue_gain = kwargs.get('blue_gain', None)
+        if ccm is None:
+            ccm = [[np.nan, np.nan, np.nan],
+                   [np.nan, np.nan, np.nan],
+                   [np.nan, np.nan, np.nan]]
+        if rgb_gain is None:
+            rgb_gain = np.nan
+        if red_gain is None:
+            red_gain = np.nan
+        if blue_gain is None:
+            blue_gain = np.nan
+        self._ccm = ccm
+        self._rgb_gain = rgb_gain
+        self._red_gain = red_gain
+        self._blue_gain = blue_gain
+
     def _make_filters(self):
         with tf.device(self.param_device):
             with tf.variable_scope('calc/'):
@@ -205,8 +226,20 @@ class Unprocessing(ConvNet):
 
             # Randomly creates image metadata.
             rgb2cam = unprocess.random_ccm()
+            rgb2cam = tf.cond(self.is_train,
+                              true_fn=rgb2cam,
+                              false_fn=tf.where(tf.math.is_nan(self._ccm), rgb2cam, self._ccm))
             cam2rgb = tf.matrix_inverse(rgb2cam)
             rgb_gain, red_gain, blue_gain = unprocess.random_gains()
+            rgb_gain = tf.cond(self.is_train,
+                               true_fn=rgb_gain,
+                               false_fn=tf.where(tf.math.is_nan(self._rgb_gain), rgb_gain, self._rgb_gain))
+            red_gain = tf.cond(self.is_train,
+                               true_fn=red_gain,
+                               false_fn=tf.where(tf.math.is_nan(self._red_gain), red_gain, self._red_gain))
+            blue_gain = tf.cond(self.is_train,
+                                true_fn=blue_gain,
+                                false_fn=tf.where(tf.math.is_nan(self._blue_gain), blue_gain, self._blue_gain))
 
             # Approximately inverts global tone mapping.
             image = unprocess.inverse_smoothstep(image)
