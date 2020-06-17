@@ -104,7 +104,7 @@ class Parameters(object):
     d['rand_crop_scale'] = (0.25, 1.75)  # Scale*input_size patch is cropped from an image
     d['rand_crop_ratio'] = (3/4, 4/3)
 
-    # FIXME: Unprocessing parameters for validation/test (set None to use random values)
+    # FIXME: Unprocessing parameters for validation/test (use None to apply random values)
     d['color_correction_matrix'] = [[ 0.7530, -0.2054, -0.0917],
                                     [-0.4856,  1.3395,  0.1716],
                                     [-0.0966,  0.1836,  0.6052]]
