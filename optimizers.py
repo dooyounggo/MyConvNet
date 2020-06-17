@@ -424,6 +424,10 @@ class Optimizer(object):
                     del eval_Y_true, eval_Y_pred
 
                     curr_score = eval_score
+
+                    self.model.save_results(self.val_set,
+                                            max_examples=kwargs.get('num_examples_to_save', None),
+                                            **kwargs)
                 else:
                     curr_score = np.mean(step_scores) if show_each_step else step_scores/validation_frequency
 
