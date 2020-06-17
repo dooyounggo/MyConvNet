@@ -547,14 +547,15 @@ class ConvNet(object):
                                                                 feed_dict=feed_dict)
                 sidx = i*batch_size
                 eidx = (i + 1)*batch_size
+                num_left = pred_size - sidx
                 if return_images:
-                    _X[sidx:eidx] = X
-                _Y_true[sidx:eidx] = Y_true
-                _Y_pred[sidx:eidx] = Y_pred
-                _loss_pred[sidx:eidx] = loss_pred
+                    _X[sidx:eidx] = X[:num_left]
+                _Y_true[sidx:eidx] = Y_true[:num_left]
+                _Y_pred[sidx:eidx] = Y_pred[:num_left]
+                _loss_pred[sidx:eidx] = loss_pred[:num_left]
             except tf.errors.OutOfRangeError:
                 if verbose:
-                    print('The last iteration ({} data) has been ignored'.format(pred_size - i*batch_size))
+                    print('The last iteration ({} data) has been ignored'.format(pred_size - i * batch_size))
 
         if verbose:
             print('Total prediction time: {:.2f} sec'.format(time.time() - start_time))
@@ -592,7 +593,7 @@ class ConvNet(object):
 
         features = []
         for feat in zip(*batched_features):
-            features.append(np.concatenate(feat, axis=0))
+            features.append(np.concatenate(feat, axis=0)[:pred_size])
 
         return features
 
