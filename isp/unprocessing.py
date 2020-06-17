@@ -5,8 +5,12 @@ Reference: https://github.com/google-research/google-research/tree/master/unproc
 
 from abc import abstractmethod
 import tensorflow.compat.v1 as tf
+import numpy as np
+import os
+import cv2
 from convnet import ConvNet
 from isp import process, unprocess
+from subsets.subset_functions import to_int
 
 
 class Unprocessing(ConvNet):
@@ -193,3 +197,18 @@ class Unprocessing(ConvNet):
         metadata = [v for v in metadata.values()]
         return image, noisy_img, variance, metadata
 
+    def save_results(self, dataset, save_dir, epoch, max_examples=None, **kwargs):
+        if max_examples is None:
+            num_examples = min(8, dataset.num_examples)
+        else:
+            num_examples = min(max_examples, dataset.num_examples)
+
+        noisy, gt, pred, _ = self.predict(dataset, verbose=False, return_images=True, max_examples=num_examples,
+                                          **kwargs)
+        noisy.reshape([num_examples*self.input_size[0], -1, -1])
+        gt.reshape([num_examples * self.input_size[0], -1, -1])
+        pred.reshape([num_examples * self.input_size[0], -1, -1])
+        image = np.concatenate([noisy, gt, pred], axis=1)
+
+        cv2.imwrite(os.path.join(save_dir, 'epoch_{:03d}.jpg'.format(epoch)), to_int(image),
+                    [cv2.IMWRITE_JPEG_QUALITY, 100])
