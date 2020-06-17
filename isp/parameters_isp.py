@@ -104,6 +104,16 @@ class Parameters(object):
     d['rand_crop_scale'] = (0.25, 1.75)  # Scale*input_size patch is cropped from an image
     d['rand_crop_ratio'] = (3/4, 4/3)
 
+    # FIXME: Unprocessing parameters for validation/test (set None to use random values)
+    d['color_correction_matrix'] = [[1.0234, -0.2969, -0.2266],
+                                    [-0.5625, 1.6328, -0.0469],
+                                    [-0.0703, 0.2188, 0.6406]]
+    d['rgb_gain'] = 1.25
+    d['red_gain'] = 2.15
+    d['blue_gain'] = 1.7
+    d['shot_noise'] = 1e-3
+    d['read_noise'] = 1e-5
+
     def __init__(self, parser=None):
         print('Training directory: ', self.train_dir)
         print('Test directory: ', self.test_dir)
