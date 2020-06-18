@@ -109,11 +109,23 @@ class DataSet(object):
         self._iterators = []
         self._handles = []
         batch_size_per_gpu = self.batch_size//self.num_shards
+
+        idx = np.arange(self.num_examples)
+        num_split = self.num_examples//self.batch_size
+        exact_size = self.batch_size*num_split
+        splitted = list(np.split(idx[:exact_size], num_split))
+        idx_shards = []
+        for sp in splitted:
+            idx_shards += list(np.split(sp, self.num_shards))
+        idx_shards += np.array_split(idx[exact_size:], self.num_shards)
+
+        image_dirs = np.array(image_dirs)
+        label_dirs = np.array(label_dirs)
         with tf.name_scope('dataset/'):
             with tf.device('/cpu:{}'.format(self.cpu_offset)):
                 for i in range(self.num_shards):
-                    dataset = tf.data.Dataset.from_tensor_slices((image_dirs[i::self.num_shards],
-                                                                  label_dirs[i::self.num_shards]))
+                    idx = np.concatenate(idx_shards[i::self.num_shards])
+                    dataset = tf.data.Dataset.from_tensor_slices((image_dirs[idx], label_dirs[idx]))
                     if self.shuffle:
                         dataset = dataset.shuffle(buffer_size=min([np.ceil(self.num_examples/self.num_shards),
                                                                    np.ceil(1024*batch_size_per_gpu/32)]))
