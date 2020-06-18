@@ -112,7 +112,7 @@ class Parameters(object):
     d['rgb_gain'] = 1.25
     d['red_gain'] = 2.15
     d['blue_gain'] = 1.7
-    d['shot_noise'] = 10**(-2.8)
+    d['shot_noise'] = 10**(-2.9)
     d['read_noise'] = 10**(-5.0)
 
     def __init__(self, parser=None):
