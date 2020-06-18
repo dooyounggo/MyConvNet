@@ -561,6 +561,7 @@ class Optimizer(object):
                      self.learning_rate_multiplier: self.curr_multiplier}
         for h_t, h in zip(self.model.handles, handles):
             feed_dict.update({h_t: h})
+        feed_dict.update(self.model.custom_feed_dict)
 
         run_options = tf.RunOptions(trace_level=tf.RunOptions.FULL_TRACE) if log_trace else None
         run_metadata = tf.RunMetadata() if log_trace else None

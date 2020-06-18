@@ -21,6 +21,7 @@ class ConvNet(object):
         """
         self._block_list = []
         self._curr_block = None  # Use this instance to group variables into blocks
+        self._custom_feed_dict = dict()  # feed_dict for custom placeholders {placeholder: value}
 
         graph = tf.get_default_graph()
         config = tf.ConfigProto()
@@ -289,6 +290,10 @@ class ConvNet(object):
         self.__dict__['_num_blocks'] = num_blocks
 
     @property
+    def custom_feed_dict(self):
+        return self._custom_feed_dict
+
+    @property
     def flops(self):
         return self._flops
 
@@ -532,6 +537,7 @@ class ConvNet(object):
                      self.total_steps: num_steps}
         for h_t, h in zip(self.handles, handles):
             feed_dict.update({h_t: h})
+        feed_dict.update(self.custom_feed_dict)
 
         if return_images:
             _X = np.zeros([pred_size] + list(self.input_size), dtype=np.float32)
@@ -583,6 +589,7 @@ class ConvNet(object):
                      self.augmentation: augment_test}
         for h_t, h in zip(self.handles, handles):
             feed_dict.update({h_t: h})
+        feed_dict.update(self.custom_feed_dict)
 
         if not isinstance(tensors, (list, tuple)):
             tensors = [tensors]
