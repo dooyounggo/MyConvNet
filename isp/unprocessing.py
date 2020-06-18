@@ -167,8 +167,12 @@ class Unprocessing(ConvNet):
         self._rgb_gain = rgb_gain
         self._red_gain = red_gain
         self._blue_gain = blue_gain
-        self._shot_noise = shot_noise
-        self._read_noise = read_noise
+
+        with tf.device(self.param_device):
+            with tf.variable_scope('conditions/'):
+                self._shot_noise = tf.placeholder(dtype=tf.float32, shape=[], name='shot_noise')
+                self._read_noise = tf.placeholder(dtype=tf.float32, shape=[], name='read_noise')
+        self.custom_feed_dict.update({self._shot_noise: shot_noise, self._read_noise: read_noise})
 
     def _make_filters(self):
         with tf.device(self.param_device):
@@ -302,6 +306,11 @@ class Unprocessing(ConvNet):
             num_examples = min(max_examples, dataset.num_examples)
         num_images = num_examples//examples_per_image
 
+        shot_noise = kwargs.get('shot_noise')
+        read_noise = kwargs.get('read_noise')
+        # FIXME: High noise level
+        self.custom_feed_dict[self._shot_noise] = shot_noise*10**0.4
+        self.custom_feed_dict[self._read_noise] = read_noise*10**0.8
         noisy, gt, pred, _ = self.predict(dataset, verbose=False, return_images=True, max_examples=num_examples,
                                           **kwargs)
         for i in range(num_images):
@@ -313,5 +322,24 @@ class Unprocessing(ConvNet):
             image = np.concatenate([noisy_img, gt_img, pred_img], axis=1)
 
             image = to_int(cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
-            cv2.imwrite(os.path.join(save_dir, 'epoch_{:03d}_{:03d}.png'.format(epoch, i)), image,
-                        [cv2.IMWRITE_PNG_COMPRESSION, 9])
+            cv2.imwrite(os.path.join(save_dir, 'epoch_{:03d}_{:03d}.jpg'.format(epoch, i)), image,
+                        [cv2.IMWRITE_JPEG_QUALITY, 100])
+
+        # FIXME: Low noise level
+        self.custom_feed_dict[self._shot_noise] = shot_noise*10**(-0.4)
+        self.custom_feed_dict[self._read_noise] = read_noise*10**(-0.8)
+        noisy, gt, pred, _ = self.predict(dataset, verbose=False, return_images=True, max_examples=num_examples,
+                                          **kwargs)
+        for i in range(num_images):
+            sidx = i*examples_per_image
+            eidx = (i + 1)*examples_per_image
+            noisy_img = np.reshape(noisy[sidx:eidx],
+                                   [examples_per_image*self.input_size[0], self.input_size[1], -1])
+            gt_img = np.reshape(gt[sidx:eidx], [examples_per_image*self.input_size[0], self.input_size[1], -1])
+            pred_img = np.reshape(pred[sidx:eidx],
+                                  [examples_per_image*self.input_size[0], self.input_size[1], -1])
+            image = np.concatenate([noisy_img, gt_img, pred_img], axis=1)
+
+            image = to_int(cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
+            cv2.imwrite(os.path.join(save_dir, 'epoch_{:03d}_{:03d}.jpg'.format(epoch, i + num_images)), image,
+                        [cv2.IMWRITE_JPEG_QUALITY, 100])
