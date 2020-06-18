@@ -56,9 +56,11 @@ def quantize(model, images, ckpt_dir, save_dir, overwrite=False, saved_model=Tru
                 if act in op_tensor.name.lower():
                     output_tensors.append(op_tensor)
                     break
-    for n in range(model.num_blocks):
-        if f'block_{n}' in d:
-            output_tensors.append(d[f'block_{n}'])
+    for blk in model.block_list:
+        if f'block_{blk}' in d:
+            output_tensors.append(d[f'block_{blk}'])
+        elif blk in d:
+            output_tensors.append(d[blk])
 
     if kwargs.get('zero_center', True):
         image_mean = kwargs.get('image_mean', 0.5)
