@@ -343,3 +343,6 @@ class Unprocessing(ConvNet):
             image = to_int(cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
             cv2.imwrite(os.path.join(save_dir, 'epoch_{:03d}_{:03d}.jpg'.format(epoch, i + num_images)), image,
                         [cv2.IMWRITE_JPEG_QUALITY, 100])
+
+        self.custom_feed_dict[self._shot_noise] = shot_noise
+        self.custom_feed_dict[self._read_noise] = read_noise
