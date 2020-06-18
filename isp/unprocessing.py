@@ -294,7 +294,7 @@ class Unprocessing(ConvNet):
         noisy_img = unprocess.add_noise(bayer_image, shot_noise, read_noise)
         variance = shot_noise*noisy_img + read_noise
 
-        metadata = [v for v in metadata.values()]
+        metadata = [v for v in metadata.values()] + [shot_noise, read_noise]
         return image, bayer_image, noisy_img, variance, metadata
 
     def save_results(self, dataset, save_dir, epoch, max_examples=None, **kwargs):
