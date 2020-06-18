@@ -87,13 +87,19 @@ class Unprocessing(ConvNet):
         return loss
 
     def _loss_fn(self, **kwargs):
+        l2_loss_factor = kwargs.get('l2_loss_factor', 0.0)
         edge_loss_l1_factor = kwargs.get('edge_loss_l1_factor', 0.0)
         edge_loss_l2_factor = kwargs.get('edge_loss_l2_factor', 0.0)
-        mask = tf.ones([1, self.input_size[0] - 4, self.input_size[1] - 4, 1])
-        mask = tf.pad(mask, [[0, 0], [2, 2], [2, 2], [0, 0]], constant_values=0.0)  # Mask distorted boundaries
-        loss = tf.losses.absolute_difference(mask*self.Y, mask*self.pred)
+        eps = 1e-8
+
+        loss = tf.losses.absolute_difference(self.Y, self.pred)
+        if l2_loss_factor > 0.0:
+            loss += l2_loss_factor*tf.math.sqrt(tf.losses.mean_squared_error(self.Y, self.pred) + eps)
         if edge_loss_l1_factor > 0.0 or edge_loss_l2_factor > 0.0:
             with tf.variable_scope('edge_loss'):
+                mask = tf.ones([1, self.input_size[0] - 2, self.input_size[1] - 2, 1])
+                mask = tf.pad(mask, [[0, 0], [1, 1], [1, 1], [0, 0]], constant_values=0.0)  # Mask distorted boundaries
+
                 tr = kwargs.get('edge_loss_true_ratio', 0.0)
                 edge_y = tf.nn.depthwise_conv2d(self.Y, self.edge_filters,
                                                 strides=[1, 1, 1, 1], padding='SAME')
@@ -114,7 +120,7 @@ class Unprocessing(ConvNet):
                 true_edge = tf.math.sqrt(tf.math.reduce_sum(edge_y**2, axis=-1, keepdims=True))
                 edge_l1 = tf.math.reduce_mean(((1.0 - tr) + tr*true_edge)*tf.math.abs(edge_y - edge_pred))
                 edge_l2 = tf.math.reduce_mean(((1.0 - tr) + tr*true_edge)*tf.math.pow(edge_y - edge_pred, 2))
-                edge_l2 = tf.math.sqrt(edge_l2 + 1e-5)
+                edge_l2 = tf.math.sqrt(edge_l2 + eps)
                 loss += edge_l1*edge_loss_l1_factor + edge_l2*edge_loss_l2_factor
 
         l1_factor = kwargs.get('l1_reg', 0e-8)
