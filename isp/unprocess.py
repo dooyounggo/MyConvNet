@@ -154,7 +154,7 @@ def random_noise_levels():
   log_shot_noise = tf.random_uniform((), log_min_shot_noise, log_max_shot_noise)
   shot_noise = tf.exp(log_shot_noise)
 
-  line = lambda x: 2.18 * x + 1.20
+  line = lambda x: 2.18 * x + 2.76  # FIXME: Correct constant value for natural log
   log_read_noise = line(log_shot_noise) + tf.random_normal((), stddev=0.26)
   read_noise = tf.exp(log_read_noise)
   return shot_noise, read_noise
