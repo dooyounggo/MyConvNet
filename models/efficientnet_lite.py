@@ -15,7 +15,7 @@ class EfficientNetLite(ConvNet):
         self.conv_units = [None, 1, 2, 2, 3, 3, 4, 1, None]
         self.multipliers = [None, 1, 6, 6, 6, 6, 6, 6, None]
 
-        self.conv_initializer = tf.initializers.variance_scaling(scale=2.0, mode='fan_out')
+        self.conv_initializer = tf.initializers.variance_scaling(mode='fan_out')
         self.fc_initializer = tf.initializers.variance_scaling(scale=1.0/3.0,
                                                                mode='fan_out',
                                                                distribution='uniform')
