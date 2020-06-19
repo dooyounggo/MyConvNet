@@ -219,8 +219,8 @@ class Unprocessing(ConvNet):
 
                 self.input_images = tf.concat(self.X_in, axis=0, name='x_in')
                 self.input_labels = self.input_images
-                self.debug_images.append(self.Y_all, 'ground_truth')
-                self.debug_images.append(self.pred, 'prediction')
+                self.debug_images.append(self.Y_all)
+                self.debug_images.append(self.pred)
 
                 edge_true = tf.concat(self.Y_edges, axis=0, name='edge_true')
                 edge_pred = tf.concat(self.pred_edges, axis=0, name='edge_pred')
