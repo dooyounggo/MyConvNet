@@ -256,7 +256,7 @@ class NADMNet(UnprocessingDemosaic):  # Noise-Adaptive DeMosaicing Network
         self.use_adascale = kwargs.get('use_adascale', True)
         self.activation_type = kwargs.get('activation_type', 'relu')
         self.conv_initializer = tf.initializers.variance_scaling(scale=1.0, mode='fan_out')
-        self.adascale_initializer = tf.initializers.variance_scaling(scale=1e3, mode='fan_in')
+        self.adascale_initializer = tf.initializers.variance_scaling(scale=100.0, mode='fan_in')
 
         self.striding_kernel_offset = kwargs.get('striding_kernel_offset', 0)
         self.striding_kernel_size = kwargs.get('striding_kernel_size', 4)
@@ -345,8 +345,7 @@ class NADMNet(UnprocessingDemosaic):  # Noise-Adaptive DeMosaicing Network
             x = self.upsampling_2d_layer(features, scale=2, upsampling_method='bilinear')
             x = tf.concat([x, denoised_rgb], axis=channel_axis)
             with tf.variable_scope('conv_0'):
-                x = self.conv_layer(x, 3, 1, out_channels=3, padding='SAME', biased=False, verbose=True,
-                                    weight_initializer=tf.initializers.variance_scaling(mode='fan_out'))
+                x = self.conv_layer(x, 3, 1, out_channels=3, padding='SAME', biased=False, verbose=True)
             d['pred'] = x + 0.5
         return d
 
