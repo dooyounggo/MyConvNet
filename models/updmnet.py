@@ -309,6 +309,13 @@ class NADMNet(UnprocessingDemosaic):  # Noise-Adaptive DeMosaicing Network
                     x = self.upsampling_2d_layer(x, scale=s, upsampling_method='bilinear')
                 skip = residuals.pop()
                 x = tf.concat([x, skip], axis=channel_axis)
+                with tf.variable_scope('conv_reduce'):
+                    x = self.conv_layer(x, 1, 1, out_channels=c, padding='SAME',
+                                        biased=not (self.use_bn or self.use_adascale), verbose=True)
+                    if self.use_bn:
+                        x = self.batch_norm(x, shift=True, scale=True, scope='norm')
+                    if self.use_adascale:
+                        x = self.adaptive_scaling(x, self._noise_vector, scale=True, shift=True, name='adascale')
                 for j in range(n):
                     x = self.mbconv_unit(x, k, 1, c, m, d, activation_type=self.activation_type, name=f'mbconv_{j}')
                 d['block_{}'.format(self._curr_block)] = x
