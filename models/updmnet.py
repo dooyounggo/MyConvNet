@@ -70,7 +70,6 @@ class UPDMNet(UnprocessingDemosaic):
                 x = self.conv_layer(x, 3, 1, out_channels=3, biased=True, verbose=True)
                 # x = self.tanh(x)
             d['pred'] = x + denoised_rgb
-
         return d
 
     def conv_unit(self, x, channels, use_bn=False, activation_type='lrelu'):
@@ -191,7 +190,6 @@ class EDNMNet(UnprocessingDemosaic):
                 x = self.conv_layer(x, 3, 1, out_channels=3, padding='SAME', biased=False, verbose=True)
                 # x = self.tanh(x)
             d['pred'] = x + denoised_rgb
-
         return d
 
     def conv_unit(self, x, kernel, stride, out_channels, activation_type='lrelu', name='conv'):
@@ -243,7 +241,6 @@ class EDNMNet(UnprocessingDemosaic):
             if skip is not None:
                 x += skip
             d[name] = x
-
         return x
 
 
@@ -259,7 +256,7 @@ class NADMNet(UnprocessingDemosaic):  # Noise-Adaptive DeMosaicing Network
         self.use_adascale = kwargs.get('use_adascale', True)
         self.activation_type = kwargs.get('activation_type', 'relu')
         self.conv_initializer = tf.initializers.variance_scaling(scale=2.0, mode='fan_out')
-        self.adascale_initializer = tf.initializers.variance_scaling(scale=10.0, mode='fan_in')
+        self.adascale_initializer = tf.initializers.variance_scaling(scale=100.0, mode='fan_in')
 
         self.striding_kernel_offset = kwargs.get('striding_kernel_offset', 0)
         self.striding_kernel_size = kwargs.get('striding_kernel_size', 4)
@@ -351,7 +348,6 @@ class NADMNet(UnprocessingDemosaic):  # Noise-Adaptive DeMosaicing Network
                 x = self.conv_layer(x, 3, 1, out_channels=3, padding='SAME', biased=False, verbose=True,
                                     weight_initializer=tf.initializers.variance_scaling(mode='fan_out'))
             d['pred'] = x + 0.5
-
         return d
 
     def conv_unit(self, x, kernel, stride, out_channels, d, activation_type='lrelu', name='conv'):
@@ -412,7 +408,6 @@ class NADMNet(UnprocessingDemosaic):  # Noise-Adaptive DeMosaicing Network
             if skip is not None:
                 x += skip
             d[name] = x
-
         return x
 
     def adaptive_scaling(self, x, vector, scale=True, shift=True, name='adascale'):
