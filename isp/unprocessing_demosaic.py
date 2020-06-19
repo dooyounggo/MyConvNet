@@ -14,6 +14,7 @@ class UnprocessingDemosaic(Unprocessing):
         output_shapes = ([None, None, None, self.input_size[-1]],
                          None)
         self._init_unprocessing(**kwargs)
+        self.denoising_losses = []
         self._make_filters()
         with tf.variable_scope(tf.get_variable_scope()):
             for i in range(self.device_offset, self.num_devices + self.device_offset):
@@ -90,13 +91,18 @@ class UnprocessingDemosaic(Unprocessing):
                         self.losses.append(self._build_loss(**kwargs))
 
         self._make_debug_images()
+        with tf.device(self.param_device):
+            with tf.variable_scope('calc/'):
+                self.debug_values.append(tf.reduce_mean(self.denoising_losses))
 
     def _build_loss(self, **kwargs):
         with tf.variable_scope('loss'):
             denoising_loss_factor = kwargs.get('denoising_loss_factor', 0.0)
             loss = self._loss_fn(**kwargs)
             if denoising_loss_factor > 0.0 and self.denoised is not None:
-                loss += tf.losses.absolute_difference(self.Y_mosaic, self.denoised, weights=denoising_loss_factor)
+                deno_loss = tf.losses.absolute_difference(self.Y_mosaic, self.denoised, weights=denoising_loss_factor)
+                loss += deno_loss
+                self.denoising_losses.append(deno_loss)
             return loss
 
     @abstractmethod
