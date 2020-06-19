@@ -219,8 +219,8 @@ class Unprocessing(ConvNet):
 
                 self.input_images = tf.concat(self.X_in, axis=0, name='x_in')
                 self.input_labels = self.input_images
-                self.debug_images.append(self.Y_all)
-                self.debug_images.append(self.pred)
+                self.debug_images.append(self.Y_all, 'ground_truth')
+                self.debug_images.append(self.pred, 'prediction')
 
                 edge_true = tf.concat(self.Y_edges, axis=0, name='edge_true')
                 edge_pred = tf.concat(self.pred_edges, axis=0, name='edge_pred')
@@ -229,10 +229,10 @@ class Unprocessing(ConvNet):
                 self.debug_images.append(tf.math.abs(self.Y_all - self.pred, name='image_diff'))
                 self.debug_images.append(tf.math.abs(edge_true - edge_pred, name='edge_diff'))
 
-                self.debug_values.append(tf.reduce_mean(self.l1_losses))
-                self.debug_values.append(tf.reduce_mean(self.l2_losses))
-                self.debug_values.append(tf.reduce_mean(self.edge_l1_losses))
-                self.debug_values.append(tf.reduce_mean(self.edge_l2_losses))
+                self.debug_values.append(tf.reduce_mean(self.l1_losses, name='l1_loss'))
+                self.debug_values.append(tf.reduce_mean(self.l2_losses, name='l2_loss'))
+                self.debug_values.append(tf.reduce_mean(self.edge_l1_losses, name='edge_l1_loss'))
+                self.debug_values.append(tf.reduce_mean(self.edge_l2_losses, name='edge_l2_loss'))
 
     @abstractmethod
     def _build_model(self):
