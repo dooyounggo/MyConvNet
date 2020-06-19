@@ -346,7 +346,7 @@ class NADMNet(UnprocessingDemosaic):  # Noise-Adaptive DeMosaicing Network
             x = tf.concat([x, denoised_rgb], axis=channel_axis)
             with tf.variable_scope('conv_0'):
                 x = self.conv_layer(x, 3, 1, out_channels=3, padding='SAME', biased=False, verbose=True)
-            d['pred'] = x + 0.5
+            d['pred'] = x
         return d
 
     def conv_unit(self, x, kernel, stride, out_channels, d, activation_type='lrelu', name='conv'):
