@@ -19,8 +19,6 @@ class Unprocessing(ConvNet):
                          None)
         self._init_unprocessing(**kwargs)
         self._make_filters()
-        self.Y_edges = []
-        self.pred_edges = []
         with tf.variable_scope(tf.get_variable_scope()):
             for i in range(self.device_offset, self.num_devices + self.device_offset):
                 self._curr_device = i
@@ -94,8 +92,13 @@ class Unprocessing(ConvNet):
         eps = 1e-8
 
         loss = tf.losses.absolute_difference(self.Y, self.pred)
+        self.l1_losses.append(loss)
         if l2_loss_factor > 0.0:
-            loss += l2_loss_factor*tf.math.sqrt(tf.losses.mean_squared_error(self.Y, self.pred) + eps)
+            l2_loss = l2_loss_factor*tf.math.sqrt(tf.losses.mean_squared_error(self.Y, self.pred) + eps)
+            loss += l2_loss
+            self.l2_losses.append(l2_loss)
+        else:
+            self.l2_losses.append(0.0)
         if edge_loss_l1_factor > 0.0 or edge_loss_l2_factor > 0.0:
             with tf.variable_scope('edge_loss'):
                 mask = tf.ones([1, self.input_size[0] - 2, self.input_size[1] - 2, 1])
@@ -122,7 +125,14 @@ class Unprocessing(ConvNet):
                 edge_l1 = tf.math.reduce_mean(((1.0 - tr) + tr*true_edge)*tf.math.abs(edge_y - edge_pred))
                 edge_l2 = tf.math.reduce_mean(((1.0 - tr) + tr*true_edge)*tf.math.pow(edge_y - edge_pred, 2))
                 edge_l2 = tf.math.sqrt(edge_l2 + eps)
-                loss += edge_l1*edge_loss_l1_factor + edge_l2*edge_loss_l2_factor
+                edge_l1_loss = edge_l1*edge_loss_l1_factor
+                edge_l2_loss = edge_l2*edge_loss_l2_factor
+                loss += edge_l1_loss + edge_l2_loss
+                self.edge_l1_losses.append(edge_l1_loss)
+                self.edge_l2_losses.append(edge_l2_loss)
+        else:
+            self.edge_l1_losses.append(0.0)
+            self.edge_l2_losses.append(0.0)
 
         l1_factor = kwargs.get('l1_reg', 0e-8)
         l2_factor = kwargs.get('l2_reg', 1e-4)
@@ -144,6 +154,13 @@ class Unprocessing(ConvNet):
         return loss + l1_reg_loss + l2_reg_loss
 
     def _init_unprocessing(self, **kwargs):
+        self.Y_edges = []
+        self.pred_edges = []
+        self.l1_losses = []
+        self.l2_losses = []
+        self.edge_l1_losses = []
+        self.edge_l2_losses = []
+
         ccm = kwargs.get('color_correction_matrix', None)
         rgb_gain = kwargs.get('rgb_gain', None)
         red_gain = kwargs.get('red_gain', None)
@@ -211,6 +228,11 @@ class Unprocessing(ConvNet):
                 self.debug_images.append(edge_pred)
                 self.debug_images.append(tf.math.abs(self.Y_all - self.pred, name='image_diff'))
                 self.debug_images.append(tf.math.abs(edge_true - edge_pred, name='edge_diff'))
+
+                self.debug_values.append(tf.reduce_mean(self.l1_losses))
+                self.debug_values.append(tf.reduce_mean(self.l2_losses))
+                self.debug_values.append(tf.reduce_mean(self.edge_l1_losses))
+                self.debug_values.append(tf.reduce_mean(self.edge_l2_losses))
 
     @abstractmethod
     def _build_model(self):
