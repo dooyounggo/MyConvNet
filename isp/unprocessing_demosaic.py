@@ -42,6 +42,7 @@ class UnprocessingDemosaic(Unprocessing):
                                                                                     dtype=(tf.float32, tf.float32,
                                                                                            tf.float32, tf.float32,
                                                                                            [tf.float32, tf.float32,
+                                                                                            tf.float32, tf.float32,
                                                                                             tf.float32, tf.float32]),
                                                                                     parallel_iterations=32,
                                                                                     back_prop=False)
