@@ -35,7 +35,7 @@ def apply_gains(bayer_images, red_gains, blue_gains):
   return bayer_images * gains
 
 
-def demosaic(bayer_images):
+def demosaic(bayer_images):  # FIXME: tf.image.flip_... -> tf.reverse
   """Bilinearly demosaics a batch of RGGB Bayer images."""
   bayer_images.shape.assert_is_compatible_with((None, None, None, 4))
 
