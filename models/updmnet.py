@@ -256,7 +256,7 @@ class NADMNet(UnprocessingDemosaic):  # Noise-Adaptive DeMosaicing Network
         self.use_adascale = kwargs.get('use_adascale', True)
         self.activation_type = kwargs.get('activation_type', 'relu')
         self.conv_initializer = tf.initializers.variance_scaling(scale=2.0, mode='fan_out')
-        self.adascale_initializer = tf.initializers.variance_scaling(scale=1e3, mode='fan_in')
+        self.adascale_initializer = tf.initializers.variance_scaling(scale=2e3, mode='fan_in')
 
         self.striding_kernel_offset = kwargs.get('striding_kernel_offset', 0)
         self.striding_kernel_size = kwargs.get('striding_kernel_size', 4)
