@@ -93,7 +93,7 @@ class EDNMNet(UnprocessingDemosaic):
 
         self.use_bn = kwargs.get('use_bn', False)
         self.activation_type = kwargs.get('activation_type', 'lrelu')
-        self.conv_initializer = tf.initializers.variance_scaling(mode='fan_out')
+        self.conv_initializer = tf.initializers.variance_scaling(scale=2.0, mode='fan_out')
 
         self.striding_kernel_offset = kwargs.get('striding_kernel_offset', 0)
         self.striding_kernel_size = kwargs.get('striding_kernel_size', 4)
@@ -258,7 +258,8 @@ class NADMNet(UnprocessingDemosaic):  # Noise-Adaptive DeMosaicing Network
         self.use_bn = kwargs.get('use_bn', False)
         self.use_adascale = kwargs.get('use_adascale', True)
         self.activation_type = kwargs.get('activation_type', 'relu')
-        self.conv_initializer = tf.initializers.variance_scaling(mode='fan_out')
+        self.conv_initializer = tf.initializers.variance_scaling(scale=2.0, mode='fan_out')
+        self.adascale_initializer = tf.initializers.variance_scaling(scale=10.0, mode='fan_in')
 
         self.striding_kernel_offset = kwargs.get('striding_kernel_offset', 0)
         self.striding_kernel_size = kwargs.get('striding_kernel_size', 4)
@@ -426,13 +427,13 @@ class NADMNet(UnprocessingDemosaic):  # Noise-Adaptive DeMosaicing Network
             if scale:
                 with tf.variable_scope('conv_scale'):
                     gamma = self.conv_layer(vector, 1, 1, out_channels=in_channels, padding='SAME', biased=True,
-                                            weight_initializer=tf.initializers.random_normal(mean=0.0, stddev=10),
+                                            weight_initializer=self.adascale_initializer,
                                             bias_initializer=tf.initializers.ones())
                 x *= gamma
             if shift:
                 with tf.variable_scope('conv_shift'):
                     beta = self.conv_layer(vector, 1, 1, out_channels=in_channels, padding='SAME', biased=True,
-                                           weight_initializer=tf.initializers.random_normal(mean=0.0, stddev=10),
+                                           weight_initializer=self.adascale_initializer,
                                            bias_initializer=tf.initializers.zeros())
                 x += beta
         return x
