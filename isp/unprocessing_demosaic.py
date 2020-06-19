@@ -15,8 +15,6 @@ class UnprocessingDemosaic(Unprocessing):
                          None)
         self._init_unprocessing(**kwargs)
         self._make_filters()
-        self.Y_edges = []
-        self.pred_edges = []
         with tf.variable_scope(tf.get_variable_scope()):
             for i in range(self.device_offset, self.num_devices + self.device_offset):
                 self._curr_device = i
