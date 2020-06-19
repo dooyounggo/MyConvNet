@@ -135,7 +135,9 @@ class ConvNet(object):
 
                 self.scale_factor = tf.constant(kwargs.get('scale_factor', 2.0), dtype=tf.float32, name='scale_factor')
 
-                self.linear_schedule_multiplier = global_step/tf.cast(self.total_steps, dtype=tf.float32)
+                self.linear_schedule_multiplier = tf.math.divide(global_step,
+                                                                 tf.cast(self.total_steps, dtype=tf.float32),
+                                                                 name='linear_schedule_multiplier')
 
                 self._dummy_image = tf.zeros([4, 8, 8, 3], dtype=tf.float32, name='dummy_image')
 
