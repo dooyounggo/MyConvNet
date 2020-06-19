@@ -311,7 +311,7 @@ class Optimizer(object):
                 tf.summary.scalar('Loss', self.model.loss)
                 tf.summary.scalar('Learning Rate', self.learning_rate)
                 for i, val in enumerate(self.model.debug_values):
-                    tf.summary.scalar('Debug Value {}'.format(i), val)
+                    tf.summary.scalar('Debug Value {}-{}'.format(i, val.name), val)
 
                 tf.summary.image('Input Images',
                                  tf.cast(self.model.input_images*255, dtype=tf.uint8),
@@ -320,7 +320,7 @@ class Optimizer(object):
                                  tf.cast(self.model.X_all*255, dtype=tf.uint8),
                                  max_outputs=4)
                 for i, img in enumerate(self.model.debug_images):
-                    tf.summary.image('Debug Images {}'.format(i),
+                    tf.summary.image('Debug Images {}-{}'.format(i, img.name),
                                      tf.cast(img*255, dtype=tf.uint8),
                                      max_outputs=4)
 
