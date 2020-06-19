@@ -247,7 +247,7 @@ class EDNMNet(UnprocessingDemosaic):
         return x
 
 
-class EDNMNet2(UnprocessingDemosaic):
+class NADMNet(UnprocessingDemosaic):  # Noise-Adaptive DeMosaicing Network
     def _init_params(self, **kwargs):
         self.channels = [24, 24, 40, 80]
         self.kernels = [3, 3, 5, 5]
@@ -255,8 +255,8 @@ class EDNMNet2(UnprocessingDemosaic):
         self.conv_units = [1, 2, 3, 3]
         self.multipliers = [1, 3, 6, 6]
 
-        self.use_adascale = kwargs.get('use_adascale', True)
         self.use_bn = kwargs.get('use_bn', False)
+        self.use_adascale = kwargs.get('use_adascale', True)
         self.activation_type = kwargs.get('activation_type', 'relu')
         self.conv_initializer = tf.initializers.variance_scaling(mode='fan_out')
 
@@ -267,12 +267,12 @@ class EDNMNet2(UnprocessingDemosaic):
         d = dict()
         channel_axis = 1 if self.channel_first else -1
 
-        self._noise_vector = tf.stack([self._shot_noise_tensor, self._read_noise_tensor], axis=-1)
+        self._noise_vector = tf.math.sqrt(tf.stack([self._shot_noise_tensor, self._read_noise_tensor], axis=-1))
 
         X_input = self.X
         bayer = tf.gather(X_input, [0, 1, 2, 3], axis=channel_axis)
-        x = bayer - 0.5
-        bayer_avg = x
+        x = bayer
+        bayer_avg = bayer
 
         self._curr_block = 0
         residuals = []
@@ -345,9 +345,10 @@ class EDNMNet2(UnprocessingDemosaic):
         self._curr_block = 'demosaic'  # Demosaicing head
         with tf.variable_scope('block_{}'.format(self._curr_block)):
             x = self.upsampling_2d_layer(features, scale=2, upsampling_method='bilinear')
-            x = tf.concat([x, denoised_rgb - 0.5], axis=channel_axis)
+            x = tf.concat([x, denoised_rgb], axis=channel_axis)
             with tf.variable_scope('conv_0'):
-                x = self.conv_layer(x, 3, 1, out_channels=3, padding='SAME', biased=False, verbose=True)
+                x = self.conv_layer(x, 3, 1, out_channels=3, padding='SAME', biased=False, verbose=True,
+                                    weight_initializer=tf.initializers.variance_scaling(mode='fan_out'))
             d['pred'] = x + 0.5
 
         return d
@@ -355,7 +356,7 @@ class EDNMNet2(UnprocessingDemosaic):
     def conv_unit(self, x, kernel, stride, out_channels, d, activation_type='lrelu', name='conv'):
         with tf.variable_scope(name):
             x = self.conv_layer(x, kernel, stride, out_channels=out_channels, padding='SAME',
-                                biased=not self.use_bn, verbose=True)
+                                biased=not (self.use_bn or self.use_adascale), verbose=True)
             if self.use_bn:
                 x = self.batch_norm(x)
             if self.use_adascale:
@@ -374,8 +375,9 @@ class EDNMNet2(UnprocessingDemosaic):
             d[name + '/branch'] = skip
 
             with tf.variable_scope('conv_0'):
-                x = self.conv_layer(x, 1, 1, out_channels*multiplier, padding='SAME', biased=not self.use_bn,
-                                    depthwise=False, weight_initializer=self.conv_initializer, verbose=True)
+                x = self.conv_layer(x, 1, 1, out_channels*multiplier, padding='SAME',
+                                    biased=not (self.use_bn or self.use_adascale), depthwise=False,
+                                    weight_initializer=self.conv_initializer, verbose=True)
                 d[name + '/conv_0'] = x
                 if self.use_bn:
                     x = self.batch_norm(x, shift=True, scale=True, scope='norm')
@@ -385,8 +387,9 @@ class EDNMNet2(UnprocessingDemosaic):
                 d[name + '/conv_0' + activation_type] = x
 
             with tf.variable_scope('conv_1'):
-                x = self.conv_layer(x, kernel, stride, out_channels*multiplier, padding='SAME', biased=not self.use_bn,
-                                    depthwise=True, weight_initializer=self.conv_initializer, verbose=True)
+                x = self.conv_layer(x, kernel, stride, out_channels*multiplier, padding='SAME',
+                                    biased=not (self.use_bn or self.use_adascale), depthwise=True,
+                                    weight_initializer=self.conv_initializer, verbose=True)
                 d[name + '/conv_1'] = x
                 if self.use_bn:
                     x = self.batch_norm(x, shift=True, scale=True, scope='norm')
@@ -396,7 +399,8 @@ class EDNMNet2(UnprocessingDemosaic):
                 d[name + '/conv_1' + activation_type] = x
 
             with tf.variable_scope('conv_2'):
-                x = self.conv_layer(x, 1, 1, out_channels, padding='SAME', biased=not self.use_bn, depthwise=False,
+                x = self.conv_layer(x, 1, 1, out_channels, padding='SAME',
+                                    biased=not (self.use_bn or self.use_adascale), depthwise=False,
                                     weight_initializer=self.conv_initializer, verbose=True)
                 d[name + '/conv_2'] = x
                 if self.use_bn:
@@ -422,10 +426,13 @@ class EDNMNet2(UnprocessingDemosaic):
             if scale:
                 with tf.variable_scope('conv_scale'):
                     gamma = self.conv_layer(vector, 1, 1, out_channels=in_channels, padding='SAME', biased=True,
+                                            weight_initializer=tf.initializers.random_normal(mean=0.0, stddev=10),
                                             bias_initializer=tf.initializers.ones())
                 x *= gamma
             if shift:
                 with tf.variable_scope('conv_shift'):
-                    beta = self.conv_layer(vector, 1, 1, out_channels=in_channels, padding='SAME', biased=True)
+                    beta = self.conv_layer(vector, 1, 1, out_channels=in_channels, padding='SAME', biased=True,
+                                           weight_initializer=tf.initializers.random_normal(mean=0.0, stddev=10),
+                                           bias_initializer=tf.initializers.zeros())
                 x += beta
         return x
