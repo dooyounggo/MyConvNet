@@ -421,10 +421,11 @@ class EDNMNet2(UnprocessingDemosaic):
 
             if scale:
                 with tf.variable_scope('conv_scale'):
-                    gamma = self.conv_layer(vector, 1, 1, out_channels=in_channels, padding='SAME', biased=False) + 1.0
+                    gamma = self.conv_layer(vector, 1, 1, out_channels=in_channels, padding='SAME', biased=True,
+                                            bias_initializer=tf.initializers.ones())
                 x *= gamma
             if shift:
                 with tf.variable_scope('conv_shift'):
-                    beta = self.conv_layer(vector, 1, 1, out_channels=in_channels, padding='SAME', biased=False)
+                    beta = self.conv_layer(vector, 1, 1, out_channels=in_channels, padding='SAME', biased=True)
                 x += beta
         return x
