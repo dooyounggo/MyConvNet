@@ -93,7 +93,7 @@ class UnprocessingDemosaic(Unprocessing):
         self._make_debug_images()
         with tf.device(self.param_device):
             with tf.variable_scope('calc/'):
-                self.debug_values.append(tf.reduce_mean(self.denoising_losses))
+                self.debug_values.append(tf.reduce_mean(self.denoising_losses, name='denoising_loss'))
 
     def _build_loss(self, **kwargs):
         with tf.variable_scope('loss'):
