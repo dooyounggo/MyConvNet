@@ -367,9 +367,9 @@ class NADMNet(UnprocessingDemosaic):  # Noise-Adaptive DeMosaicing Network
                 init_b = tf.concat([tf.random_uniform([self.channels[0]], -limit, limit, dtype=tf.float32), init_b],
                                    axis=0)
 
-                init_weights = tf.concat([init_r[tf.newaxis, tf.newaxis, :, tf.newaxis]],
-                                         [init_g[tf.newaxis, tf.newaxis, :, tf.newaxis]],
-                                         [init_b[tf.newaxis, tf.newaxis, :, tf.newaxis]])
+                init_weights = tf.concat([init_r[tf.newaxis, tf.newaxis, :, tf.newaxis],
+                                         init_g[tf.newaxis, tf.newaxis, :, tf.newaxis],
+                                         init_b[tf.newaxis, tf.newaxis, :, tf.newaxis]], axis=-1)
                 x = self.conv_layer(x, 1, 1, out_channels=3, padding='SAME', biased=False, verbose=True,
                                     weight_initializer=init_weights)
             d['pred'] = x
