@@ -246,8 +246,8 @@ class EDNMNet(UnprocessingDemosaic):
 
 class NADMNet(UnprocessingDemosaic):  # Noise-Adaptive DeMosaicing Network
     def _init_params(self, **kwargs):
-        self.channels = [24, 24, 40, 80]
-        self.kernels = [3, 3, 5, 5]
+        self.channels = [18, 18, 30, 60]
+        self.kernels = [3, 3, 3, 3]
         self.strides = [1, 2, 2, 2]
         self.conv_units = [1, 2, 3, 3]
         self.multipliers = [1, 3, 6, 6]
@@ -358,7 +358,7 @@ class NADMNet(UnprocessingDemosaic):  # Noise-Adaptive DeMosaicing Network
             d['pred'] = x
         return d
 
-    def conv_unit(self, x, kernel, stride, out_channels, d, activation_type='lrelu', name='conv'):
+    def conv_unit(self, x, kernel, stride, out_channels, d, activation_type='relu', name='conv'):
         with tf.variable_scope(name):
             x = self.conv_layer(x, kernel, stride, out_channels=out_channels, padding='SAME',
                                 biased=not self.use_bn, verbose=True)
@@ -368,7 +368,7 @@ class NADMNet(UnprocessingDemosaic):  # Noise-Adaptive DeMosaicing Network
             d[name + activation_type] = x
         return x
 
-    def mbconv_unit(self, x, kernel, stride, out_channels, multiplier, d, activation_type='lrelu', name='mbconv'):
+    def mbconv_unit(self, x, kernel, stride, out_channels, multiplier, d, activation_type='relu', name='mbconv'):
         in_channels = x.get_shape()[1] if self.channel_first else x.get_shape()[-1]
         with tf.variable_scope(name):
             if stride == 1 and in_channels == out_channels:
