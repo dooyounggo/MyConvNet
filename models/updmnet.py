@@ -297,6 +297,8 @@ class NADMNet(UnprocessingDemosaic):  # Noise-Adaptive DeMosaicing Network
                     else:
                         x = self.mbconv_unit(x, k, s, c, m, d, activation_type=self.activation_type, name=f'mbconv_{j}')
                 x = tf.concat([x, bayer_avg], axis=channel_axis)
+                if self.use_adascale:
+                    x = self.adaptive_scaling(x, self._noise_vector, scale=True, shift=True, name='adascale')
                 if i < len(self.channels) - 1:
                     residuals.append(x)
                 d['block_{}'.format(self._curr_block)] = x
@@ -311,13 +313,13 @@ class NADMNet(UnprocessingDemosaic):  # Noise-Adaptive DeMosaicing Network
                 x = tf.concat([x, skip], axis=channel_axis)
                 with tf.variable_scope('conv_reduce'):
                     x = self.conv_layer(x, 1, 1, out_channels=c, padding='SAME',
-                                        biased=not (self.use_bn or self.use_adascale), verbose=True)
+                                        biased=not self.use_bn, verbose=True)
                     if self.use_bn:
                         x = self.batch_norm(x, shift=True, scale=True, scope='norm')
-                    if self.use_adascale:
-                        x = self.adaptive_scaling(x, self._noise_vector, scale=True, shift=True, name='adascale')
                 for j in range(n):
                     x = self.mbconv_unit(x, k, 1, c, m, d, activation_type=self.activation_type, name=f'mbconv_{j}')
+                if self.use_adascale:
+                    x = self.adaptive_scaling(x, self._noise_vector, scale=True, shift=True, name='adascale')
                 d['block_{}'.format(self._curr_block)] = x
             self._curr_block += 1
 
@@ -359,11 +361,9 @@ class NADMNet(UnprocessingDemosaic):  # Noise-Adaptive DeMosaicing Network
     def conv_unit(self, x, kernel, stride, out_channels, d, activation_type='lrelu', name='conv'):
         with tf.variable_scope(name):
             x = self.conv_layer(x, kernel, stride, out_channels=out_channels, padding='SAME',
-                                biased=not (self.use_bn or self.use_adascale), verbose=True)
+                                biased=not self.use_bn, verbose=True)
             if self.use_bn:
                 x = self.batch_norm(x)
-            if self.use_adascale:
-                x = self.adaptive_scaling(x, self._noise_vector, scale=True, shift=True, name='adascale')
             x = self.activation(x, activation_type=activation_type)
             d[name + activation_type] = x
         return x
@@ -379,37 +379,31 @@ class NADMNet(UnprocessingDemosaic):  # Noise-Adaptive DeMosaicing Network
 
             with tf.variable_scope('conv_0'):
                 x = self.conv_layer(x, 1, 1, out_channels*multiplier, padding='SAME',
-                                    biased=not (self.use_bn or self.use_adascale), depthwise=False,
+                                    biased=not self.use_bn, depthwise=False,
                                     weight_initializer=self.conv_initializer, verbose=True)
                 d[name + '/conv_0'] = x
                 if self.use_bn:
                     x = self.batch_norm(x, shift=True, scale=True, scope='norm')
-                if self.use_adascale:
-                    x = self.adaptive_scaling(x, self._noise_vector, scale=True, shift=True, name='adascale')
                 x = self.activation(x, activation_type=activation_type)
                 d[name + '/conv_0' + activation_type] = x
 
             with tf.variable_scope('conv_1'):
                 x = self.conv_layer(x, kernel, stride, out_channels*multiplier, padding='SAME',
-                                    biased=not (self.use_bn or self.use_adascale), depthwise=True,
+                                    biased=not self.use_bn, depthwise=True,
                                     weight_initializer=self.conv_initializer, verbose=True)
                 d[name + '/conv_1'] = x
                 if self.use_bn:
                     x = self.batch_norm(x, shift=True, scale=True, scope='norm')
-                if self.use_adascale:
-                    x = self.adaptive_scaling(x, self._noise_vector, scale=True, shift=True, name='adascale')
                 x = self.activation(x, activation_type=activation_type)
                 d[name + '/conv_1' + activation_type] = x
 
             with tf.variable_scope('conv_2'):
                 x = self.conv_layer(x, 1, 1, out_channels, padding='SAME',
-                                    biased=not (self.use_bn or self.use_adascale), depthwise=False,
+                                    biased=not self.use_bn, depthwise=False,
                                     weight_initializer=self.conv_initializer, verbose=True)
                 d[name + '/conv_2'] = x
                 if self.use_bn:
                     x = self.batch_norm(x, shift=True, scale=True, zero_scale_init=skip is not None, scope='norm')
-                if self.use_adascale:
-                    x = self.adaptive_scaling(x, self._noise_vector, scale=True, shift=True, name='adascale')
 
             if skip is not None:
                 x += skip
