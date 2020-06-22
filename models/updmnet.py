@@ -334,7 +334,8 @@ class NADMNet(UnprocessingDemosaic):  # Noise-Adaptive DeMosaicing Network
         self._curr_block = 'denoise'  # Denoising head
         with tf.variable_scope('block_{}'.format(self._curr_block)):
             with tf.variable_scope('conv_0'):
-                x = self.conv_layer(features, 1, 1, out_channels=4, padding='SAME', biased=False, verbose=True)
+                x = self.conv_layer(features, 1, 1, out_channels=4, padding='SAME', biased=False, verbose=True,
+                                    weight_initializer=tf.initializers.variance_scaling(distribution='uniform'))
             noisy_img = bayer
             denoised = x + noisy_img
             d['denoised'] = denoised
@@ -354,7 +355,8 @@ class NADMNet(UnprocessingDemosaic):  # Noise-Adaptive DeMosaicing Network
             x = self.upsampling_2d_layer(features, scale=2, upsampling_method='bilinear')
             x = tf.concat([x, denoised_rgb], axis=channel_axis)
             with tf.variable_scope('conv_0'):
-                x = self.conv_layer(x, 1, 1, out_channels=3, padding='SAME', biased=False, verbose=True)
+                x = self.conv_layer(x, 1, 1, out_channels=3, padding='SAME', biased=False, verbose=True,
+                                    weight_initializer=tf.initializers.variance_scaling(distribution='uniform'))
             d['pred'] = x
         return d
 
