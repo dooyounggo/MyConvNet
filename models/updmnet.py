@@ -355,8 +355,20 @@ class NADMNet(UnprocessingDemosaic):  # Noise-Adaptive DeMosaicing Network
             x = self.upsampling_2d_layer(features, scale=2, upsampling_method='bilinear')
             x = tf.concat([x, denoised_rgb], axis=channel_axis)
             with tf.variable_scope('conv_0'):
+                init_r = tf.constant([0.4, 0.2, 0.2], dtype=tf.float32)
+                init_g = tf.constant([0.2, 0.4, 0.2], dtype=tf.float32)
+                init_b = tf.constant([0.2, 0.2, 0.4], dtype=tf.float32)
+
+                limit = tf.math.sqrt(3/self.channels[0])
+                init_r = tf.concat(tf.random_uniform([self.channels[0]], -limit, limit, dtype=tf.float32), init_r)
+                init_g = tf.concat(tf.random_uniform([self.channels[0]], -limit, limit, dtype=tf.float32), init_g)
+                init_b = tf.concat(tf.random_uniform([self.channels[0]], -limit, limit, dtype=tf.float32), init_b)
+
+                init_weights = tf.concat([init_r[tf.newaxis, tf.newaxis, :, tf.newaxis]],
+                                         [init_g[tf.newaxis, tf.newaxis, :, tf.newaxis]],
+                                         [init_b[tf.newaxis, tf.newaxis, :, tf.newaxis]])
                 x = self.conv_layer(x, 1, 1, out_channels=3, padding='SAME', biased=False, verbose=True,
-                                    weight_initializer=tf.initializers.variance_scaling(distribution='uniform'))
+                                    weight_initializer=init_weights)
             d['pred'] = x
         return d
 
