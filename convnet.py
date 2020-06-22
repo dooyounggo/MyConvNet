@@ -1546,7 +1546,11 @@ class ConvNet(object):
                 channel_multiplier = out_channels//in_channels
                 if channel_multiplier < 1:
                     channel_multiplier = 1
-                weights = self.weight_variable([kernel[0], kernel[1], in_channels, channel_multiplier],
+                if tf.is_tensor(weight_initializer):
+                    shape = None
+                else:
+                    shape = [kernel[0], kernel[1], in_channels, channel_multiplier]
+                weights = self.weight_variable(shape,
                                                initializer=weight_initializer,
                                                weight_standardization=ws, paddings=kernel_paddings)
                 convs = tf.nn.depthwise_conv2d(x, weights, strides=conv_strides, padding=padding,
@@ -1556,7 +1560,11 @@ class ConvNet(object):
                 params = kernel[0]*kernel[1]*in_channels*channel_multiplier
                 nodes = out_size[0]*out_size[1]*in_channels*channel_multiplier
             else:
-                weights = self.weight_variable([kernel[0], kernel[1], in_channels, out_channels],
+                if tf.is_tensor(weight_initializer):
+                    shape = None
+                else:
+                    shape = [kernel[0], kernel[1], in_channels, out_channels]
+                weights = self.weight_variable(shape,
                                                initializer=weight_initializer,
                                                weight_standardization=ws, paddings=kernel_paddings)
                 convs = tf.nn.conv2d(x, weights, strides=conv_strides, padding=padding,
@@ -1614,7 +1622,11 @@ class ConvNet(object):
         in_dim = int(x.get_shape()[-1])
 
         with tf.variable_scope(scope) if scope is not None else nullcontext():
-            weights = self.weight_variable([in_dim, out_dim], initializer=weight_initializer, weight_standardization=ws)
+            if tf.is_tensor(weight_initializer):
+                shape = None
+            else:
+                shape = [in_dim, out_dim]
+            weights = self.weight_variable(shape, initializer=weight_initializer, weight_standardization=ws)
 
             flops = in_dim*out_dim
             params = in_dim*out_dim
