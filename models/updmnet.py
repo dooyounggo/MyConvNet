@@ -360,9 +360,9 @@ class NADMNet(UnprocessingDemosaic):  # Noise-Adaptive DeMosaicing Network
                 init_b = tf.constant([0.2, 0.2, 0.4], dtype=tf.float32)
 
                 limit = tf.math.sqrt(3.0/self.channels[0])
-                init_r = tf.concat(tf.random_uniform([self.channels[0]], -limit, limit, dtype=tf.float32), init_r)
-                init_g = tf.concat(tf.random_uniform([self.channels[0]], -limit, limit, dtype=tf.float32), init_g)
-                init_b = tf.concat(tf.random_uniform([self.channels[0]], -limit, limit, dtype=tf.float32), init_b)
+                init_r = tf.concat([tf.random_uniform([self.channels[0]], -limit, limit, dtype=tf.float32), init_r])
+                init_g = tf.concat([tf.random_uniform([self.channels[0]], -limit, limit, dtype=tf.float32), init_g])
+                init_b = tf.concat([tf.random_uniform([self.channels[0]], -limit, limit, dtype=tf.float32), init_b])
 
                 init_weights = tf.concat([init_r[tf.newaxis, tf.newaxis, :, tf.newaxis]],
                                          [init_g[tf.newaxis, tf.newaxis, :, tf.newaxis]],
