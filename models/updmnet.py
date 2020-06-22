@@ -246,7 +246,7 @@ class EDNMNet(UnprocessingDemosaic):
 
 class NADMNet(UnprocessingDemosaic):  # Noise-Adaptive DeMosaicing Network
     def _init_params(self, **kwargs):
-        self.channels = [18, 18, 30, 60]
+        self.channels = [12, 18, 30, 48]
         self.kernels = [3, 3, 3, 3]
         self.strides = [1, 2, 2, 2]
         self.conv_units = [1, 2, 3, 3]
@@ -354,6 +354,10 @@ class NADMNet(UnprocessingDemosaic):  # Noise-Adaptive DeMosaicing Network
             x = self.upsampling_2d_layer(features, scale=2, upsampling_method='bilinear')
             x = tf.concat([x, denoised_rgb], axis=channel_axis)
             with tf.variable_scope('conv_0'):
+                x = self.conv_layer(x, 3, 1, out_channels=self.channels[0]//2, padding='SAME',
+                                    biased=True, verbose=True)
+                x = self.activation(x, activation_type=self.activation_type)
+            with tf.variable_scope('conv_1'):
                 x = self.conv_layer(x, 3, 1, out_channels=3, padding='SAME', biased=False, verbose=True)
             d['pred'] = x
         return d
