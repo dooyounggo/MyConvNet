@@ -5,7 +5,7 @@ Includes gradient descent, weight decay, TensorBoard summaries, learning rate up
 
 import os
 import time
-from abc import abstractmethod
+from abc import abstractmethod, abstractproperty
 import tensorflow.compat.v1 as tf
 import numpy as np
 import matplotlib.pyplot as plt
