@@ -3,7 +3,7 @@ Model evaluation methods.
 Includes accuracy, IoU, etc.
 """
 
-from abc import abstractmethod, abstractproperty
+from abc import abstractmethod
 import numpy as np
 
 
