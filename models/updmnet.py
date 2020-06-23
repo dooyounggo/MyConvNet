@@ -355,11 +355,11 @@ class NADMNet(UnprocessingDemosaic):  # Noise-Adaptive DeMosaicing Network
             x = self.upsampling_2d_layer(features, scale=2, upsampling_method='bilinear')
             x = tf.concat([x, denoised_rgb], axis=channel_axis)
             with tf.variable_scope('conv_0'):
-                x = self.conv_layer(x, 1, 1, out_channels=self.channels[0], padding='SAME', biased=False,
+                x = self.conv_layer(x, 1, 1, out_channels=self.channels[0], padding='SAME', biased=True,
                                     weight_initializer=tf.initializers.variance_scaling(scale=1.0), verbose=True)
             with tf.variable_scope('conv_1'):
                 init = tf.initializers.variance_scaling(scale=6.0, mode='fan_out')
-                x = self.conv_layer(x, 3, 1, out_channels=self.channels[0]*3, padding='SAME', biased=False,
+                x = self.conv_layer(x, 3, 1, out_channels=self.channels[0]*3, padding='SAME', biased=True,
                                     depthwise=True, weight_initializer=init, verbose=True)
                 x = self.activation(x, activation_type=self.activation_type)
             with tf.variable_scope('conv_2'):
