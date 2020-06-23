@@ -165,6 +165,7 @@ class GANOptimizer(Optimizer):
 
 
 class MomentumOptimizer(GANOptimizer):
+    @property
     def name(self):
         return 'SGD with Momentum'
 
@@ -176,6 +177,7 @@ class MomentumOptimizer(GANOptimizer):
 
 
 class RMSPropOptimizer(GANOptimizer):
+    @property
     def name(self):
         return 'RMSProp'
 
@@ -189,6 +191,7 @@ class RMSPropOptimizer(GANOptimizer):
 
 
 class AdamOptimizer(GANOptimizer):
+    @property
     def name(self):
         return 'Adam'
 
