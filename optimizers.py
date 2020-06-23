@@ -5,7 +5,7 @@ Includes gradient descent, weight decay, TensorBoard summaries, learning rate up
 
 import os
 import time
-from abc import abstractmethod, abstractproperty
+from abc import abstractmethod
 import tensorflow.compat.v1 as tf
 import numpy as np
 import matplotlib.pyplot as plt
@@ -669,6 +669,7 @@ class Optimizer(object):
 
 
 class MomentumOptimizer(Optimizer):
+    @property
     def name(self):
         return 'SGD with Momentum'
 
@@ -680,6 +681,7 @@ class MomentumOptimizer(Optimizer):
 
 
 class RMSPropOptimizer(Optimizer):
+    @property
     def name(self):
         return 'RMSProp'
 
@@ -693,6 +695,7 @@ class RMSPropOptimizer(Optimizer):
 
 
 class AdamOptimizer(Optimizer):
+    @property
     def name(self):
         return 'Adam'
 
