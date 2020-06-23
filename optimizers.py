@@ -62,7 +62,7 @@ class Optimizer(object):
         self._reset()
 
         gradient_threshold = kwargs.get('gradient_threshold', None)
-        print('Optimizer: {}. Initial learning rate: {:.6f}. Decay: {}. Gradient threshold: {}.'
+        print('Optimizer: {}. Initial learning rate: {:.6f}. Decay: {}. Gradient threshold: {}.\n'
               .format(self.name, self.init_learning_rate, self.decay_method, gradient_threshold))
 
     def _reset(self):
