@@ -313,7 +313,7 @@ class NADMNet(UnprocessingDemosaic):  # Noise-Adaptive DeMosaicing Network
                 x = tf.concat([x, skip], axis=channel_axis)
                 with tf.variable_scope('conv_reduce'):
                     x = self.conv_layer(x, 1, 1, out_channels=c, padding='SAME', biased=not self.use_bn,
-                                        weight_initializer=tf.initializers.variance_scaling(scale=1.0), verbose=True)
+                                        weight_initializer=tf.initializers.glorot_normal(), verbose=True)
                     if self.use_bn:
                         x = self.batch_norm(x, shift=True, scale=True, scope='norm')
                 for j in range(n):
@@ -356,7 +356,7 @@ class NADMNet(UnprocessingDemosaic):  # Noise-Adaptive DeMosaicing Network
             x = tf.concat([x, denoised_rgb], axis=channel_axis)
             with tf.variable_scope('conv_0'):
                 x = self.conv_layer(x, 1, 1, out_channels=self.channels[0], padding='SAME', biased=True,
-                                    weight_initializer=tf.initializers.variance_scaling(scale=1.0), verbose=True)
+                                    weight_initializer=tf.initializers.glorot_normal(), verbose=True)
             with tf.variable_scope('conv_1'):
                 init = tf.initializers.variance_scaling(scale=6.0, mode='fan_out')
                 x = self.conv_layer(x, 3, 1, out_channels=self.channels[0]*3, padding='SAME', biased=True,
@@ -410,7 +410,7 @@ class NADMNet(UnprocessingDemosaic):  # Noise-Adaptive DeMosaicing Network
             with tf.variable_scope('conv_2'):
                 x = self.conv_layer(x, 1, 1, out_channels, padding='SAME',
                                     biased=not self.use_bn, depthwise=False,
-                                    weight_initializer=tf.initializers.variance_scaling(scale=1.0), verbose=True)
+                                    weight_initializer=tf.initializers.glorot_normal(), verbose=True)
                 d[name + '/conv_2'] = x
                 if self.use_bn:
                     x = self.batch_norm(x, shift=True, scale=True, zero_scale_init=skip is not None, scope='norm')
