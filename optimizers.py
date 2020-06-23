@@ -75,6 +75,10 @@ class Optimizer(object):
     @property
     @abstractmethod
     def name(self):
+        """
+        Name of the optimizer
+        :return: string
+        """
         pass
 
     @abstractmethod
