@@ -72,8 +72,8 @@ class Optimizer(object):
         self.learning_rate_update = 0
         self.curr_multiplier = 1.0
 
-    @abstractmethod
     @property
+    @abstractmethod
     def name(self):
         pass
 
