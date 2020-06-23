@@ -49,7 +49,7 @@ class Optimizer(object):
         self.init_learning_rate = kwargs.get('base_learning_rate', 0.1)*self.batch_size/256
 
         self.warmup_epoch = kwargs.get('learning_warmup_epoch', 0)
-        self.decay_method = kwargs.get('learning_rate_decay_method', 'cosine')
+        self.decay_method = kwargs.get('learning_rate_decay_method', None)
         self.decay_params = kwargs.get('learning_rate_decay_params', (0.94, 2))
 
         self.update_vars = tf.trainable_variables()
@@ -59,8 +59,11 @@ class Optimizer(object):
             self.learning_rate = self.init_learning_rate*self.learning_rate_multiplier
 
         self.optimization_operation = self._optimize_and_update(self._optimizer(**kwargs), **kwargs)
-
         self._reset()
+
+        gradient_threshold = kwargs.get('gradient_threshold', None)
+        print('Optimizer: {}. Initial learning rate: {:.6f}. Decay: {}. Gradient threshold: {}.'
+              .format(self.name, self.init_learning_rate, self.decay_method, gradient_threshold))
 
     def _reset(self):
         self.curr_step = 0
@@ -68,6 +71,11 @@ class Optimizer(object):
         self.best_score = self.evaluator.worst_score
         self.learning_rate_update = 0
         self.curr_multiplier = 1.0
+
+    @abstractmethod
+    @property
+    def name(self):
+        pass
 
     @abstractmethod
     def _optimizer(self, **kwargs):
@@ -657,40 +665,37 @@ class Optimizer(object):
 
 
 class MomentumOptimizer(Optimizer):
+    def name(self):
+        return 'SGD with Momentum'
+
     def _optimizer(self, **kwargs):
         momentum = kwargs.get('momentum', 0.9)
-        gradient_threshold = kwargs.get('gradient_threshold', None)
-        print('Optimizer: SGD with momentum. Initial learning rate: {:.6f}. Gradient threshold: {}'
-              .format(self.init_learning_rate, gradient_threshold))
 
         optimizer = tf.train.MomentumOptimizer(self.learning_rate, momentum, use_nesterov=True)
-
         return optimizer
 
 
 class RMSPropOptimizer(Optimizer):
+    def name(self):
+        return 'RMSProp'
+
     def _optimizer(self, **kwargs):
         momentum = kwargs.get('momentum', 0.9)
         decay = 0.9
         eps = 0.001
-        gradient_threshold = kwargs.get('gradient_threshold', None)
-        print('Optimizer: RMSProp. Initial learning rate: {:.6f}. Gradient threshold: {}'
-              .format(self.init_learning_rate, gradient_threshold))
 
         optimizer = tf.train.RMSPropOptimizer(self.learning_rate, decay=decay, momentum=momentum, epsilon=eps)
-
         return optimizer
 
 
 class AdamOptimizer(Optimizer):
+    def name(self):
+        return 'Adam'
+
     def _optimizer(self, **kwargs):
         momentum = kwargs.get('momentum', 0.9)
         decay = 0.999
         eps = 0.001
-        gradient_threshold = kwargs.get('gradient_threshold', None)
-        print('Optimizer: Adam. Initial learning rate: {:.6f}. Gradient threshold: {}'
-              .format(self.init_learning_rate, gradient_threshold))
 
         optimizer = tf.train.AdamOptimizer(self.learning_rate, beta1=momentum, beta2=decay, epsilon=eps)
-
         return optimizer
