@@ -312,8 +312,8 @@ class NADMNet(UnprocessingDemosaic):  # Noise-Adaptive DeMosaicing Network
                 skip = residuals.pop()
                 x = tf.concat([x, skip], axis=channel_axis)
                 with tf.variable_scope('conv_reduce'):
-                    x = self.conv_layer(x, 1, 1, out_channels=c, padding='SAME',
-                                        biased=not self.use_bn, verbose=True)
+                    x = self.conv_layer(x, 1, 1, out_channels=c, padding='SAME', biased=not self.use_bn,
+                                        weight_initializer=tf.initializers.variance_scaling(scale=1.0), verbose=True)
                     if self.use_bn:
                         x = self.batch_norm(x, shift=True, scale=True, scope='norm')
                 for j in range(n):
@@ -334,8 +334,8 @@ class NADMNet(UnprocessingDemosaic):  # Noise-Adaptive DeMosaicing Network
         self._curr_block = 'denoise'  # Denoising head
         with tf.variable_scope('block_{}'.format(self._curr_block)):
             with tf.variable_scope('conv_0'):
-                x = self.conv_layer(features, 1, 1, out_channels=4, padding='SAME', biased=False, verbose=True,
-                                    weight_initializer=tf.initializers.variance_scaling(distribution='uniform'))
+                x = self.conv_layer(features, 1, 1, out_channels=4, padding='SAME', biased=False,
+                                    weight_initializer=tf.initializers.variance_scaling(scale=1.0), verbose=True)
             noisy_img = bayer
             denoised = x + noisy_img
             d['denoised'] = denoised
@@ -355,16 +355,16 @@ class NADMNet(UnprocessingDemosaic):  # Noise-Adaptive DeMosaicing Network
             x = self.upsampling_2d_layer(features, scale=2, upsampling_method='bilinear')
             x = tf.concat([x, denoised_rgb], axis=channel_axis)
             with tf.variable_scope('conv_0'):
-                x = self.conv_layer(x, 1, 1, out_channels=self.channels[0], padding='SAME',
-                                    biased=False, verbose=True)
+                x = self.conv_layer(x, 1, 1, out_channels=self.channels[0], padding='SAME', biased=False,
+                                    weight_initializer=tf.initializers.variance_scaling(scale=1.0), verbose=True)
             with tf.variable_scope('conv_1'):
                 init = tf.initializers.variance_scaling(scale=6.0, mode='fan_out')
-                x = self.conv_layer(x, 3, 1, out_channels=self.channels[0]*3, padding='SAME',
-                                    biased=False, verbose=True, depthwise=True, weight_initializer=init)
+                x = self.conv_layer(x, 3, 1, out_channels=self.channels[0]*3, padding='SAME', biased=False,
+                                    depthwise=True, weight_initializer=init, verbose=True)
                 x = self.activation(x, activation_type=self.activation_type)
             with tf.variable_scope('conv_2'):
-                x = self.conv_layer(x, 1, 1, out_channels=3, padding='SAME', biased=False, verbose=True,
-                                    weight_initializer=tf.initializers.variance_scaling(distribution='uniform'))
+                x = self.conv_layer(x, 1, 1, out_channels=3, padding='SAME', biased=False,
+                                    weight_initializer=tf.initializers.variance_scaling(scale=1.0), verbose=True)
             d['pred'] = x
         return d
 
