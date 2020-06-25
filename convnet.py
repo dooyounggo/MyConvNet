@@ -705,6 +705,8 @@ class ConvNet(object):
 
     def affine_augment(self, x, mask=None, **kwargs):  # Scale, ratio, translation, rotation, shear, and reflection
         scheduling = kwargs.get('rand_affine_scheduling', False)
+        interpolation = kwargs.get('resize_interpolation', 'bilinear')
+        rand_interpolation = kwargs.get('rand_interpolation', True)
         with tf.variable_scope('affine_augment'):
             shape_tensor = tf.shape(x)
             batch_size = shape_tensor[0]
@@ -807,7 +809,21 @@ class ConvNet(object):
             c1 = tf.zeros([batch_size, 1], dtype=tf.float32)
             transforms = tf.concat([a0, a1, a2, b0, b1, b2, c0, c1], axis=1)
 
-            x = tf_contrib.image.transform(x, transforms, interpolation='BILINEAR')
+            if rand_interpolation:
+                num = tf.random.uniform([], 0, 2, dtype=tf.int32)
+                x = tf.cond(tf.cast(num, dtype=tf.bool),
+                            lambda: tf_contrib.image.transform(x, transforms, interpolation='NEAREST'),
+                            lambda: tf_contrib.image.transform(x, transforms, interpolation='BILINEAR'))
+            elif interpolation.lower() == 'nearest' or interpolation.lower() == 'nearest neighbor':
+                x = tf_contrib.image.transform(x, transforms, interpolation='NEAREST')
+            elif interpolation.lower() == 'bilinear':
+                x = tf_contrib.image.transform(x, transforms, interpolation='BILINEAR')
+            elif interpolation.lower() == 'bicubic':
+                warnings.warn('Bicubic interpolation is not supported for GPU. Bilinear is used instead.', UserWarning)
+                x = tf_contrib.image.transform(x, transforms, interpolation='BILINEAR')
+            else:
+                raise ValueError('Interpolation method of {} is not supported.'.format(interpolation))
+
             if mask is not None:
                 mask = tf_contrib.image.transform(mask, transforms, interpolation='NEAREST')
 
