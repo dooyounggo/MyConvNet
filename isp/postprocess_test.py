@@ -14,7 +14,7 @@ if __name__ == '__main__':
     images_noisy = sorted(os.listdir(noisy_dir))
     images_gt = sorted(os.listdir(gt_dir))
     images_denoised = sorted(os.listdir(denoised_dir))
-    for orig, no, gt, dn in (images_orig, images_noisy, images_gt, images_denoised):
+    for orig, no, gt, dn in zip(images_orig, images_noisy, images_gt, images_denoised):
         img_orig = cv2.imread(os.path.join(Param.test_dir, orig))
         shape = img_orig.shape[0:2]
 
