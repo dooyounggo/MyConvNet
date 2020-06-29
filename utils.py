@@ -182,8 +182,8 @@ def plot_class_results(images, y_true, y_pred=None, fault=None, num_rows=3, num_
             os.makedirs(save_dir)
         print('')
         for i in range(num_images):
-            fig_name = os.path.join(save_dir, '{}.jpg'.format(i + start_idx))
-            if not os.path.isfile(os.path.join(save_dir, '{}.jpg'.format(i + start_idx))):
+            fig_name = os.path.join(save_dir, '{:5d}.jpg'.format(i + start_idx))
+            if not os.path.isfile(os.path.join(save_dir, '{:5d}.jpg'.format(i + start_idx))):
                 fig = plt.figure()
                 plt.imshow(images[i])
                 if class_names is None:
@@ -455,8 +455,8 @@ def plot_seg_results(images, y_true, y_pred=None,
             os.makedirs(save_dir)
         print('')
         for i in range(num_images):
-            fig_name = os.path.join(save_dir, '{}.jpg'.format(i + start_idx))
-            if not os.path.isfile(os.path.join(save_dir, '{}.jpg'.format(i + start_idx))):
+            fig_name = os.path.join(save_dir, '{:5d}.jpg'.format(i + start_idx))
+            if not os.path.isfile(os.path.join(save_dir, '{:5d}.jpg'.format(i + start_idx))):
                 fig = plt.figure()
                 plt.imshow(np.clip(images[i] + mask_pred[i], 0, 255))
                 fig.suptitle('{:6d}. {}:\n{:.4}'.format(i + start_idx, name, scores[i]))
