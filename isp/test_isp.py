@@ -64,9 +64,9 @@ if __name__ == '__main__':
         x = cv2.cvtColor(x, cv2.COLOR_RGB2BGR)
         y_t = cv2.cvtColor(y_t, cv2.COLOR_RGB2BGR)
         y_p = cv2.cvtColor(y_p, cv2.COLOR_RGB2BGR)
-        cv2.imwrite(os.path.join(noisy_dir, f'{i:5d}.png'), to_int(x), [cv2.IMWRITE_PNG_COMPRESSION, 9])
-        cv2.imwrite(os.path.join(gt_dir, f'{i:5d}.png'), to_int(y_t), [cv2.IMWRITE_PNG_COMPRESSION, 9])
-        cv2.imwrite(os.path.join(denoised_dir, f'{i:5d}.png'), to_int(y_p), [cv2.IMWRITE_PNG_COMPRESSION, 9])
+        cv2.imwrite(os.path.join(noisy_dir, f'{i:05d}.png'), to_int(x), [cv2.IMWRITE_PNG_COMPRESSION, 9])
+        cv2.imwrite(os.path.join(gt_dir, f'{i:05d}.png'), to_int(y_t), [cv2.IMWRITE_PNG_COMPRESSION, 9])
+        cv2.imwrite(os.path.join(denoised_dir, f'{i:05d}.png'), to_int(y_p), [cv2.IMWRITE_PNG_COMPRESSION, 9])
     print('Done.')
 
     model.session.close()
