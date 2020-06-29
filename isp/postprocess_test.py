@@ -12,15 +12,18 @@ if __name__ == '__main__':
 
     images_orig = sorted(os.listdir(Param.test_dir))
     images_noisy = sorted(os.listdir(noisy_dir))
-    for im in images_noisy:
+    images_temp = images_noisy
+    for im in images_temp:
         if not im.endswith('.png'):
             images_noisy.remove(im)
     images_gt = sorted(os.listdir(gt_dir))
-    for im in images_gt:
+    images_temp = images_gt
+    for im in images_temp:
         if not im.endswith('.png'):
             images_gt.remove(im)
     images_denoised = sorted(os.listdir(denoised_dir))
-    for im in images_denoised:
+    images_temp = images_denoised
+    for im in images_temp:
         if not im.endswith('.png'):
             images_denoised.remove(im)
     for orig, no, gt, dn in zip(images_orig, images_noisy, images_gt, images_denoised):
