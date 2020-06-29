@@ -31,16 +31,16 @@ if __name__ == '__main__':
         shape = img_orig.shape[0:2]
 
         img_no = cv2.imread(os.path.join(noisy_dir, no))
-        os.remove(os.path.join(noisy_dir, no))
+        # os.remove(os.path.join(noisy_dir, no))
         img_no = sf.resize_with_crop_or_pad(img_no, out_size=shape)
         cv2.imwrite(os.path.join(noisy_dir, orig), sf.to_int(img_no), [cv2.IMWRITE_JPEG_QUALITY, 100])
 
         img_gt = cv2.imread(os.path.join(gt_dir, gt))
-        os.remove(os.path.join(gt_dir, gt))
+        # os.remove(os.path.join(gt_dir, gt))
         img_gt = sf.resize_with_crop_or_pad(img_gt, out_size=shape)
         cv2.imwrite(os.path.join(gt_dir, orig), sf.to_int(img_gt), [cv2.IMWRITE_JPEG_QUALITY, 100])
 
         img_dn = cv2.imread(os.path.join(denoised_dir, dn))
-        os.remove(os.path.join(denoised_dir, dn))
+        # os.remove(os.path.join(denoised_dir, dn))
         img_dn = sf.resize_with_crop_or_pad(img_dn, out_size=shape)
         cv2.imwrite(os.path.join(denoised_dir, orig), sf.to_int(img_dn), [cv2.IMWRITE_JPEG_QUALITY, 100])
