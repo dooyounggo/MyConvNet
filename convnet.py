@@ -78,6 +78,7 @@ class ConvNet(object):
 
         self._blocks_to_train = kwargs.get('blocks_to_train', None)
         self._update_batch_norm = kwargs.get('update_batch_norm', True)
+        self._activate_batch_norm = kwargs.get('activate_batch_norm', True)
 
         self._moving_average_decay = kwargs.get('moving_average_decay', 0.99)
         self._batch_norm_decay = kwargs.get('batch_norm_decay', 0.99)
@@ -326,6 +327,10 @@ class ConvNet(object):
     @property
     def update_batch_norm(self):
         return self._update_batch_norm
+
+    @property
+    def activate_batch_norm(self):
+        return self._activate_batch_norm
 
     @property
     def moving_average_decay(self):
@@ -1682,7 +1687,7 @@ class ConvNet(object):
                 return tf.matmul(x, weights)
 
     def batch_norm(self, x, scale=True, shift=True, zero_scale_init=False, epsilon=1e-3, scope='bn'):
-        if self.update_batch_norm is not None:
+        if isinstance(self.update_batch_norm, bool):
             update = self.update_batch_norm
         else:
             if self.blocks_to_train is None:
@@ -1691,6 +1696,15 @@ class ConvNet(object):
                 update = True
             else:
                 update = False
+        if isinstance(self.activate_batch_norm, bool):
+            activate = self.activate_batch_norm
+        else:
+            if self.blocks_to_train is None:
+                activate = True
+            elif self._curr_block in self.blocks_to_train:
+                activate = True
+            else:
+                activate = False
         if self.blocks_to_train is None:
             trainable = True
         elif self._curr_block in self.blocks_to_train:
@@ -1785,40 +1799,49 @@ class ConvNet(object):
             if self.dtype is not tf.float32:
                 x = tf.cast(x, dtype=tf.float32)
             data_format = 'NCHW' if self.channel_first else 'NHWC'
-            if update:
-                x, batch_mean, batch_var = self.cond(self.is_train,
-                                                     lambda: tf.nn.fused_batch_norm(x,
-                                                                                    gamma,
-                                                                                    beta,
-                                                                                    epsilon=epsilon,
-                                                                                    data_format=data_format,
-                                                                                    is_training=True),
-                                                     lambda: tf.nn.fused_batch_norm(x,
-                                                                                    gamma,
-                                                                                    beta,
-                                                                                    mean=mean,
-                                                                                    variance=var,
-                                                                                    epsilon=epsilon,
-                                                                                    data_format=data_format,
-                                                                                    is_training=False)
-                                                   )
-                update_rate = 1.0 - momentum
-                if self._curr_device == self.device_offset:
-                    update_mu = momentum*mu + update_rate*batch_mean
-                    update_sigma = momentum*sigma + update_rate*batch_var
-                else:  # Chained variable updates
-                    dep_ops = tf.get_collection('dev_{}_update_ops'.format(self._curr_device - 1))
-                    updated_mu, updated_sigma = dep_ops[self._curr_dependent_op:self._curr_dependent_op + 2]
-                    update_mu = momentum*updated_mu + update_rate*batch_mean
-                    update_sigma = momentum*updated_sigma + update_rate*batch_var
-                tf.add_to_collection('dev_{}_update_ops'.format(self._curr_device), update_mu)
-                tf.add_to_collection('dev_{}_update_ops'.format(self._curr_device), update_sigma)
-                self._curr_dependent_op += 2
-                if self._curr_device == self.num_devices + self.device_offset - 1:
-                    update_mu = mu.assign(update_mu)
-                    update_sigma = sigma.assign(update_sigma)
-                    tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_mu)
-                    tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_sigma)
+            if update or activate:
+                if activate:
+                    x, batch_mean, batch_var = self.cond(self.is_train,
+                                                         lambda: tf.nn.fused_batch_norm(x,
+                                                                                        gamma,
+                                                                                        beta,
+                                                                                        epsilon=epsilon,
+                                                                                        data_format=data_format,
+                                                                                        is_training=True),
+                                                         lambda: tf.nn.fused_batch_norm(x,
+                                                                                        gamma,
+                                                                                        beta,
+                                                                                        mean=mean,
+                                                                                        variance=var,
+                                                                                        epsilon=epsilon,
+                                                                                        data_format=data_format,
+                                                                                        is_training=False)
+                                                         )
+                else:
+                    stat_axis = [0, 2, 3] if self.channel_first else [0, 1, 2]
+                    batch_mean, batch_var = tf.nn.moments(x, axis=stat_axis)
+                    mean = tf.expand_dims(mean, axis=stat_axis)
+                    var = tf.expand_dims(var, axis=stat_axis)
+                    x = gamma*((x - mean)/tf.math.sqrt(var + epsilon)) + beta
+
+                if update:
+                    update_rate = 1.0 - momentum
+                    if self._curr_device == self.device_offset:
+                        update_mu = momentum*mu + update_rate*batch_mean
+                        update_sigma = momentum*sigma + update_rate*batch_var
+                    else:  # Chained variable updates
+                        dep_ops = tf.get_collection('dev_{}_update_ops'.format(self._curr_device - 1))
+                        updated_mu, updated_sigma = dep_ops[self._curr_dependent_op:self._curr_dependent_op + 2]
+                        update_mu = momentum*updated_mu + update_rate*batch_mean
+                        update_sigma = momentum*updated_sigma + update_rate*batch_var
+                    tf.add_to_collection('dev_{}_update_ops'.format(self._curr_device), update_mu)
+                    tf.add_to_collection('dev_{}_update_ops'.format(self._curr_device), update_sigma)
+                    self._curr_dependent_op += 2
+                    if self._curr_device == self.num_devices + self.device_offset - 1:
+                        update_mu = mu.assign(update_mu)
+                        update_sigma = sigma.assign(update_sigma)
+                        tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_mu)
+                        tf.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_sigma)
             else:
                 x, _, _ = tf.nn.fused_batch_norm(x,
                                                  gamma,
