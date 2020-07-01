@@ -10,6 +10,7 @@ from convnet import ConvNet
 
 class SegNet(ConvNet):
     def _init_model(self, **kwargs):
+        dtypes = (tf.float32, tf.float32)
         output_shapes = ([None, None, None, self.input_size[-1]],
                          None)
         with tf.variable_scope(tf.get_variable_scope()):
@@ -17,15 +18,13 @@ class SegNet(ConvNet):
                 self._curr_device = i
                 self._curr_block = None
                 self._curr_dependent_op = 0  # For ops with dependencies between GPUs such as BN
-                with tf.device('/{}:'.format(self.compute_device) + str(i)):
-                    with tf.name_scope('{}'.format(self.compute_device + str(i))):
-                        handle = tf.placeholder(tf.string, shape=[], name='handle')  # Handle for the feedable iterator
-                        self.handles.append(handle)
-                        iterator = tf.data.Iterator.from_string_handle(handle, (tf.float32, tf.float32),
-                                                                       output_shapes=output_shapes)
-                        self.X, self.Y = iterator.get_next()
+                device = '/{}:'.format(self.compute_device) + str(i)
+                with tf.device(device):
+                    with tf.name_scope(self.compute_device + '_' + str(i)):
+                        self._set_next_elements(device, dtypes, output_shapes)
+                        self.X, self.Y = self.next_elements[device]
 
-                        # FIXME: Fake label generation
+                        # FIXME: Fake label generation from NaNs
                         self._broadcast_shape = [tf.shape(self.X)[1], tf.shape(self.X)[2]]
                         self.Y = tf.map_fn(self._broadcast_nans, self.Y)  # Broadcasting for NaNs
                         self.Y = tf.where(tf.is_nan(self.Y), tf.zeros_like(self.Y), self.Y)

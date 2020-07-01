@@ -12,13 +12,15 @@ from contextlib import nullcontext
 
 
 class ConvNet(object):
-    def __init__(self, input_shape, num_classes, loss_weights=None, session=None, model_scope=None, **kwargs):
+    def __init__(self, input_shape, num_classes, loss_weights=None, session=None, model_scope=None, next_elements=None,
+                 **kwargs):
         """
         :param input_shape: list or tuple, network input size.
         :param num_classes: int, number of classes.
         :param loss_weights: list or tuple, weighting factors for softmax losses.
         :param session: tf.Session, TensorFlow session. If None, a new session is created.
         :param model_scope: string, variable scope for the model. None for no scope.
+        :param next_elements: dict, iterator.get_next elements for each device. If None, new elements are created.
         :param kwargs: dict, (hyper)parameters.
         """
         self._block_list = []
@@ -43,6 +45,10 @@ class ConvNet(object):
         self._num_classes = num_classes
         self._loss_weights = loss_weights  # Weight values for the softmax losses of each class
         self._model_scope = model_scope
+        if next_elements is None:
+            self._next_elements = dict()
+        else:
+            self._next_elements = dict(next_elements)
 
         self._dtype = tf.float16 if kwargs.get('half_precision', False) else tf.float32
         self._channel_first = kwargs.get('channel_first', False)
@@ -118,16 +124,16 @@ class ConvNet(object):
                     self.monte_carlo = tf.placeholder(tf.bool, shape=[], name='monte_carlo')
                     self.augmentation = tf.placeholder(tf.bool, shape=[], name='augmentation')
                     self.total_steps = tf.placeholder(tf.int64, shape=[], name='total_steps')
-    
+
                 with tf.variable_scope('calc'):
                     self.global_step = tf.train.get_or_create_global_step()
                     global_step = tf.cast(self.global_step, dtype=tf.float32)
-    
+
                     self.dropout_rate = tf.cond(tf.math.logical_or(self.is_train, self.monte_carlo),
                                                 lambda: tf.constant(kwargs.get('dropout_rate', 0.0), dtype=self.dtype),
                                                 lambda: tf.constant(0.0, dtype=self.dtype, name='0'),
                                                 name='dropout_rate')
-    
+
                     if self.dropout_weights:
                         self.dropout_rate_weights = self.dropout_rate
                     else:
@@ -141,14 +147,14 @@ class ConvNet(object):
                                                       name='image_mean')
                     else:
                         self.image_mean = tf.constant(0.0, dtype=tf.float32, name='0')
-    
+
                     self.scale_factor = tf.constant(kwargs.get('scale_factor', 2.0), dtype=tf.float32,
                                                     name='scale_factor')
-    
+
                     self.linear_schedule_multiplier = tf.math.divide(global_step,
                                                                      tf.cast(self.total_steps, dtype=tf.float32),
                                                                      name='linear_schedule_multiplier')
-    
+
                     self._dummy_image = tf.zeros([4, 8, 8, 3], dtype=tf.float32, name='dummy_image')
 
             self.ema = tf.train.ExponentialMovingAverage(decay=self.moving_average_decay,
@@ -253,10 +259,14 @@ class ConvNet(object):
     @property
     def loss_weights(self):
         return self._loss_weights
-    
+
     @property
     def model_scope(self):
         return self._model_scope
+
+    @property
+    def next_elements(self):
+        return self._next_elements
 
     @property
     def dtype(self):
@@ -378,6 +388,7 @@ class ConvNet(object):
         return tensors
 
     def _init_model(self, **kwargs):
+        dtypes = (tf.float32, tf.float32)
         output_shapes = ([None, None, None, self.input_size[-1]],
                          [None])
         with tf.variable_scope(tf.get_variable_scope()):
@@ -385,15 +396,13 @@ class ConvNet(object):
                 self._curr_device = i
                 self._curr_block = None
                 self._curr_dependent_op = 0  # For ops with dependencies between GPUs such as BN
-                with tf.device('/{}:'.format(self.compute_device) + str(i)):
-                    with tf.name_scope('{}'.format(self.compute_device + str(i))):
-                        handle = tf.placeholder(tf.string, shape=[], name='handle')  # Handle for the feedable iterator
-                        self.handles.append(handle)
-                        iterator = tf.data.Iterator.from_string_handle(handle, (tf.float32, tf.float32),
-                                                                       output_shapes=output_shapes)
-                        self.X, self.Y = iterator.get_next()
+                device = '/{}:'.format(self.compute_device) + str(i)
+                with tf.device(device):
+                    with tf.name_scope(self.compute_device + '_' + str(i)):
+                        self._set_next_elements(device, dtypes, output_shapes)
+                        self.X, self.Y = self.next_elements[device]
 
-                        # FIXME: Fake label generation
+                        # FIXME: Fake label generation from NaNs
                         self.Y = tf.where(tf.is_nan(self.Y),  # Fake label is created when the label is NaN
                                           0.0 - tf.ones_like(self.Y, dtype=tf.float32),
                                           self.Y)
@@ -465,6 +474,15 @@ class ConvNet(object):
                 self.input_labels = tf.concat(self.Y_in, axis=0, name='y_in')
                 self.debug_images.append(tf.clip_by_value(self.gcam/2 + self.X_all, 0, 1))
                 self.debug_images.append(tf.clip_by_value(self.gcam*self.X_all, 0, 1))
+
+    def _set_next_elements(self, device, dtypes, output_shapes=None):
+        if device in self.next_elements:
+            self.handles.append(None)  # Handles already exist in other ConvNet
+        else:
+            handle = tf.placeholder(tf.string, shape=[], name='handle')
+            self.handles.append(handle)  # Handles for feedable iterators of datasets
+            iterator = tf.data.Iterator.from_string_handle(handle, dtypes, output_shapes=output_shapes)
+            self.next_elements[device] = iterator.get_next()
 
     def _build_loss(self, **kwargs):
         l1_factor = kwargs.get('l1_reg', 0e-8)

@@ -15,6 +15,7 @@ class GAN(ConvNet):
         return self._num_blocks_g
 
     def _init_model(self, **kwargs):
+        dtypes = (tf.float32, tf.float32)
         output_shapes = ([None, None, None, self.input_size[-1]],
                          None)
         self.losses_g = []
@@ -24,15 +25,13 @@ class GAN(ConvNet):
                 self._curr_block = None
                 self._num_blocks_g = 1  # Number of generator blocks
                 self._curr_dependent_op = 0  # For ops with dependencies between GPUs such as BN
-                with tf.device('/{}:'.format(self.compute_device) + str(i)):
-                    with tf.name_scope('{}'.format(self.compute_device + str(i))):
-                        handle = tf.placeholder(tf.string, shape=[], name='handle')  # Handle for the feedable iterator
-                        self.handles.append(handle)
-                        iterator = tf.data.Iterator.from_string_handle(handle, (tf.float32, tf.float32),
-                                                                       output_shapes=output_shapes)
-                        self.X, self.Y = iterator.get_next()  # Y is latent vectors
+                device = '/{}:'.format(self.compute_device) + str(i)
+                with tf.device(device):
+                    with tf.name_scope(self.compute_device + '_' + str(i)):
+                        self._set_next_elements(device, dtypes, output_shapes)
+                        self.X, self.Y = self.next_elements[device]  # Y is latent vectors
 
-                        # FIXME: Fake label generation
+                        # FIXME: Fake label generation from NaNs
                         self._broadcast_shape = [self.num_classes]  # num_classes is the size of the latent vector.
                         self.Y = tf.map_fn(self._broadcast_nans, self.Y)  # Broadcasting for NaNs
                         self.Y = tf.where(tf.is_nan(self.Y), tf.random_uniform(tf.shape(self.Y), -1.0, 1.0), self.Y)
