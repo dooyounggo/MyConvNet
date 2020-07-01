@@ -24,10 +24,10 @@ class GANOptimizer(Optimizer):
         vars_d = []
         vars_g = []
         for i in range(self.model.num_blocks - self.model.num_blocks_g):
-            vars_d += tf.get_collection('block_{}_variables'.format(i))
-        vars_d += tf.get_collection('block_{}_variables'.format(None))
+            vars_d += self.model.get_collection('block_{}/variables'.format(i))
+        vars_d += self.model.get_collection('block_{}/variables'.format(None))
         for i in range(self.model.num_blocks - self.model.num_blocks_g, self.model.num_blocks):
-            vars_g += tf.get_collection('block_{}_variables'.format(i))
+            vars_g += self.model.get_collection('block_{}/variables'.format(i))
 
         update_vars_d = []
         update_vars_g = []
@@ -99,9 +99,9 @@ class GANOptimizer(Optimizer):
                     self.avg_grads = avg_grads
 
         if weight_decay > 0.0:
-            variables = tf.get_collection('weight_variables')
+            variables = self.model.get_collection('weight_variables')
             if kwargs.get('bias_norm_decay', False):
-                variables += tf.get_collection('bias_variables') + tf.get_collection('norm_variables')
+                variables += self.model.get_collection('bias_variables') + self.model.get_collection('norm_variables')
             with tf.variable_scope('weight_decay'):
                 weight_decay = tf.constant(weight_decay, dtype=tf.float32, name='weight_decay_factor')
                 if weight_decay_scheduling:
