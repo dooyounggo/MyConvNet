@@ -79,8 +79,8 @@ class ConvNet(object):
         self._dropout_features = kwargs.get('dropout_features', True)
 
         self._blocks_to_train = kwargs.get('blocks_to_train', None)
-        self._update_batch_norm = kwargs.get('update_batch_norm', True)
-        self._activate_batch_norm = kwargs.get('activate_batch_norm', True)
+        self._update_batch_norm = kwargs.get('update_batch_norm', None)
+        self._activate_batch_norm = kwargs.get('activate_batch_norm', None)
 
         self._moving_average_decay = kwargs.get('moving_average_momentum', kwargs.get('moving_average_decay', 0.99))
         self._batch_norm_decay = kwargs.get('batch_norm_momentum', kwargs.get('batch_norm_decay', 0.99))
