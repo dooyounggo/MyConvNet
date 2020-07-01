@@ -706,7 +706,7 @@ class ConvNet(object):
                 max_stddev *= self.linear_schedule_multiplier
             elif scheduling < 0:
                 max_stddev *= 1.0 - self.linear_schedule_multiplier
-            self.max_stddev = max_stddev
+            self._max_stddev = max_stddev
             x = tf.map_fn(self.gaussian_blur_fn, x, parallel_iterations=32, back_prop=False)
 
         return x
@@ -720,7 +720,7 @@ class ConvNet(object):
         column_base = tf.tile(tf.constant(column_base[:, :, np.newaxis, np.newaxis], dtype=tf.float32),
                               multiples=(1, 1, in_channels, 1))
 
-        var = tf.random.uniform([], minval=0.0, maxval=self.max_stddev, dtype=tf.float32)**2
+        var = tf.random.uniform([], minval=0.0, maxval=self._max_stddev, dtype=tf.float32) ** 2
         h_filt = tf.math.exp(column_base/var)
         h_filt = h_filt/tf.reduce_sum(h_filt, axis=0, keepdims=True)
         w_filt = tf.math.exp(row_base/var)
