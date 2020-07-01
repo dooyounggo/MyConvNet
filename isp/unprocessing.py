@@ -133,9 +133,9 @@ class Unprocessing(ConvNet):
 
         l1_factor = kwargs.get('l1_reg', 0e-8)
         l2_factor = kwargs.get('l2_reg', 1e-4)
-        variables = tf.get_collection('weight_variables')
+        variables = self.get_collection('weight_variables')
         if kwargs.get('bias_norm_decay', False):
-            variables += tf.get_collection('bias_variables') + tf.get_collection('norm_variables')
+            variables += self.get_collection('bias_variables') + self.get_collection('norm_variables')
         with tf.variable_scope('l1_loss'):
             if l1_factor > 0.0:
                 l1_factor = tf.constant(l1_factor, dtype=tf.float32, name='L1_factor')
