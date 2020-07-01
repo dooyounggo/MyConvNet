@@ -137,11 +137,13 @@ class ConvNet(object):
                     else:
                         self.dropout_rate_features = tf.constant(0.0, dtype=self.dtype, name='0')
                     if kwargs.get('zero_center', True):
-                        self.image_mean = tf.constant(kwargs.get('image_mean', 0.5), dtype=tf.float32, name='image_mean')
+                        self.image_mean = tf.constant(kwargs.get('image_mean', 0.5), dtype=tf.float32,
+                                                      name='image_mean')
                     else:
                         self.image_mean = tf.constant(0.0, dtype=tf.float32, name='0')
     
-                    self.scale_factor = tf.constant(kwargs.get('scale_factor', 2.0), dtype=tf.float32, name='scale_factor')
+                    self.scale_factor = tf.constant(kwargs.get('scale_factor', 2.0), dtype=tf.float32,
+                                                    name='scale_factor')
     
                     self.linear_schedule_multiplier = tf.math.divide(global_step,
                                                                      tf.cast(self.total_steps, dtype=tf.float32),
