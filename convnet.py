@@ -41,6 +41,7 @@ class ConvNet(object):
             self._session = session
         self._top_scope = tf.get_variable_scope()
 
+        assert len(input_shape) == 3, 'input_size must contain 3D size'
         self._input_size = input_shape  # Size of the network input (i.e., the first convolution layer).
         self._num_classes = num_classes
         self._loss_weights = loss_weights  # Weight values for the softmax losses of each class
