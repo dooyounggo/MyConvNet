@@ -53,7 +53,7 @@ class Optimizer(object):
         self.decay_params = kwargs.get('learning_rate_decay_params', (0.94, 2))
 
         self.update_vars = tf.trainable_variables()
-        self.update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+        self.update_ops = self.model.get_collection(tf.GraphKeys.UPDATE_OPS)
         with tf.variable_scope('calc/'):
             self.learning_rate_multiplier = tf.placeholder(dtype=tf.float32, name='learning_rate_multiplier')
             self.learning_rate = self.init_learning_rate*self.learning_rate_multiplier
@@ -151,9 +151,9 @@ class Optimizer(object):
                     self.avg_grads = avg_grads
 
         if weight_decay > 0.0:
-            variables = tf.get_collection('weight_variables')
+            variables = self.model.get_collection('weight_variables')
             if kwargs.get('bias_norm_decay', False):
-                variables += tf.get_collection('bias_variables') + tf.get_collection('norm_variables')
+                variables += self.model.get_collection('bias_variables') + self.model.get_collection('norm_variables')
             with tf.variable_scope('weight_decay'):
                 weight_decay = tf.constant(weight_decay, dtype=tf.float32, name='weight_decay_factor')
                 if weight_decay_scheduling:
@@ -224,12 +224,12 @@ class Optimizer(object):
             var_list = []
             if blocks_to_load is None:
                 for blk in self.model.block_list:
-                    var_list += tf.get_collection('block_{}_variables'.format(blk))
-                    var_list += tf.get_collection('block_{}_ema_variables'.format(blk))
+                    var_list += self.model.get_collection('block_{}/variables'.format(blk))
+                    var_list += self.model.get_collection('block_{}/ema_variables'.format(blk))
             else:
                 for blk in blocks_to_load:
-                    var_list += tf.get_collection('block_{}_variables'.format(blk))
-                    var_list += tf.get_collection('block_{}_ema_variables'.format(blk))
+                    var_list += self.model.get_collection('block_{}/variables'.format(blk))
+                    var_list += self.model.get_collection('block_{}/ema_variables'.format(blk))
 
             variables_not_loaded = []
             if load_moving_average:
@@ -338,10 +338,10 @@ class Optimizer(object):
 
                 tf.summary.histogram('Image Histogram', self.model.X_all)
                 for blk in self.model.block_list:
-                    weights = tf.get_collection('block_{}_weight_variables'.format(blk))
+                    weights = self.model.get_collection('block_{}/weight_variables'.format(blk))
                     if len(weights) > 0:
                         tf.summary.histogram('Block {} Weight Histogram'.format(blk), weights[0])
-                weights = tf.get_collection('weight_variables')
+                weights = self.model.get_collection('weight_variables')
                 with tf.variable_scope('weights_l1'):
                     weights_l1 = tf.math.accumulate_n([tf.reduce_sum(tf.math.abs(w)) for w in weights])
                     tf.summary.scalar('Weights L1 Norm', weights_l1)
