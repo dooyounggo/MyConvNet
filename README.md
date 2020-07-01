@@ -62,7 +62,8 @@ Some scripts may not support command-line execution.
 
 ### TODO
 - Speedup: Training is slower than tf_cnn_benchmark.
-- Include the detection task, GAN, etc..
+- Object detection task.
+- Multi-model optimization including knowledge distillation.
 
 ## Checkpoints
 ### ImageNet - Images are subtracted by 0.5 and multiplied by 2, ranging in [-1.0, 1.0]
