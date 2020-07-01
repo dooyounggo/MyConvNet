@@ -12,27 +12,31 @@ from contextlib import nullcontext
 
 
 class ConvNet(object):
-    def __init__(self, input_shape, num_classes, loss_weights=None, model_scope=None, **kwargs):
+    def __init__(self, input_shape, num_classes, loss_weights=None, session=None, model_scope=None, **kwargs):
         """
         :param input_shape: list or tuple, network input size.
         :param num_classes: int, number of classes.
         :param loss_weights: list or tuple, weighting factors for softmax losses.
-        :param model_scope: string, variable scope for the model.
+        :param session: tf.Session, TensorFlow session. If None, a new session is created.
+        :param model_scope: string, variable scope for the model. None for no scope.
         :param kwargs: dict, (hyper)parameters.
         """
         self._block_list = []
         self._curr_block = None  # Use this instance to group variables into blocks
         self._custom_feed_dict = dict()  # feed_dict for custom placeholders {placeholder: value}
 
-        graph = tf.get_default_graph()
-        config = tf.ConfigProto()
-        config.intra_op_parallelism_threads = kwargs.get('num_parallel_calls', 0)
-        config.inter_op_parallelism_threads = 0
-        config.gpu_options.force_gpu_compatible = True
-        config.allow_soft_placement = False
-        config.gpu_options.allow_growth = True
-        # config.gpu_options.per_process_gpu_memory_fraction = 0.7  # FIXME
-        self._session = tf.Session(graph=graph, config=config)  # TF main session
+        if session is None:
+            graph = tf.get_default_graph()
+            config = tf.ConfigProto()
+            config.intra_op_parallelism_threads = kwargs.get('num_parallel_calls', 0)
+            config.inter_op_parallelism_threads = 0
+            config.gpu_options.force_gpu_compatible = True
+            config.allow_soft_placement = False
+            config.gpu_options.allow_growth = True
+            # config.gpu_options.per_process_gpu_memory_fraction = 0.7  # FIXME
+            self._session = tf.Session(graph=graph, config=config)  # TF main session
+        else:
+            self._session = session
         self._top_scope = tf.get_variable_scope()
 
         self._input_size = input_shape  # Size of the network input (i.e., the first convolution layer).
