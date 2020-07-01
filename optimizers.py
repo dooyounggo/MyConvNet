@@ -39,9 +39,6 @@ class Optimizer(object):
                                                                ': {} vs. {}.'.format(model.device_offset,
                                                                                      train_set.device_offset)
 
-        self.input_size = kwargs.get('input_size', [224, 224, 3])
-        assert len(self.input_size) == 3, 'input_size must contain 3D size'
-
         self.batch_size = train_set.batch_size
         self.num_epochs = kwargs.get('num_epochs', 100)
         self.monte_carlo = kwargs.get('monte_carlo', False)
