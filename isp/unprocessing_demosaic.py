@@ -113,12 +113,13 @@ class UnprocessingDemosaic(Unprocessing):
         """
         pass
 
-    def process(self, images, red_gains, blue_gains, cam2rgbs):
+    def process(self, images, red_gains, blue_gains, cam2rgbs, simple=False):
         images.shape.assert_is_compatible_with([None, None, None, 3])
         with tf.name_scope(None, 'process'):
-            # White balance.
-            images = self.apply_gains(images, red_gains, blue_gains)
-            images = tf.clip_by_value(images, 0.0, 1.0)
+            if not simple:
+                # White balance.
+                images = self.apply_gains(images, red_gains, blue_gains)
+                images = tf.clip_by_value(images, 0.0, 1.0)
             # Color correction.
             images = process.apply_ccms(images, cam2rgbs)
             # Gamma compression.
