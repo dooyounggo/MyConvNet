@@ -1868,6 +1868,8 @@ class ConvNet(object):
                     var_shape = [1, in_channels, 1, 1] if self.channel_first else [1, 1, 1, in_channels]
                     mean = tf.reshape(mean, shape=var_shape)
                     var = tf.reshape(var, shape=var_shape)
+                    gamma = tf.reshape(gamma, shape=var_shape)
+                    beta = tf.reshape(beta, shape=var_shape)
                     x = gamma*((x - mean)/tf.math.sqrt(var + epsilon)) + beta
 
                 if update:
