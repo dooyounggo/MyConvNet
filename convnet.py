@@ -1863,14 +1863,12 @@ class ConvNet(object):
                                                                                         is_training=False)
                                                          )
                 else:
-                    # stat_axis = [0, 2, 3] if self.channel_first else [0, 1, 2]
-                    # batch_mean, batch_var = tf.nn.moments(x, axis=stat_axis)
-                    # mean = tf.expand_dims(mean, axis=stat_axis)
-                    # var = tf.expand_dims(var, axis=stat_axis)
-                    # x = gamma*((x - mean)/tf.math.sqrt(var + epsilon)) + beta
-                    x, batch_mean, batch_var = tf.nn.fused_batch_norm(x, gamma, beta,
-                                                                      mean=mean, variance=var, epsilon=epsilon,
-                                                                      data_format=data_format, is_training=False)
+                    stat_axis = [0, 2, 3] if self.channel_first else [0, 1, 2]
+                    batch_mean, batch_var = tf.nn.moments(x, axes=stat_axis)
+                    var_shape = [1, in_channels, 1, 1] if self.channel_first else [1, 1, 1, in_channels]
+                    mean = tf.reshape(mean, shape=var_shape)
+                    var = tf.reshape(var, shape=var_shape)
+                    x = gamma*((x - mean)/tf.math.sqrt(var + epsilon)) + beta
 
                 if update:
                     update_rate = 1.0 - momentum
