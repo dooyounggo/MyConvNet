@@ -9,7 +9,8 @@ import cv2
 
 INT_TYPES = ('uint8', 'uint16', 'uint32', 'uint64', 'int8', 'int16', 'int32', 'int64')
 FLOAT_TYPES = ('float16', 'float32', 'float64')
-IMAGE_FORMATS = ('bmp', 'dib', 'jpeg', 'jpe', 'jp2', 'png', 'webp', 'pbm', 'pgm', 'ppm', 'sr', 'ras', 'tiff', 'tif')
+IMAGE_FORMATS = ('bmp', 'dib', 'jpg', 'jpeg', 'jpe', 'jp2', 'png',
+                 'webp', 'pbm', 'pgm', 'ppm', 'sr', 'ras', 'tiff', 'tif')
 
 
 def read_subset_cls(subset_dir, shuffle=False, sample_size=None, image_dir=None, label_dir=None):
