@@ -45,11 +45,14 @@ class UnprocessingDemosaic(Unprocessing):
                                                                                     parallel_iterations=32,
                                                                                     back_prop=False)
 
-                        self.Y = self.process(image, metadata[2], metadata[3], metadata[0])
+                        self.Y = self.process(image, metadata[2], metadata[3], metadata[0],
+                                              simple=self.simple_unprocessing)
                         self.Y.set_shape([None] + list(self.input_size))
-                        self.Y_mosaic = process.process(bayer_img, metadata[2], metadata[3], metadata[0])
+                        self.Y_mosaic = process.process(bayer_img, metadata[2], metadata[3], metadata[0],
+                                                        simple=self.simple_unprocessing)
                         self.Y_mosaic.set_shape([None] + list(self.input_size))
-                        noisy = process.process(noisy_img, metadata[2], metadata[3], metadata[0])
+                        noisy = process.process(noisy_img, metadata[2], metadata[3], metadata[0],
+                                                simple=self.simple_unprocessing)
                         noisy.set_shape([None] + list(self.input_size))
                         self.Xs.append(noisy)
                         self.Ys.append(self.Y)
@@ -74,7 +77,8 @@ class UnprocessingDemosaic(Unprocessing):
                         tf.get_variable_scope().reuse_variables()
 
                         self.dicts.append(self.d)
-                        self.pred = self.process(self.d['pred'], metadata[2], metadata[3], metadata[0])
+                        self.pred = self.process(self.d['pred'], metadata[2], metadata[3], metadata[0],
+                                                 simple=self.simple_unprocessing)
                         self.pred.set_shape([None] + list(self.input_size))
                         if 'denoised' in self.d:
                             if self.dtype is not tf.float32:
@@ -82,7 +86,8 @@ class UnprocessingDemosaic(Unprocessing):
                                     self.d['denoised'] = tf.cast(self.d['denoised'], dtype=tf.float32)
                             if self.channel_first:
                                 self.d['denoised'] = tf.transpose(self.d['denoised'], perm=[0, 2, 3, 1])
-                            self.denoised = process.process(self.d['denoised'], metadata[2], metadata[3], metadata[0])
+                            self.denoised = process.process(self.d['denoised'], metadata[2], metadata[3], metadata[0],
+                                                            simple=self.simple_unprocessing)
                             self.denoised.set_shape([None] + list(self.input_size))
                         else:
                             self.denoised = None
