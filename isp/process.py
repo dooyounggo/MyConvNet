@@ -94,12 +94,13 @@ def gamma_compression(images, gamma=2.2):
   return tf.maximum(images, 1e-8) ** (1.0 / gamma)
 
 
-def process(bayer_images, red_gains, blue_gains, cam2rgbs):
+def process(bayer_images, red_gains, blue_gains, cam2rgbs, simple=False):  # FIXME
   """Processes a batch of Bayer RGGB images into sRGB images."""
   bayer_images.shape.assert_is_compatible_with((None, None, None, 4))
   with tf.name_scope(None, 'process'):
-    # White balance.
-    bayer_images = apply_gains(bayer_images, red_gains, blue_gains)
+    if not simple:
+      # White balance.
+      bayer_images = apply_gains(bayer_images, red_gains, blue_gains)
     # Demosaic.
     bayer_images = tf.clip_by_value(bayer_images, 0.0, 1.0)
     images = demosaic(bayer_images)
