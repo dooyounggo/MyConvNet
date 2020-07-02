@@ -32,8 +32,7 @@ class Unprocessing(ConvNet):
                         self.X, _ = self.next_elements[device]
                         self.X_in.append(self.X)
 
-                        if self._padded_size[0] > self.input_size[0] or self._padded_size[1] > self.input_size[1]:
-                            self.X = self.zero_pad(self.X, pad_value=self.pad_value)
+                        self.X = self.zero_pad(self.X, pad_value=self.pad_value)
                         self.X = tf.cond(self.augmentation,
                                          lambda: self.augment_images(self.X, **kwargs),
                                          lambda: self.center_crop(self.X),
