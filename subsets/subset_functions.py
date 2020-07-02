@@ -22,7 +22,7 @@ def read_subset_cls(subset_dir, shuffle=False, sample_size=None, image_dir=None,
         full_filename = os.path.join(subset_dir, fname)
         if ext == 'csv':
             label_paths.append(full_filename)
-        elif ext in ('jpeg', 'jpg', 'bmp'):
+        elif ext in IMAGE_FORMATS:
             image_paths.append(full_filename)
 
     if image_dir is not None:
