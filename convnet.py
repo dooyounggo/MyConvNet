@@ -12,14 +12,15 @@ from contextlib import nullcontext
 
 
 class ConvNet(object):
-    def __init__(self, input_shape, num_classes, loss_weights=None, session=None, model_scope=None, next_elements=None,
-                 **kwargs):
+    def __init__(self, input_shape, num_classes, loss_weights=None, session=None, model_scope=None,
+                 auxiliary_networks=None, next_elements=None, **kwargs):
         """
         :param input_shape: list or tuple, network input size.
         :param num_classes: int, number of classes.
         :param loss_weights: list or tuple, weighting factors for softmax losses.
         :param session: tf.Session, TensorFlow session. If None, a new session is created.
         :param model_scope: string, variable scope for the model. None for no scope.
+        :param auxiliary_networks: dict, other ConvNets related to the model.
         :param next_elements: dict, iterator.get_next elements for each device. If None, new elements are created.
         :param kwargs: dict, (hyper)parameters.
         """
@@ -50,6 +51,10 @@ class ConvNet(object):
             self._next_elements = dict()
         else:
             self._next_elements = dict(next_elements)
+        if auxiliary_networks is None:
+            self._auxiliary_networks = dict()
+        else:
+            self._auxiliary_networks = dict(auxiliary_networks)
 
         self._dtype = tf.float16 if kwargs.get('half_precision', False) else tf.float32
         self._channel_first = kwargs.get('channel_first', False)
@@ -264,6 +269,10 @@ class ConvNet(object):
     @property
     def model_scope(self):
         return self._model_scope
+
+    @property
+    def auxiliary_networks(self):
+        return self._auxiliary_networks
 
     @property
     def next_elements(self):
