@@ -101,8 +101,8 @@ def process(bayer_images, red_gains, blue_gains, cam2rgbs, simple=False):  # FIX
     if not simple:
       # White balance.
       bayer_images = apply_gains(bayer_images, red_gains, blue_gains)
+      bayer_images = tf.clip_by_value(bayer_images, 0.0, 1.0)
     # Demosaic.
-    bayer_images = tf.clip_by_value(bayer_images, 0.0, 1.0)
     images = demosaic(bayer_images)
     # Color correction.
     images = apply_ccms(images, cam2rgbs)
