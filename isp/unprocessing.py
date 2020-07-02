@@ -157,6 +157,9 @@ class Unprocessing(ConvNet):
         self.edge_l1_losses = []
         self.edge_l2_losses = []
 
+        self.simple_unprocessing = kwargs.get('simple_unprocessing', False)
+        self.add_unprocessing_noise = kwargs.get('add_unprocessing_noise', True)
+
         ccm = kwargs.get('color_correction_matrix', None)
         rgb_gain = kwargs.get('rgb_gain', None)
         red_gain = kwargs.get('red_gain', None)
@@ -280,14 +283,20 @@ class Unprocessing(ConvNet):
 
             cam2rgb = tf.matrix_inverse(rgb2cam)
 
-            # Approximately inverts global tone mapping.
-            image = unprocess.inverse_smoothstep(image)
-            # Inverts gamma compression.
-            image = unprocess.gamma_expansion(image)
-            # Inverts color correction.
-            image = unprocess.apply_ccm(image, rgb2cam)
-            # Approximately inverts white balance and brightening.
-            image = unprocess.safe_invert_gains(image, rgb_gain, red_gain, blue_gain)
+            if self.simple_unprocessing:
+                # Inverts gamma compression.
+                image = unprocess.gamma_expansion(image)
+                # Inverts color correction.
+                image = unprocess.apply_ccm(image, rgb2cam)
+            else:
+                # Approximately inverts global tone mapping.
+                image = unprocess.inverse_smoothstep(image)
+                # Inverts gamma compression.
+                image = unprocess.gamma_expansion(image)
+                # Inverts color correction.
+                image = unprocess.apply_ccm(image, rgb2cam)
+                # Approximately inverts white balance and brightening.
+                image = unprocess.safe_invert_gains(image, rgb_gain, red_gain, blue_gain)
             # Clips saturated pixels.
             image = tf.clip_by_value(image, 0.0, 1.0)
             # Applies a Bayer mosaic.
@@ -304,13 +313,19 @@ class Unprocessing(ConvNet):
     def unprocess_images(self, image):
         image, bayer_image, metadata = self.unprocess(image)
         shot_noise, read_noise = unprocess.random_noise_levels()
+        if not self.add_unprocessing_noise:
+            shot_noise = 0.0
+            read_noise = 0.0
         shot_noise = tf.cond(self.is_train,
                              true_fn=lambda: shot_noise,
                              false_fn=lambda: tf.where(tf.math.is_nan(self._shot_noise), shot_noise, self._shot_noise))
         read_noise = tf.cond(self.is_train,
                              true_fn=lambda: read_noise,
                              false_fn=lambda: tf.where(tf.math.is_nan(self._read_noise), read_noise, self._read_noise))
-        noisy_img = unprocess.add_noise(bayer_image, shot_noise, read_noise)
+        if self.add_unprocessing_noise:
+            noisy_img = unprocess.add_noise(bayer_image, shot_noise, read_noise)
+        else:
+            noisy_img = bayer_image
         variance = shot_noise*noisy_img + read_noise
 
         metadata = [v for v in metadata.values()] + [shot_noise, read_noise]
