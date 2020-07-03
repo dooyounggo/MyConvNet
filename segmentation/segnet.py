@@ -13,6 +13,7 @@ class SegNet(ConvNet):
         dtypes = (tf.float32, tf.float32)
         output_shapes = ([None, None, None, self.input_size[-1]],
                          None)
+        self._set_next_elements(dtypes, output_shapes)
         with tf.variable_scope(tf.get_variable_scope()):
             for i in range(self.device_offset, self.num_devices + self.device_offset):
                 self._curr_device = i
@@ -21,7 +22,6 @@ class SegNet(ConvNet):
                 device = '/{}:'.format(self.compute_device) + str(i)
                 with tf.device(device):
                     with tf.name_scope(self.compute_device + '_' + str(i)):
-                        self._set_next_elements(device, dtypes, output_shapes)
                         self.X, self.Y = self.next_elements[device]
 
                         # FIXME: Fake label generation from NaNs

@@ -11,23 +11,22 @@ from isp import process
 
 class UnprocessingDemosaic(Unprocessing):
     def _init_model(self, **kwargs):
+        dtypes = (tf.float32, tf.float32)
         output_shapes = ([None, None, None, self.input_size[-1]],
                          None)
         self._init_unprocessing(**kwargs)
         self.denoising_losses = []
         self._make_filters()
+        self._set_next_elements(dtypes, output_shapes)
         with tf.variable_scope(tf.get_variable_scope()):
             for i in range(self.device_offset, self.num_devices + self.device_offset):
                 self._curr_device = i
                 self._curr_block = None
                 self._curr_dependent_op = 0  # For ops with dependencies between GPUs such as BN
-                with tf.device('/{}:'.format(self.compute_device) + str(i)):
-                    with tf.name_scope('{}'.format(self.compute_device + str(i))):
-                        handle = tf.placeholder(tf.string, shape=[], name='handle')  # Handle for the feedable iterator
-                        self.handles.append(handle)
-                        iterator = tf.data.Iterator.from_string_handle(handle, (tf.float32, tf.float32),
-                                                                       output_shapes=output_shapes)
-                        self.X, _ = iterator.get_next()
+                device = '/{}:'.format(self.compute_device) + str(i)
+                with tf.device(device):
+                    with tf.name_scope(self.compute_device + '_' + str(i)):
+                        self.X, _ = self.next_elements[device]
                         self.X_in.append(self.X)
 
                         self.X = self.zero_pad(self.X, pad_value=self.pad_value)

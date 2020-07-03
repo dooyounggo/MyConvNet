@@ -410,6 +410,7 @@ class ConvNet(object):
         dtypes = (tf.float32, tf.float32)
         output_shapes = ([None, None, None, self.input_size[-1]],
                          [None])
+        self._set_next_elements(dtypes, output_shapes)
         with tf.variable_scope(tf.get_variable_scope()):
             for i in range(self.device_offset, self.num_devices + self.device_offset):
                 self._curr_device = i
@@ -418,7 +419,6 @@ class ConvNet(object):
                 device = '/{}:'.format(self.compute_device) + str(i)
                 with tf.device(device):
                     with tf.name_scope(self.compute_device + '_' + str(i)):
-                        self._set_next_elements(device, dtypes, output_shapes)
                         self.X, self.Y = self.next_elements[device]
 
                         # FIXME: Fake label generation from NaNs
@@ -496,14 +496,16 @@ class ConvNet(object):
                     self.debug_images.append(tf.clip_by_value(self.gcam/2 + self.X_all, 0, 1))
                     self.debug_images.append(tf.clip_by_value(self.gcam*self.X_all, 0, 1))
 
-    def _set_next_elements(self, device, dtypes, output_shapes=None):
-        if device in self.next_elements:
-            self.handles.append(None)  # Handles already exist in other ConvNet
-        else:
-            handle = tf.placeholder(tf.string, shape=[], name='handle')
-            self.handles.append(handle)  # Handles for feedable iterators of datasets
-            iterator = tf.data.Iterator.from_string_handle(handle, dtypes, output_shapes=output_shapes)
-            self.next_elements[device] = iterator.get_next()
+    def _set_next_elements(self, dtypes, output_shapes=None):
+        for i in range(self.device_offset, self.num_devices + self.device_offset):
+            device = '/{}:'.format(self.compute_device) + str(i)
+            if device in self.next_elements:
+                self.handles.append(None)  # Handles already exist in other ConvNet
+            else:
+                handle = tf.placeholder(tf.string, shape=[], name='handle')
+                self.handles.append(handle)  # Handles for feedable iterators of datasets
+                iterator = tf.data.Iterator.from_string_handle(handle, dtypes, output_shapes=output_shapes)
+                self.next_elements[device] = iterator.get_next()
 
     def _build_loss(self, **kwargs):
         l1_factor = kwargs.get('l1_reg', 0e-8)
