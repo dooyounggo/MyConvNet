@@ -248,6 +248,10 @@ class ConvNet(object):
         pass
 
     @property
+    def name(self):
+        return 'ConvNet'
+
+    @property
     def session(self):
         return self._session
 
