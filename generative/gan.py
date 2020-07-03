@@ -28,7 +28,7 @@ class GAN(ConvNet):
                 self._curr_dependent_op = 0  # For ops with dependencies between GPUs such as BN
                 device = '/{}:'.format(self.compute_device) + str(i)
                 with tf.device(device):
-                    with tf.name_scope(self.compute_device + '_' + str(i)):
+                    with tf.name_scope(self.compute_device + '_' + str(i) + '/'):
                         self.X, self.Y = self.next_elements[device]  # Y is latent vectors
 
                         # FIXME: Fake label generation from NaNs

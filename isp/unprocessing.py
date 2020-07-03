@@ -32,7 +32,7 @@ class Unprocessing(ConvNet):
                 self._curr_dependent_op = 0  # For ops with dependencies between GPUs such as BN
                 device = '/{}:'.format(self.compute_device) + str(i)
                 with tf.device(device):
-                    with tf.name_scope(self.compute_device + '_' + str(i)):
+                    with tf.name_scope(self.compute_device + '_' + str(i) + '/'):
                         self.X, _ = self.next_elements[device]
                         self.X_in.append(self.X)
 
@@ -264,7 +264,7 @@ class Unprocessing(ConvNet):
             for i in range(self.device_offset, self.num_devices + self.device_offset):
                 device = '/{}:'.format(self.compute_device) + str(i)
                 with tf.device(device):
-                    with tf.name_scope(self.compute_device + '_' + str(i)):
+                    with tf.name_scope(self.compute_device + '_' + str(i) + '/'):
                         with tf.variable_scope('perceptual_loss'):
                             loss = loss_factor*tf.losses.mean_squared_error(vgg_features_gt[n], vgg_features_pred[n])
                             self.losses[n] += loss
