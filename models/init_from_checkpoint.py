@@ -42,7 +42,9 @@ def resnet_v1_50_101(ckpt_dir, model_scope=None, load_moving_average=True, verbo
     global_variables = tf.global_variables()
     variables = []
     for var in global_variables:
-        if var.name is not None:
+        if model_scope is None:
+            variables.append(var)
+        else:
             if var.name.startswith(model_scope):
                 variables.append(var)
     variables_not_loaded = [var.name for var in variables]
@@ -193,7 +195,9 @@ def resnet_v2_50_101(ckpt_dir, model_scope=None, load_moving_average=True, verbo
     global_variables = tf.global_variables()
     variables = []
     for var in global_variables:
-        if var.name is not None:
+        if model_scope is None:
+            variables.append(var)
+        else:
             if var.name.startswith(model_scope):
                 variables.append(var)
     variables_not_loaded = [var.name for var in variables]
@@ -342,7 +346,9 @@ def vggnet(ckpt_dir, model_scope=None, load_moving_average=False, verbose=True):
     global_variables = tf.global_variables()
     variables = []
     for var in global_variables:
-        if var.name is not None:
+        if model_scope is None:
+            variables.append(var)
+        else:
             if var.name.startswith(model_scope):
                 variables.append(var)
     variables_not_loaded = [var.name for var in variables]
