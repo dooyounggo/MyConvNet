@@ -13,7 +13,7 @@ from contextlib import nullcontext
 
 class ConvNet(object):
     def __init__(self, input_shape, num_classes, loss_weights=None, session=None, model_scope=None,
-                 auxiliary_networks=None, next_elements=None, backbone_only=False, **kwargs):
+                 auxiliary_networks=None, next_elements=None, backbone_only=False, auto_build=True, **kwargs):
         """
         :param input_shape: list or tuple, network input size.
         :param num_classes: int, number of classes.
@@ -23,6 +23,7 @@ class ConvNet(object):
         :param auxiliary_networks: dict, other ConvNets related to the model.
         :param next_elements: dict, iterator.get_next elements for each device. If None, new elements are created.
         :param backbone_only: bool, whether to build backbone (feature extractor) only.
+        :param auto_build: bool, whether to call build() at init.
         :param kwargs: dict, (hyper)parameters.
         """
         self._block_list = []
@@ -57,6 +58,7 @@ class ConvNet(object):
         else:
             self._auxiliary_networks = dict(auxiliary_networks)
         self._backbone_only = backbone_only
+        self._parameters = kwargs
 
         self._dtype = tf.float16 if kwargs.get('half_precision', False) else tf.float32
         self._channel_first = kwargs.get('channel_first', False)
@@ -124,6 +126,11 @@ class ConvNet(object):
         self.dicts = []
         self._update_ops = []
 
+        if auto_build:
+            self.build()
+
+    def build(self):
+        kwargs = self._parameters
         with tf.variable_scope(self.model_scope) if self.model_scope is not None else nullcontext():
             with tf.device(self.param_device):
                 with tf.variable_scope('conditions'):
