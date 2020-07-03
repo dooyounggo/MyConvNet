@@ -470,12 +470,12 @@ class ConvNet(object):
 
                         with tf.name_scope('nn'):
                             self.d = self._build_model()
+                            tf.get_variable_scope().reuse_variables()
                         if not self.backbone_only:
                             if self.dtype is not tf.float32:
                                 with tf.name_scope('{}/cast/'.format(self.compute_device + '_' + str(i))):
                                     self.d['logits'] = tf.cast(self.d['logits'], dtype=tf.float32)
                                     self.d['pred'] = tf.cast(self.d['pred'], dtype=tf.float32)
-                            tf.get_variable_scope().reuse_variables()
 
                             for blk in self.block_list[::-1]:
                                 if f'block_{blk}' in self.d:
