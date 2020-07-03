@@ -13,14 +13,14 @@ from contextlib import nullcontext
 
 class ConvNet(object):
     def __init__(self, input_shape, num_classes, loss_weights=None, session=None, model_scope=None,
-                 auxiliary_networks=None, next_elements=None, backbone_only=False, auto_build=True, **kwargs):
+                 companion_networks=None, next_elements=None, backbone_only=False, auto_build=True, **kwargs):
         """
         :param input_shape: list or tuple, network input size.
         :param num_classes: int, number of classes.
         :param loss_weights: list or tuple, weighting factors for softmax losses.
         :param session: tf.Session, TensorFlow session. If None, a new session is created.
         :param model_scope: string, variable scope for the model. None for no scope.
-        :param auxiliary_networks: dict, other ConvNets related to the model.
+        :param companion_networks: dict, other ConvNets related to the model.
         :param next_elements: dict, iterator.get_next elements for each device. If None, new elements are created.
         :param backbone_only: bool, whether to build backbone (feature extractor) only.
         :param auto_build: bool, whether to call build() at init.
@@ -53,10 +53,10 @@ class ConvNet(object):
             self._next_elements = dict()
         else:
             self._next_elements = dict(next_elements)
-        if auxiliary_networks is None:
-            self._auxiliary_networks = dict()
+        if companion_networks is None:
+            self._companion_networks = dict()
         else:
-            self._auxiliary_networks = dict(auxiliary_networks)
+            self._companion_networks = dict(companion_networks)
         self._backbone_only = backbone_only
         self._parameters = kwargs
 
@@ -134,10 +134,17 @@ class ConvNet(object):
         with tf.variable_scope(self.model_scope) if self.model_scope is not None else nullcontext():
             with tf.device(self.param_device):
                 with tf.variable_scope('conditions'):
-                    self.is_train = tf.placeholder(tf.bool, shape=[], name='is_train')
-                    self.monte_carlo = tf.placeholder(tf.bool, shape=[], name='monte_carlo')
-                    self.augmentation = tf.placeholder(tf.bool, shape=[], name='augmentation')
-                    self.total_steps = tf.placeholder(tf.int64, shape=[], name='total_steps')
+                    if self.companion_networks:
+                        net = list(self.companion_networks.values())[0]
+                        self.is_train = net.is_train
+                        self.monte_carlo = net.monte_carlo
+                        self.augmentation = net.augmentation
+                        self.total_steps = net.total_steps
+                    else:
+                        self.is_train = tf.placeholder(tf.bool, shape=[], name='is_train')
+                        self.monte_carlo = tf.placeholder(tf.bool, shape=[], name='monte_carlo')
+                        self.augmentation = tf.placeholder(tf.bool, shape=[], name='augmentation')
+                        self.total_steps = tf.placeholder(tf.int64, shape=[], name='total_steps')
 
                 with tf.variable_scope('calc'):
                     self.global_step = tf.train.get_or_create_global_step()
@@ -283,8 +290,8 @@ class ConvNet(object):
         return self._model_scope
 
     @property
-    def auxiliary_networks(self):
-        return self._auxiliary_networks
+    def companion_networks(self):
+        return self._companion_networks
 
     @property
     def next_elements(self):
