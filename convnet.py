@@ -512,7 +512,7 @@ class ConvNet(object):
                 handle = tf.placeholder(tf.string, shape=[], name='handle')
                 self.handles.append(handle)  # Handles for feedable iterators of datasets
                 iterator = tf.data.Iterator.from_string_handle(handle, dtypes, output_shapes=output_shapes)
-                self.next_elements[device] = iterator.get_next()
+                self.next_elements[device] = list(iterator.get_next())
 
     def _build_loss(self, **kwargs):
         l1_factor = kwargs.get('l1_reg', 0e-8)
