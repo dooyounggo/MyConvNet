@@ -221,17 +221,19 @@ class Unprocessing(ConvNet):
                     self.edge_filters = tf.concat(filters, axis=-1)
 
     def _init_vgg_net(self, **kwargs):
+        class DummyNet(object):
+            def __init__(self, is_train, monte_carlo, augmentation, total_steps):
+                self.is_train = is_train
+                self.monte_carlo = monte_carlo
+                self.augmentation = augmentation
+                self.total_steps = total_steps
         loss_factor = kwargs.get('perceptual_loss_factor', 0.0)
         kwargs['blocks_to_train'] = []
         if loss_factor > 0.0:
-            dummy_net = object()
-            dummy_net.is_train = self.is_train
-            dummy_net.monte_carlo = self.monte_carlo
-            dummy_net.augmentation = self.augmentation
-            dummy_net.total_steps = self.total_steps
+            dummynet = DummyNet(self.is_train, self.monte_carlo, self.augmentation, self.total_steps)
             self.vggnet = VGG16(input_shape=self.input_size, num_classes=0, session=self.session, model_scope='vgg',
-                                companion_networks=dummy_net, next_elements=self.next_elements, backbone_only=True,
-                                auto_build=False, **kwargs)
+                                companion_networks={'DummyNet': dummynet}, next_elements=self.next_elements,
+                                backbone_only=True, auto_build=False, **kwargs)
         else:
             self.vggnet = None
 
