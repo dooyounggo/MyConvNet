@@ -20,7 +20,9 @@ class VGGNet(ConvNet):
             X_input = tf.cast(self.X, dtype=tf.float32)
         else:
             X_input = self.X
-        x = (X_input/self.scale_factor + self.image_mean)*255.0 - tf.constant(VGG_MEAN, dtype=tf.float32)
+        mean = tf.constant(VGG_MEAN, dtype=tf.float32)
+        mean = mean[None, :, None, None] if self.channel_first else mean[None, None, None, :]
+        x = (X_input/self.scale_factor + self.image_mean)*255.0 - mean
         if self.dtype is not tf.float32:
             x = tf.cast(self.X, dtype=self.dtype)
 
