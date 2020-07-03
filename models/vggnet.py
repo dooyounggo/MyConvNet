@@ -16,8 +16,13 @@ class VGGNet(ConvNet):
         d = dict()
 
         assert self.num_layers == 16 or self.num_layers == 19, 'Number of layers must be either 16 or 19.'
-        X_input = (self.X/self.scale_factor + self.image_mean)*255.0
-        x = X_input - tf.constant(VGG_MEAN, dtype=tf.float32)
+        if self.dtype is not tf.float32:
+            X_input = tf.cast(self.X, dtype=tf.float32)
+        else:
+            X_input = self.X
+        x = (X_input/self.scale_factor + self.image_mean)*255.0 - tf.constant(VGG_MEAN, dtype=tf.float32)
+        if self.dtype is not tf.float32:
+            x = tf.cast(self.X, dtype=self.dtype)
 
         self._curr_block = 0
         with tf.variable_scope(f'block_{self._curr_block}'):
