@@ -243,21 +243,17 @@ class Unprocessing(ConvNet):
             vggnet = self.vggnet
 
             vgg_features_gt = []
-            n = 0
             for i in range(self.device_offset, self.num_devices + self.device_offset):
                 device = '/{}:'.format(self.compute_device) + str(i)
-                vggnet.next_elements[device][0] = vgg_input_gt[n]
-                n += 1
+                vggnet.next_elements[device][0] = vgg_input_gt[device]
             vggnet.build()
             for n in range(self.num_devices):
                 vgg_features_gt.append(vggnet.dicts[n]['conv2_2'])
 
             vgg_features_pred = []
-            n = 0
             for i in range(self.device_offset, self.num_devices + self.device_offset):
                 device = '/{}:'.format(self.compute_device) + str(i)
-                vggnet.next_elements[device][0] = vgg_input_pred[n]
-                n += 1
+                vggnet.next_elements[device][0] = vgg_input_pred[device]
             vggnet.build()
             for n in range(self.num_devices):
                 vgg_features_pred.append(vggnet.dicts[n]['conv2_2'])
