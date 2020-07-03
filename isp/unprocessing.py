@@ -231,17 +231,20 @@ class Unprocessing(ConvNet):
         kwargs['blocks_to_train'] = []
         if loss_factor > 0.0:
             dummynet = DummyNet(self.is_train, self.monte_carlo, self.augmentation, self.total_steps)
-            self.vggnet = VGG16(input_shape=self.input_size, num_classes=0, session=self.session, model_scope='vgg',
-                                companion_networks={'DummyNet': dummynet}, next_elements=self.next_elements,
-                                backbone_only=True, auto_build=False, **kwargs)
+            self.vggnet_gt = VGG16(input_shape=self.input_size, num_classes=0, session=self.session,
+                                   model_scope='vgg_gt', companion_networks={'DummyNet': dummynet},
+                                   next_elements=self.next_elements, backbone_only=True, auto_build=False, **kwargs)
+            self.vggnet_pred = VGG16(input_shape=self.input_size, num_classes=0, session=self.session,
+                                     model_scope='vgg_pred', companion_networks={'DummyNet': dummynet},
+                                     next_elements=self.next_elements, backbone_only=True, auto_build=False, **kwargs)
         else:
-            self.vggnet = None
+            self.vggnet_gt = None
+            self.vggnet_pred = None
 
     def _build_perceptual_loss(self, vgg_input_gt, vgg_input_pred, **kwargs):
         loss_factor = kwargs.get('perceptual_loss_factor', 0.0)
         if loss_factor > 0.0:
-            vggnet = self.vggnet
-
+            vggnet = self.vggnet_gt
             vgg_features_gt = []
             for i in range(self.device_offset, self.num_devices + self.device_offset):
                 device = '/{}:'.format(self.compute_device) + str(i)
@@ -250,6 +253,7 @@ class Unprocessing(ConvNet):
             for n in range(self.num_devices):
                 vgg_features_gt.append(vggnet.dicts[n]['conv2_2'])
 
+            vggnet = self.vggnet_pred
             vgg_features_pred = []
             for i in range(self.device_offset, self.num_devices + self.device_offset):
                 device = '/{}:'.format(self.compute_device) + str(i)

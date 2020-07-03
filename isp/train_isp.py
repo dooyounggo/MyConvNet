@@ -69,7 +69,8 @@ if __name__ == '__main__':
     # Initialize
     model = ConvNet(Param.d['input_size'], train_set.num_classes, **Param.d)
     if Param.d.get('perceptual_loss_factor', 0.0) > 0.0:
-        init_from_checkpoint(Param.checkpoint_dir, model_scope='vgg')
+        init_from_checkpoint(Param.checkpoint_dir, model_scope='vgg_gt')
+        init_from_checkpoint(Param.checkpoint_dir, model_scope='vgg_pred')
     evaluator = Evaluator()
     optimizer = Optimizer(model, train_set, evaluator, val_set=val_set, **Param.d)
 
