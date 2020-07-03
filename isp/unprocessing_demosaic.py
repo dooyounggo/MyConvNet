@@ -18,6 +18,9 @@ class UnprocessingDemosaic(Unprocessing):
         self.denoising_losses = []
         self._make_filters()
         self._set_next_elements(dtypes, output_shapes)
+        self._init_vgg_net(**kwargs)
+        vgg_input_gt = dict()
+        vgg_input_pred = dict()
         with tf.variable_scope(tf.get_variable_scope()):
             for i in range(self.device_offset, self.num_devices + self.device_offset):
                 self._curr_device = i
@@ -47,6 +50,8 @@ class UnprocessingDemosaic(Unprocessing):
                         self.Y = self.process(image, metadata[2], metadata[3], metadata[0],
                                               simple=self.simple_unprocessing)
                         self.Y.set_shape([None] + list(self.input_size))
+                        vgg_input_gt[device] = self.Y
+
                         self.Y_mosaic = process.process(bayer_img, metadata[2], metadata[3], metadata[0],
                                                         simple=self.simple_unprocessing)
                         self.Y_mosaic.set_shape([None] + list(self.input_size))
@@ -91,8 +96,11 @@ class UnprocessingDemosaic(Unprocessing):
                         else:
                             self.denoised = None
                         self.preds.append(self.pred)
+                        vgg_input_pred[device] = self.pred
+
                         self.losses.append(self._build_loss(**kwargs))
 
+        self._build_perceptual_loss(vgg_input_gt, vgg_input_pred, **kwargs)
         self._make_debug_images()
         with tf.device(self.param_device):
             with tf.variable_scope('calc/'):

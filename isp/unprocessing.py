@@ -11,6 +11,7 @@ import cv2
 from convnet import ConvNet
 from isp import process, unprocess
 from subsets.subset_functions import to_int
+from models.vggnet import VGG16
 
 
 class Unprocessing(ConvNet):
@@ -21,6 +22,9 @@ class Unprocessing(ConvNet):
         self._init_unprocessing(**kwargs)
         self._make_filters()
         self._set_next_elements(dtypes, output_shapes)
+        self._init_vgg_net(**kwargs)
+        vgg_input_gt = dict()
+        vgg_input_pred = dict()
         with tf.variable_scope(tf.get_variable_scope()):
             for i in range(self.device_offset, self.num_devices + self.device_offset):
                 self._curr_device = i
@@ -49,6 +53,8 @@ class Unprocessing(ConvNet):
                         self.Y = process.process(bayer_img, metadata[2], metadata[3], metadata[0],
                                                  simple=self.simple_unprocessing)
                         self.Y.set_shape([None] + list(self.input_size))
+                        vgg_input_gt[device] = self.Y
+
                         noisy = process.process(noisy_img, metadata[2], metadata[3], metadata[0],
                                                 simple=self.simple_unprocessing)
                         noisy.set_shape([None] + list(self.input_size))
@@ -77,8 +83,11 @@ class Unprocessing(ConvNet):
                                                     simple=self.simple_unprocessing)
                         self.pred.set_shape([None] + list(self.input_size))
                         self.preds.append(self.pred)
+                        vgg_input_pred[device] = self.pred
+
                         self.losses.append(self._build_loss(**kwargs))
 
+        self._build_perceptual_loss(vgg_input_gt, vgg_input_pred, **kwargs)
         self._make_debug_images()
 
     def _build_loss(self, **kwargs):
@@ -158,6 +167,7 @@ class Unprocessing(ConvNet):
         self.l2_losses = []
         self.edge_l1_losses = []
         self.edge_l2_losses = []
+        self.perceptual_losses = []
 
         self.simple_unprocessing = kwargs.get('simple_unprocessing', False)
         self.add_unprocessing_noise = kwargs.get('add_unprocessing_noise', True)
@@ -210,6 +220,58 @@ class Unprocessing(ConvNet):
                         filters[i] = tf.tile(filters[i][..., tf.newaxis, tf.newaxis], [1, 1, 3, 1])
                     self.edge_filters = tf.concat(filters, axis=-1)
 
+    def _init_vgg_net(self, **kwargs):
+        loss_factor = kwargs.get('perceptual_loss_factor', 0.0)
+        if loss_factor > 0.0:
+            dummy_net = object()
+            dummy_net.is_train = self.is_train
+            dummy_net.monte_carlo = self.monte_carlo
+            dummy_net.augmentation = self.augmentation
+            dummy_net.total_steps = self.total_steps
+            self.vggnet = VGG16(input_shape=self.input_size, num_classes=0, session=self.session, model_scope='vgg',
+                                companion_networks=dummy_net, next_elements=self.next_elements, backbone_only=True,
+                                auto_build=False, **kwargs)
+        else:
+            self.vggnet = None
+
+    def _build_perceptual_loss(self, vgg_input_gt, vgg_input_pred, **kwargs):
+        loss_factor = kwargs.get('perceptual_loss_factor', 0.0)
+        if loss_factor > 0.0:
+            vggnet = self.vggnet
+
+            vgg_features_gt = []
+            n = 0
+            for i in range(self.device_offset, self.num_devices + self.device_offset):
+                device = '/{}:'.format(self.compute_device) + str(i)
+                vggnet.next_elements[device][0] = vgg_input_gt[n]
+                n += 1
+            vggnet.build()
+            for n in range(self.num_devices):
+                vgg_features_gt.append(vggnet.dicts[n]['conv2_2'])
+
+            vgg_features_pred = []
+            n = 0
+            for i in range(self.device_offset, self.num_devices + self.device_offset):
+                device = '/{}:'.format(self.compute_device) + str(i)
+                vggnet.next_elements[device][0] = vgg_input_pred[n]
+                n += 1
+            vggnet.build()
+            for n in range(self.num_devices):
+                vgg_features_pred.append(vggnet.dicts[n]['conv2_2'])
+
+            n = 0
+            for i in range(self.device_offset, self.num_devices + self.device_offset):
+                device = '/{}:'.format(self.compute_device) + str(i)
+                with tf.device(device):
+                    with tf.name_scope(self.compute_device + '_' + str(i)):
+                        with tf.variable_scope('perceptual_loss'):
+                            loss = loss_factor*tf.losses.mean_squared_error(vgg_features_gt[n], vgg_features_pred[n])
+                            self.losses[n] += loss
+                            self.perceptual_losses.append(loss)
+        else:
+            for n in range(self.num_devices):
+                self.perceptual_losses.append(0.0)
+
     def _make_debug_images(self):
         with tf.device(self.param_device):
             with tf.variable_scope('calc/'):
@@ -234,6 +296,7 @@ class Unprocessing(ConvNet):
                 self.debug_values.append(tf.reduce_mean(self.l2_losses, name='l2_loss'))
                 self.debug_values.append(tf.reduce_mean(self.edge_l1_losses, name='edge_l1_loss'))
                 self.debug_values.append(tf.reduce_mean(self.edge_l2_losses, name='edge_l2_loss'))
+                self.debug_values.append(tf.reduce_mean(self.perceptual_losses, name='perceptual_loss'))
 
     @abstractmethod
     def _build_model(self):

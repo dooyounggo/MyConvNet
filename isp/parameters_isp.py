@@ -12,7 +12,7 @@ from subsets.places365_standard import read_subset
 from models.upinet import UPINet as ConvNet
 from optimizers import AdamOptimizer as Optimizer
 from evaluators import PSNREvaluator as Evaluator
-from models.init_from_checkpoint import resnet_v1_50_101 as init_from_checkpoint
+from models.init_from_checkpoint import vggnet as init_from_checkpoint
 import utils
 
 
@@ -28,7 +28,7 @@ class Parameters(object):
 
     _save_dir = os.path.join(_root_dir, 'trained_models/UPINet_Places365')
     _transfer_dir = None
-    _checkpoint_dir = os.path.join(_root_dir, 'pretrained_models', 'resnet_v1_50', 'resnet_v1_50.ckpt')
+    _checkpoint_dir = os.path.join(_root_dir, 'pretrained_models', 'vgg_16', 'vgg_16.ckpt')
 
     d = dict()
     # FIXME: Image pre-processing hyperparameters
@@ -80,6 +80,7 @@ class Parameters(object):
     d['edge_loss_l1_factor'] = 0.0
     d['edge_loss_l2_factor'] = 0.0
     d['edge_loss_true_ratio'] = 0.0
+    d['perceptual_loss_factor'] = 0.0
     d['l1_reg'] = 0.0  # L1 regularization factor
     d['l2_reg'] = 0.0  # L2 regularization factor
 

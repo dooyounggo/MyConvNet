@@ -25,6 +25,7 @@ if __name__ == '__main__':
         image_mean = np.load(image_mean_file).astype(np.float32)    # load mean image
         Param.d['image_mean'] = image_mean
     Param.d['monte_carlo'] = False
+    Param.d['perceptual_loss_factor'] = 0.0
 
     # Initialize
     model = ConvNet(Param.d['input_size'], test_set.num_classes, loss_weights=None, **Param.d)
