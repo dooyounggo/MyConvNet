@@ -39,7 +39,11 @@ def resnet_v1_50_101(ckpt_dir, model_scope=None, load_moving_average=True, verbo
     var_to_shape_map = reader.get_variable_to_shape_map()
     var_names = [var for var in var_to_shape_map.keys()]
 
-    variables = tf.global_variables()
+    global_variables = tf.global_variables()
+    variables = []
+    for var in global_variables:
+        if var.name.startswith(model_scope):
+            variables.append(var)
     variables_not_loaded = [var.name for var in variables]
     assign_dict = dict()
     for var in variables:
@@ -185,7 +189,11 @@ def resnet_v2_50_101(ckpt_dir, model_scope=None, load_moving_average=True, verbo
     var_to_shape_map = reader.get_variable_to_shape_map()
     var_names = [var for var in var_to_shape_map.keys()]
 
-    variables = tf.global_variables()
+    global_variables = tf.global_variables()
+    variables = []
+    for var in global_variables:
+        if var.name.startswith(model_scope):
+            variables.append(var)
     variables_not_loaded = [var.name for var in variables]
     assign_dict = dict()
     for var in variables:
@@ -329,7 +337,11 @@ def vggnet(ckpt_dir, model_scope=None, load_moving_average=False, verbose=True):
     var_to_shape_map = reader.get_variable_to_shape_map()
     var_names = [var for var in var_to_shape_map.keys()]
 
-    variables = tf.global_variables()
+    global_variables = tf.global_variables()
+    variables = []
+    for var in global_variables:
+        if var.name.startswith(model_scope):
+            variables.append(var)
     variables_not_loaded = [var.name for var in variables]
     assign_dict = dict()
     for var in variables:
