@@ -465,14 +465,14 @@ class ConvNet(object):
                         if self.channel_first:
                             self.X = tf.transpose(self.X, perm=[0, 3, 1, 2])
                         if self.dtype is not tf.float32:
-                            with tf.name_scope('{}/cast/'.format(self.compute_device + str(i))):
+                            with tf.name_scope('{}/cast/'.format(self.compute_device + '_' + str(i))):
                                 self.X = tf.cast(self.X, dtype=self.dtype)
 
                         with tf.name_scope('nn'):
                             self.d = self._build_model()
                         if not self.backbone_only:
                             if self.dtype is not tf.float32:
-                                with tf.name_scope('{}/cast/'.format(self.compute_device + str(i))):
+                                with tf.name_scope('{}/cast/'.format(self.compute_device + '_' + str(i))):
                                     self.d['logits'] = tf.cast(self.d['logits'], dtype=tf.float32)
                                     self.d['pred'] = tf.cast(self.d['pred'], dtype=tf.float32)
                             tf.get_variable_scope().reuse_variables()

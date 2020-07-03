@@ -53,7 +53,7 @@ class GAN(ConvNet):
                         if self.channel_first:
                             self.X = tf.transpose(self.X, perm=[0, 3, 1, 2])
                         if self.dtype is not tf.float32:
-                            with tf.name_scope('{}/cast/'.format(self.compute_device + str(i))):
+                            with tf.name_scope('{}/cast/'.format(self.compute_device + '_' + str(i))):
                                 self.X = tf.cast(self.X, dtype=self.dtype)
                                 self.Y = tf.cast(self.Y, dtype=self.dtype)
 
@@ -64,7 +64,7 @@ class GAN(ConvNet):
                             tf.get_variable_scope().reuse_variables()
                             d_fake = self._build_model()
                         if self.dtype is not tf.float32:
-                            with tf.name_scope('{}/cast/'.format(self.compute_device + str(i))):
+                            with tf.name_scope('{}/cast/'.format(self.compute_device + '_' + str(i))):
                                 d_real['logits'] = tf.cast(d_real['logits'], dtype=tf.float32)
                                 d_fake['logits'] = tf.cast(d_fake['logits'], dtype=tf.float32)
                                 self.d['generate'] = tf.cast(self.d['generate'], dtype=tf.float32)
