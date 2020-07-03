@@ -60,9 +60,9 @@ class SegNet(ConvNet):
                                 self.X = tf.cast(self.X, dtype=self.dtype)
 
                         with tf.name_scope('nn'):
-                            self.backbone_only = True
+                            self._backbone_only = True
                             d_backbone = self._build_model()
-                            self.backbone_only = False
+                            self._backbone_only = False
                             self.d = self._build_model_seg(d_backbone)
                         if self.dtype is not tf.float32:
                             with tf.name_scope('{}/cast/'.format(self.compute_device + str(i))):

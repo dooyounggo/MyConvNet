@@ -13,7 +13,7 @@ from contextlib import nullcontext
 
 class ConvNet(object):
     def __init__(self, input_shape, num_classes, loss_weights=None, session=None, model_scope=None,
-                 auxiliary_networks=None, next_elements=None, **kwargs):
+                 auxiliary_networks=None, next_elements=None, backbone_only=False, **kwargs):
         """
         :param input_shape: list or tuple, network input size.
         :param num_classes: int, number of classes.
@@ -22,6 +22,7 @@ class ConvNet(object):
         :param model_scope: string, variable scope for the model. None for no scope.
         :param auxiliary_networks: dict, other ConvNets related to the model.
         :param next_elements: dict, iterator.get_next elements for each device. If None, new elements are created.
+        :param backbone_only: bool, whether to build backbone (feature extractor) only.
         :param kwargs: dict, (hyper)parameters.
         """
         self._block_list = []
@@ -55,6 +56,7 @@ class ConvNet(object):
             self._auxiliary_networks = dict()
         else:
             self._auxiliary_networks = dict(auxiliary_networks)
+        self._backbone_only = backbone_only
 
         self._dtype = tf.float16 if kwargs.get('half_precision', False) else tf.float32
         self._channel_first = kwargs.get('channel_first', False)
@@ -119,7 +121,6 @@ class ConvNet(object):
         self._nodes = 0
         self._layer_info = []
 
-        self.backbone_only = False
         self.dicts = []
         self._update_ops = []
 
@@ -175,7 +176,7 @@ class ConvNet(object):
             self._params = int(self._params)
             self._nodes = int(self._nodes)
 
-            if self.argmax_output:
+            if self.argmax_output and not self.backbone_only:
                 with tf.device(self.param_device):
                     with tf.variable_scope('calc/'):
                         valid_mask = tf.cast(self.valid_mask, dtype=tf.int32)
@@ -277,6 +278,10 @@ class ConvNet(object):
     @property
     def next_elements(self):
         return self._next_elements
+
+    @property
+    def backbone_only(self):
+        return self._backbone_only
 
     @property
     def dtype(self):
@@ -447,26 +452,29 @@ class ConvNet(object):
 
                         with tf.name_scope('nn'):
                             self.d = self._build_model()
-                        if self.dtype is not tf.float32:
-                            with tf.name_scope('{}/cast/'.format(self.compute_device + str(i))):
-                                self.d['logits'] = tf.cast(self.d['logits'], dtype=tf.float32)
-                                self.d['pred'] = tf.cast(self.d['pred'], dtype=tf.float32)
-                        tf.get_variable_scope().reuse_variables()
+                        if not self.backbone_only:
+                            if self.dtype is not tf.float32:
+                                with tf.name_scope('{}/cast/'.format(self.compute_device + str(i))):
+                                    self.d['logits'] = tf.cast(self.d['logits'], dtype=tf.float32)
+                                    self.d['pred'] = tf.cast(self.d['pred'], dtype=tf.float32)
+                            tf.get_variable_scope().reuse_variables()
 
-                        for blk in self.block_list[::-1]:
-                            if f'block_{blk}' in self.d:
-                                self.gcams.append(self.grad_cam(self.d['logits'],
-                                                                self.d[f'block_{blk}'],
-                                                                y=None))
-                                break
+                            for blk in self.block_list[::-1]:
+                                if f'block_{blk}' in self.d:
+                                    self.gcams.append(self.grad_cam(self.d['logits'],
+                                                                    self.d[f'block_{blk}'],
+                                                                    y=None))
+                                    break
+                            else:
+                                self.gcams.append(self.X)
+
+                            self.logits = self.d['logits']
+                            self.pred = self.d['pred']
+                            self.preds.append(self.pred)
+                            self.losses.append(self._build_loss(**kwargs))
                         else:
-                            self.gcams.append(self.X)
-
+                            self.losses.append(0.0)
                         self.dicts.append(self.d)
-                        self.logits = self.d['logits']
-                        self.pred = self.d['pred']
-                        self.preds.append(self.pred)
-                        self.losses.append(self._build_loss(**kwargs))
 
                         # self.bytes_in_use.append(tf_contrib.memory_stats.BytesInUse())
 
@@ -474,15 +482,15 @@ class ConvNet(object):
             with tf.variable_scope('calc/'):
                 self.X_all = tf.concat(self.Xs, axis=0, name='x') + self.image_mean
                 self.Y_all = tf.concat(self.Ys, axis=0, name='y_true')
-                self.pred = tf.concat(self.preds, axis=0, name='y_pred')
-                self.valid_mask = tf.concat(self.valid_masks, axis=0, name='valid_mask')
-                self.loss = tf.reduce_mean(self.losses, name='mean_loss')
-                self.gcam = tf.concat(self.gcams, axis=0, name='grad_cam')
-
                 self.input_images = tf.concat(self.X_in, axis=0, name='x_in')
                 self.input_labels = tf.concat(self.Y_in, axis=0, name='y_in')
-                self.debug_images.append(tf.clip_by_value(self.gcam/2 + self.X_all, 0, 1))
-                self.debug_images.append(tf.clip_by_value(self.gcam*self.X_all, 0, 1))
+                if not self.backbone_only:
+                    self.pred = tf.concat(self.preds, axis=0, name='y_pred')
+                    self.valid_mask = tf.concat(self.valid_masks, axis=0, name='valid_mask')
+                    self.loss = tf.reduce_mean(self.losses, name='mean_loss')
+                    self.gcam = tf.concat(self.gcams, axis=0, name='grad_cam')
+                    self.debug_images.append(tf.clip_by_value(self.gcam/2 + self.X_all, 0, 1))
+                    self.debug_images.append(tf.clip_by_value(self.gcam*self.X_all, 0, 1))
 
     def _set_next_elements(self, device, dtypes, output_shapes=None):
         if device in self.next_elements:
