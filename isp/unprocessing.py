@@ -222,6 +222,7 @@ class Unprocessing(ConvNet):
 
     def _init_vgg_net(self, **kwargs):
         loss_factor = kwargs.get('perceptual_loss_factor', 0.0)
+        kwargs['blocks_to_train'] = []
         if loss_factor > 0.0:
             dummy_net = object()
             dummy_net.is_train = self.is_train
