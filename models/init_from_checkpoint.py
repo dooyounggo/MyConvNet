@@ -3,13 +3,14 @@ Initialize your networks using public checkpoints.
 Define mapping rules to load variables in the checkpoints
 ResNet v1: https://github.com/tensorflow/models/tree/master/research/slim
 ResNet v2: https://github.com/tensorflow/models/tree/master/research/slim
+VGGNet: https://github.com/tensorflow/models/tree/master/research/slim
 """
 
 import tensorflow.compat.v1 as tf
 from tensorflow.python import pywrap_tensorflow
 
 
-def resnet_v1_50_101(ckpt_dir, load_moving_average=True, verbose=True):
+def resnet_v1_50_101(ckpt_dir, model_scope=None, load_moving_average=True, verbose=True):
     if ckpt_dir.split('_')[-1] == '50.ckpt':
         prefix = 'resnet_v1_50/'
     else:
@@ -21,7 +22,8 @@ def resnet_v1_50_101(ckpt_dir, load_moving_average=True, verbose=True):
 
     index_offsets = {}
 
-    key_match_dict = {'block': 'block',
+    block_prefix = 'block'
+    key_match_dict = {block_prefix: 'block',
                       'res': 'unit_',
                       'conv': 'bottleneck_v1/conv',
                       'bn': 'BatchNorm',
@@ -42,12 +44,13 @@ def resnet_v1_50_101(ckpt_dir, load_moving_average=True, verbose=True):
     assign_dict = dict()
     for var in variables:
         keys = var.name.rstrip(':0').split('/')
+        if model_scope is not None:
+            keys = keys[1:]
         if keys[-1] in key_match_dict:
             var_name_splitted = []
-            block_name = '_'.join(keys[0].split('_')[:-1])
-            block_num = keys[0].split('_')[-1]
-            if block_num in exception_blocks:  # FIXME
-                if block_num == '0':
+            block_name = keys[0].split('_')[-1]
+            if block_name in exception_blocks:  # FIXME
+                if block_name == '0':
                     part_name = keys[2]
                     if part_name == 'bn':
                         conv_num = keys[1].split('_')[-1]
@@ -56,10 +59,10 @@ def resnet_v1_50_101(ckpt_dir, load_moving_average=True, verbose=True):
                     else:
                         conv_num = keys[1].split('_')[-1]
                         var_name_splitted.append('conv' + str(int(conv_num) + start_idx[2]))
-                elif block_num == 'None':
+                elif block_name == 'None':
                     var_name_splitted.append('logits')
                 else:
-                    raise(ValueError, 'block_{} is not considered as an exception'.format(block_num))
+                    raise ValueError('block_{} is not considered as an exception'.format(block_name))
                 if keys[-1] == 'ExponentialMovingAverage':  # To load exponential moving averages
                     var_name_splitted.append(key_match_dict[keys[-2]])
                 var_name_splitted.append(key_match_dict[keys[-1]])
@@ -70,7 +73,7 @@ def resnet_v1_50_101(ckpt_dir, load_moving_average=True, verbose=True):
                 if conv_num in exception_convs:  # FIXME
                     if unit_name in key_match_dict:
                         if conv_num == 'skip':
-                            var_name_splitted.append(key_match_dict[block_name] + str(int(block_num) + start_idx[0]))
+                            var_name_splitted.append(key_match_dict[block_prefix] + str(int(block_name) + start_idx[0]))
                             var_name_splitted.append(key_match_dict[unit_name] + str(int(unit_num) + start_idx[1]))
                             var_name_splitted.append('bottleneck_v1/shortcut')
                             if keys[3] == 'bn':
@@ -153,7 +156,7 @@ def resnet_v1_50_101(ckpt_dir, load_moving_average=True, verbose=True):
     print('')
 
 
-def resnet_v2_50_101(ckpt_dir, load_moving_average=True, verbose=True):
+def resnet_v2_50_101(ckpt_dir, model_scope=None, load_moving_average=True, verbose=True):
     if ckpt_dir.split('_')[-1] == '50.ckpt':
         prefix = 'resnet_v2_50/'
     else:
@@ -165,7 +168,8 @@ def resnet_v2_50_101(ckpt_dir, load_moving_average=True, verbose=True):
 
     index_offsets = {'bn': -1}
 
-    key_match_dict = {'block': 'block',
+    block_prefix = 'block'
+    key_match_dict = {block_prefix: 'block',
                       'res': 'unit_',
                       'conv': 'bottleneck_v2/conv',
                       'bn': 'BatchNorm',
@@ -186,21 +190,22 @@ def resnet_v2_50_101(ckpt_dir, load_moving_average=True, verbose=True):
     assign_dict = dict()
     for var in variables:
         keys = var.name.rstrip(':0').split('/')
+        if model_scope is not None:
+            keys = keys[1:]
         if keys[-1] in key_match_dict:
             var_name_splitted = []
-            block_name = '_'.join(keys[0].split('_')[:-1])
-            block_num = keys[0].split('_')[-1]
-            if block_num in exception_blocks:  # FIXME
-                if block_num == '0':
+            block_name = keys[0].split('_')[-1]
+            if block_name in exception_blocks:  # FIXME
+                if block_name == '0':
                     conv_num = keys[1].split('_')[-1]
                     var_name_splitted.append('conv' + str(int(conv_num) + start_idx[2]))
-                elif block_num == 'None':
+                elif block_name == 'None':
                     if keys[2] == 'bn':
                         var_name_splitted.append('postnorm')
                     else:
                         var_name_splitted.append('logits')
                 else:
-                    raise(ValueError, 'block_{} is not considered as an exception'.format(block_num))
+                    raise ValueError('block_{} is not considered as an exception'.format(block_name))
                 if keys[-1] == 'ExponentialMovingAverage':  # To load exponential moving averages
                     var_name_splitted.append(key_match_dict[keys[-2]])
                 var_name_splitted.append(key_match_dict[keys[-1]])
@@ -212,14 +217,14 @@ def resnet_v2_50_101(ckpt_dir, load_moving_average=True, verbose=True):
                 if conv_num in exception_convs:  # FIXME
                     if unit_name in key_match_dict:
                         if conv_num == '0':
-                            var_name_splitted.append(key_match_dict[block_name] + str(int(block_num) + start_idx[0]))
+                            var_name_splitted.append(key_match_dict[block_prefix] + str(int(block_name) + start_idx[0]))
                             var_name_splitted.append(key_match_dict[unit_name] + str(int(unit_num) + start_idx[1]))
                             if 'bn' in keys:
                                 var_name_splitted.append('bottleneck_v2/preact')
                             else:
                                 var_name_splitted.append(key_match_dict[conv_name] + str(int(conv_num) + start_idx[2]))
                         elif conv_num == 'skip':
-                            var_name_splitted.append(key_match_dict[block_name] + str(int(block_num) + start_idx[0]))
+                            var_name_splitted.append(key_match_dict[block_prefix] + str(int(block_name) + start_idx[0]))
                             var_name_splitted.append(key_match_dict[unit_name] + str(int(unit_num) + start_idx[1]))
                             var_name_splitted.append('bottleneck_v2/shortcut')
                         else:
@@ -287,6 +292,77 @@ def resnet_v2_50_101(ckpt_dir, load_moving_average=True, verbose=True):
                             print('Init. {} <===== {}'.format(var.name, var_name))
                     elif verbose:
                         print('Init. {} <==/== {} (variable shapes do not match)'.format(var.name, var_name))
+
+    tf.train.init_from_checkpoint(ckpt_dir, assign_dict)
+
+    print('')
+    print('Variables have been initialized using the following checkpoint:')
+    print(ckpt_dir)
+    print('The following variables in the checkpoint were not used:')
+    print(var_names)
+    print('The following variables do not exist in the checkpoint, so they were initialized randomly:')
+    print(variables_not_loaded)
+    print('')
+
+
+def vggnet(ckpt_dir, model_scope=None, load_moving_average=False, verbose=True):
+    if load_moving_average:
+        print('No moving average exists for VGGNet.')
+
+    if ckpt_dir.split('_')[-1] == '16.ckpt':
+        prefix = 'vgg_16/'
+    else:
+        prefix = 'vgg_19/'
+    start_idx = [1, 1]   # Starting indices for any blocks and convolutions
+    exception_blocks = ['None']
+
+    block_prefix = 'block'
+    key_match_dict = {block_prefix: 'conv',
+                      'conv': 'conv',
+                      'fc_0': 'fc6',
+                      'fc_1': 'fc7',
+                      'fc_2': 'fc8',
+                      'weights': 'weights',
+                      'biases': 'biases'}
+
+    reader = pywrap_tensorflow.NewCheckpointReader(ckpt_dir)
+    var_to_shape_map = reader.get_variable_to_shape_map()
+    var_names = [var for var in var_to_shape_map.keys()]
+
+    variables = tf.global_variables()
+    variables_not_loaded = [var.name for var in variables]
+    assign_dict = dict()
+    for var in variables:
+        keys = var.name.rstrip(':0').rstrip('/ExponentialMovingAverage').split('/')
+        if model_scope is not None:
+            keys = keys[1:]
+        if keys[-1] in key_match_dict:
+            var_name_splitted = []
+            block_name = keys[0].split('_')[-1]
+            if block_name in exception_blocks:  # FIXME
+                if block_name == 'None':
+                    var_name_splitted.append(key_match_dict[keys[-2]])
+                else:
+                    raise ValueError('block_{} is not considered as an exception'.format(block_name))
+            else:
+                block_num = str(int(block_name) + start_idx[0])
+                var_name_splitted.append(key_match_dict[block_prefix] + block_num)
+                conv_name = keys[-2].split('_')[0]
+                conv_num = str(int(keys[-2].split('_')[-1]) + start_idx[1])
+                var_name_splitted.append(key_match_dict[conv_name] + block_num + '_' + conv_num)
+            var_name_splitted.append(key_match_dict[keys[-1]])
+
+            var_name = prefix + '/'.join(var_name_splitted)
+            if var_name in var_to_shape_map:
+                if var.get_shape() == var_to_shape_map[var_name]:
+                    assign_dict[var_name] = var
+                    if var_name in var_names:
+                        var_names.remove(var_name)
+                    variables_not_loaded.remove(var.name)
+                    if verbose:
+                        print('Init. {} <===== {}'.format(var.name, var_name))
+                elif verbose:
+                    print('Init. {} <==/== {} (variable shapes do not match)'.format(var.name, var_name))
 
     tf.train.init_from_checkpoint(ckpt_dir, assign_dict)
 
