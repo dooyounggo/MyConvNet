@@ -271,6 +271,7 @@ class Unprocessing(ConvNet):
                             loss = loss_factor*tf.losses.mean_squared_error(vgg_features_gt[n], vgg_features_pred[n])
                             self.losses[n] += loss
                             self.perceptual_losses.append(loss)
+                            n += 1
         else:
             for n in range(self.num_devices):
                 self.perceptual_losses.append(0.0)
