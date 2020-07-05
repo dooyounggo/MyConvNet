@@ -230,7 +230,7 @@ class Unprocessing(ConvNet):
         loss_factor = kwargs.get('perceptual_loss_factor', 0.0)
         kwargs['blocks_to_train'] = []
         if loss_factor > 0.0:
-            dummynet = DummyNet(self.is_train, self.monte_carlo, self.augmentation, self.total_steps)
+            dummynet = DummyNet(False, False, False, self.total_steps)
             self.vggnet_gt = VGG16(input_shape=self.input_size, num_classes=0, session=self.session,
                                    model_scope='vgg_gt', companion_networks={'DummyNet': dummynet},
                                    next_elements=self.next_elements, backbone_only=True, auto_build=False, **kwargs)
