@@ -448,16 +448,16 @@ class ConvNet(object):
 
                         self.X = self.zero_pad(self.X, pad_value=self.pad_value)
                         self.X = tf.math.subtract(self.X, self.image_mean, name='zero_center')
-                        self.X = tf.cond(self.augmentation,
-                                         lambda: self.augment_images(self.X, **kwargs),
-                                         lambda: self.center_crop(self.X),
-                                         name='augmentation')
+                        self.X = self.cond(self.augmentation,
+                                           lambda: self.augment_images(self.X, **kwargs),
+                                           lambda: self.center_crop(self.X),
+                                           name='augmentation')
                         if kwargs.get('cutmix', False):
                             self._cutmix_scheduling = kwargs.get('cutmix_scheduling', False)
-                            self.X, self.Y = tf.cond(self.is_train,
-                                                     lambda: self.cutmix(self.X, self.Y),
-                                                     lambda: (self.X, self.Y),
-                                                     name='cutmix')
+                            self.X, self.Y = self.cond(self.is_train,
+                                                       lambda: self.cutmix(self.X, self.Y),
+                                                       lambda: (self.X, self.Y),
+                                                       name='cutmix')
                         self.Xs.append(self.X)
                         self.Ys.append(self.Y)
 
