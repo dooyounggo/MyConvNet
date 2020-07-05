@@ -24,7 +24,7 @@ class VGGNet(ConvNet):
         mean = mean[None, :, None, None] if self.channel_first else mean[None, None, None, :]
         x = (X_input/self.scale_factor + self.image_mean)*255.0 - mean
         if self.dtype is not tf.float32:
-            x = tf.cast(self.X, dtype=self.dtype)
+            x = tf.cast(x, dtype=self.dtype)
 
         self._curr_block = 0
         with tf.variable_scope(f'block_{self._curr_block}'):
