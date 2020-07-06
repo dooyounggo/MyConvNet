@@ -57,7 +57,7 @@ class GAN(ConvNet):
                                 self.X = tf.cast(self.X, dtype=self.dtype)
                                 self.Y = tf.cast(self.Y, dtype=self.dtype)
 
-                        with tf.name_scope('nn'):
+                        with tf.name_scope('nn') if self.model_scope is None else tf.name_scope(self.model_scope):
                             d_real = self._build_model()
                             self.d = self._build_model_g()
                             self.X = self.d['generate']

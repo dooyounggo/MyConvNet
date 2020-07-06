@@ -59,7 +59,7 @@ class SegNet(ConvNet):
                             with tf.name_scope('{}/cast/'.format(self.compute_device + '_' + str(i))):
                                 self.X = tf.cast(self.X, dtype=self.dtype)
 
-                        with tf.name_scope('nn'):
+                        with tf.name_scope('nn') if self.model_scope is None else tf.name_scope(self.model_scope):
                             self._backbone_only = True
                             d_backbone = self._build_model()
                             self._backbone_only = False

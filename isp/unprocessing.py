@@ -69,7 +69,7 @@ class Unprocessing(ConvNet):
                             with tf.name_scope('{}/cast/'.format(self.compute_device + '_' + str(i))):
                                 self.X = tf.cast(self.X, dtype=self.dtype)
 
-                        with tf.name_scope('nn'):
+                        with tf.name_scope('nn') if self.model_scope is None else tf.name_scope(self.model_scope):
                             self.d = self._build_model()
                         if self.dtype is not tf.float32:
                             with tf.name_scope('{}/cast/'.format(self.compute_device + '_' + str(i))):

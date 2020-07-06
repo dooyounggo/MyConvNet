@@ -71,7 +71,7 @@ class UnprocessingDemosaic(Unprocessing):
 
                         self._shot_noise_tensor = metadata[4]
                         self._read_noise_tensor = metadata[5]
-                        with tf.name_scope('nn'):
+                        with tf.name_scope('nn') if self.model_scope is None else tf.name_scope(self.model_scope):
                             self.d = self._build_model()
                         if self.dtype is not tf.float32:
                             with tf.name_scope('{}/cast/'.format(self.compute_device + '_' + str(i))):
