@@ -125,6 +125,7 @@ class ConvNet(object):
 
         self.dicts = []
         self._update_ops = []
+        self._init_ops = []
 
         if auto_build:
             self.build()
@@ -403,6 +404,10 @@ class ConvNet(object):
     @property
     def update_ops(self):
         return self._update_ops
+
+    @property
+    def init_ops(self):
+        return self._init_ops
 
     def close(self):
         self.session.close()

@@ -392,7 +392,7 @@ class Optimizer(object):
         #     self.val_set.initialize(self.model.session)  # Initialize validation iterator
         with tf.variable_scope('calc/'):
             step_init_op = self.model.global_step.assign(start_step, name='init_global_step')
-        self.model.session.run(step_init_op)
+        self.model.session.run([step_init_op] + self.model.init_ops)
         tf.get_default_graph().finalize()
 
         # self._test_drive(save_dir=save_dir)  # Run test code
