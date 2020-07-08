@@ -2175,7 +2175,7 @@ class ConvNet(object):
 
     # Experimental group-batch normalization
     def grouped_batch_norm(self, x, num_channels_per_group=8, scale=True, shift=True, zero_scale_init=False,
-                         epsilon=1e-3, scope='gbn'):
+                           epsilon=1e-3, scope='gbn'):
         if isinstance(self.update_batch_norm, bool):
             update = self.update_batch_norm
         else:
