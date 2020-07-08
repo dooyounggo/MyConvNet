@@ -20,6 +20,8 @@ class EfficientNetLite(ConvNet):
                                                                mode='fan_out',
                                                                distribution='uniform')
 
+        self.norm_type = kwargs.get('norm_type', 'batch')
+
         self.striding_kernel_offset = kwargs.get('striding_kernel_offset', 0)
         self.striding_kernel_size = kwargs.get('striding_kernel_size', None)
 
@@ -60,7 +62,7 @@ class EfficientNetLite(ConvNet):
                 x = self.conv_layer(X_input, k, strides[0], channels[0], padding='SAME', biased=False,
                                     weight_initializer=self.conv_initializer, verbose=True)
                 d['block_0' + '/conv_0'] = x
-                x = self.batch_norm(x, shift=True, scale=True, scope='norm')
+                x = self.normalization(x, shift=True, scale=True, scope='norm', norm_type=self.norm_type)
                 d['block_0' + '/conv_0' + '/norm'] = x
                 x = self.relu6(x, name='relu6')
                 d['block_0' + '/conv_0' + '/relu6'] = x
@@ -91,7 +93,7 @@ class EfficientNetLite(ConvNet):
                 x = self.conv_layer(x, 1, 1, self.channels[-1], padding='SAME', biased=False, depthwise=False,
                                     weight_initializer=self.conv_initializer, verbose=True)
                 d['logits' + '/conv_0'] = x
-                x = self.batch_norm(x, shift=True, scale=True, scope='norm')
+                x = self.normalization(x, shift=True, scale=True, scope='norm', norm_type=self.norm_type)
                 d['logits' + '/conv_0' + '/norm'] = x
                 x = self.relu6(x, name='relu6')
                 d['logits' + '/conv_0' + '/relu6'] = x
@@ -139,7 +141,7 @@ class EfficientNetLite(ConvNet):
                     x = self.conv_layer(x, 1, 1, in_channels*multiplier, padding='SAME', biased=False, depthwise=False,
                                         weight_initializer=self.conv_initializer, verbose=True)
                     d[name + '/conv_0'] = x
-                    x = self.batch_norm(x, shift=True, scale=True, scope='norm')
+                    x = self.normalization(x, shift=True, scale=True, scope='norm', norm_type=self.norm_type)
                     d[name + '/conv_0' + '/norm'] = x
                     x = self.relu6(x, name='relu6')
                     d[name + '/conv_0' + '/relu6'] = x
@@ -149,7 +151,7 @@ class EfficientNetLite(ConvNet):
                                     padding='SAME', biased=False, depthwise=True,
                                     weight_initializer=self.conv_initializer, verbose=True)
                 d[name + '/conv_1'] = x
-                x = self.batch_norm(x, shift=True, scale=True, scope='norm')
+                x = self.normalization(x, shift=True, scale=True, scope='norm', norm_type=self.norm_type)
                 d[name + '/conv_1' + '/norm'] = x
                 x = self.relu6(x, name='relu6')
                 d[name + '/conv_1' + '/relu6'] = x
@@ -158,7 +160,8 @@ class EfficientNetLite(ConvNet):
                 x = self.conv_layer(x, 1, 1, out_channels, padding='SAME', biased=False, depthwise=False,
                                     weight_initializer=self.conv_initializer, verbose=True)
                 d[name + '/conv_2'] = x
-                x = self.batch_norm(x, shift=True, scale=True, zero_scale_init=skip is not None, scope='norm')
+                x = self.normalization(x, shift=True, scale=True, zero_scale_init=skip is not None, scope='norm',
+                                       norm_type=self.norm_type)
                 d[name + '/conv_2' + '/norm'] = x
 
             if skip is not None:

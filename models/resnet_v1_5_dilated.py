@@ -11,6 +11,7 @@ class ResNetDilated(ConvNet):  # Dilated ResNet-50
         self.dilations = [None, 1, 1, 1, 2]
         self.multi_grid = [1, 2, 4]
 
+        self.norm_type = kwargs.get('norm_type', 'batch')
         self.erase_relu = kwargs.get('erase_relu', False)
 
         self.initial_drop_rate = kwargs.get('initial_drop_rate', 0.0)
@@ -40,7 +41,7 @@ class ResNetDilated(ConvNet):  # Dilated ResNet-50
                 x = self.conv_layer(X_input, kernels[0], strides[0], channels[0], padding='SAME', biased=False)
                 print('block_0' + '/conv_0.shape', x.get_shape().as_list())
                 d['block_0' + '/conv_0'] = x
-                x = self.batch_norm(x, shift=True, scale=True, scope='bn')
+                x = self.normalization(x, shift=True, scale=True, scope='bn', norm_type=self.norm_type)
                 d['block_0' + '/conv_0' + '/bn'] = x
                 x = self.relu(x, name='relu')
                 d['block_0' + '/conv_0' + '/relu'] = x
@@ -98,14 +99,14 @@ class ResNetDilated(ConvNet):  # Dilated ResNet-50
             else:
                 with tf.variable_scope('conv_skip'):
                     skip = self.conv_layer(x, 1, stride, out_channels, padding='SAME', biased=False)
-                    skip = self.batch_norm(skip, shift=True, scale=True, scope='bn')
+                    skip = self.normalization(skip, shift=True, scale=True, scope='bn', norm_type=self.norm_type)
             d[name + '/branch'] = skip
 
             with tf.variable_scope('conv_0'):
                 x = self.conv_layer(x, 1, 1, out_channels//4, padding='SAME', biased=False)
                 print(name + '/conv_0.shape', x.get_shape().as_list())
                 d[name + '/conv_0'] = x
-                x = self.batch_norm(x, shift=True, scale=True, scope='bn')
+                x = self.normalization(x, shift=True, scale=True, scope='bn', norm_type=self.norm_type)
                 d[name + '/conv_0' + '/bn'] = x
                 x = self.relu(x, name='relu')
                 d[name + '/conv_0' + '/relu'] = x
@@ -114,7 +115,7 @@ class ResNetDilated(ConvNet):  # Dilated ResNet-50
                 x = self.conv_layer(x, kernel, stride, out_channels//4, padding='SAME', biased=False, dilation=dilation)
                 print(name + '/conv_1.shape', x.get_shape().as_list())
                 d[name + '/conv_1'] = x
-                x = self.batch_norm(x, shift=True, scale=True, scope='bn')
+                x = self.normalization(x, shift=True, scale=True, scope='bn', norm_type=self.norm_type)
                 d[name + '/conv_1' + '/bn'] = x
                 x = self.relu(x, name='relu')
                 d[name + '/conv_1' + '/relu'] = x
@@ -123,7 +124,8 @@ class ResNetDilated(ConvNet):  # Dilated ResNet-50
                 x = self.conv_layer(x, 1, 1, out_channels, padding='SAME', biased=False)
                 print(name + '/conv_2.shape', x.get_shape().as_list())
                 d[name + '/conv_2'] = x
-                x = self.batch_norm(x, shift=True, scale=True, scope='bn')
+                x = self.normalization(x, shift=True, scale=True, scope='bn', norm_type=self.norm_type,
+                                       zero_scale_init=True)
                 d[name + '/conv_2' + '/bn'] = x
 
             x = self.stochastic_depth(x, skip, drop_rate=drop_rate)
