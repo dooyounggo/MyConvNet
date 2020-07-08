@@ -199,6 +199,7 @@ def plot_class_results(images, y_true, y_pred=None, fault=None, num_rows=3, num_
 
                 if i % 200 == 0:
                     print('Saving result images... {:5}/{}'.format(i, num_images))
+        print('Done.')
 
     # plt.show()
 
@@ -465,6 +466,7 @@ def plot_seg_results(images, y_true, y_pred=None,
 
                 if i % 200 == 0:
                     print('Saving result images... {:5}/{}'.format(i, num_images))
+        print('Done.')
 
 
 def seg_labels_to_images(y, num_classes, valid=None):

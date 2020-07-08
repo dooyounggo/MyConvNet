@@ -85,7 +85,9 @@ class DataSet(object):
 
         self._cpu_offset = kwargs.get('cpu_offset', 0)
         self._gpu_offset = kwargs.get('gpu_offset', 0)
-        num_gpus = kwargs.get('num_gpus', 1)
+        num_gpus = kwargs.get('num_gpus', None)
+        if num_gpus is None:
+            num_gpus = 1 if tf.test.is_gpu_available(cuda_only=True) else 0
         if num_gpus == 0:  # No GPU available
             self._num_shards = 1
             self._compute_device = 'cpu'
@@ -96,7 +98,7 @@ class DataSet(object):
             dev_offset = 0
         self._device_offset = dev_offset
 
-        self._batch_size = kwargs.get('batch_size', 32)
+        self._batch_size = kwargs.get('batch_size', 16)
 
         self._parameters = kwargs
 

@@ -66,19 +66,21 @@ class ConvNet(object):
 
         self._cpu_offset = kwargs.get('cpu_offset', 0)
         self._gpu_offset = kwargs.get('gpu_offset', 0)
-        num_devices = kwargs.get('num_gpus', 1)
-        if num_devices == 0:  # No GPU available
+        num_gpus = kwargs.get('num_gpus', None)
+        if num_gpus is None:
+            num_gpus = 1 if tf.test.is_gpu_available(cuda_only=True) else 0
+        if num_gpus == 0:  # No GPU available
             self._num_devices = 1
             self._compute_device = 'cpu'
             self._device_offset = self.cpu_offset
         else:
-            self._num_devices = num_devices
+            self._num_devices = num_gpus
             self._compute_device = 'gpu'
             self._device_offset = 0
 
         param_device = kwargs.get('param_device', None)
         if param_device is None:
-            dev = '/gpu:' if num_devices == 1 else '/cpu:'
+            dev = '/gpu:' if num_gpus == 1 else '/cpu:'
             self._param_device = dev + str(self.device_offset)
         else:
             if 'gpu' in param_device.lower():
@@ -205,7 +207,7 @@ class ConvNet(object):
                 self._block_list.remove(blk)
         self._set_num_blocks(len(self.block_list))
 
-        print('\nNumber of computing devices : {}'.format(self.num_devices))
+        print('\nNumber of computing devices : {} {}(s)'.format(self.num_devices, self.compute_device))
         print('Total number of variable blocks : {} {}'.format(self.num_blocks, self.block_list))
         print('\n# FLOPs : {:-15,}\n# Params: {:-15,}\n# Nodes : {:-15,}\n'.format(self.flops, self.params, self.nodes))
 

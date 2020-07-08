@@ -35,12 +35,13 @@ def init_params(d, parser=None):
                 raise ValueError(f'Argument names must start with "--" ({arg}).')
     print()
 
+    gpu_offset = d.get('gpu_offset', 0)
+    num_gpus = d.get('num_gpus', 1)
     os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
     os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(str(num) for num
-                                                  in range(d['gpu_offset'],
-                                                           d['num_gpus'] + d['gpu_offset']))
+                                                  in range(gpu_offset, num_gpus + gpu_offset))
     os.environ['TF_GPU_THREAD_MODE'] = 'gpu_private'
-    os.environ['TF_GPU_THREAD_COUNT'] = str(d['num_gpus'])
+    os.environ['TF_GPU_THREAD_COUNT'] = str(num_gpus)
     os.environ['TF_USE_CUDNN_BATCHNORM_SPATIAL_PERSISTENT'] = '1'
     os.environ['TF_ENABLE_WINOGRAD_NONFUSED'] = '1'
     os.environ['TF_SYNC_ON_FINISH'] = '0'
