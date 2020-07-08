@@ -24,9 +24,9 @@ def init_params(d, parser=None):
             d[arg_name] = arg
             is_arg = False
             if is_string:
-                print(f'"{arg_name}"', '=', f'"{arg}"')
+                print(f'"{arg_name}":', f'"{arg}"')
             else:
-                print(f'"{arg_name}"', '=', arg)
+                print(f'"{arg_name}":', arg)
         else:
             if arg.startswith('--'):
                 arg_name = arg.lstrip('-')
