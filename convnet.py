@@ -2250,15 +2250,6 @@ class ConvNet(object):
                 if not tf.get_variable_scope().reuse:
                     self.add_to_collection('block_{}/ema_variables'.format(self._curr_block), sigma_ema)
 
-                if not tf.get_variable_scope().reuse:
-                    with tf.variable_scope('initialize'):
-                        for stat in [mu, mu_ema, sigma, sigma_ema]:
-                            stat_grouped = tf.reshape(stat, shape=[num_groups, num_channels_per_group])
-                            stat_avged = tf.reduce_mean(stat_grouped, axis=-1, keepdims=True)
-                            stat_avged = tf.tile(stat_avged, multiples=[1, num_channels_per_group])
-                            stat_avged = tf.reshape(stat_avged, shape=[in_channels])
-                            self.init_ops.append(stat.assign(stat_avged))
-
                 if scale:
                     scale_initializer = tf.zeros_initializer() if zero_scale_init else tf.ones_initializer()
                     gamma = tf.get_variable('gamma', in_channels, dtype=tf.float32,
@@ -2297,6 +2288,28 @@ class ConvNet(object):
                 else:
                     beta = tf.zeros(in_channels, dtype=tf.float32, name='beta')
                     beta_ema = tf.zeros(in_channels, dtype=tf.float32, name='beta')
+
+                if not tf.get_variable_scope().reuse:
+                    with tf.variable_scope('initialize'):
+                        # Average batch statistics
+                        stats = [mu, mu_ema, sigma, sigma_ema]
+                        stats_avged = []
+                        for stat in stats:
+                            stat_grouped = tf.reshape(stat, shape=[num_groups, num_channels_per_group])
+                            stat_avged = tf.reduce_mean(stat_grouped, axis=-1, keepdims=True)
+                            stat_avged = tf.tile(stat_avged, multiples=[1, num_channels_per_group])
+                            stat_avged = tf.reshape(stat_avged, shape=[in_channels])
+                            stats_avged.append(stat_avged)
+                            self.init_ops.append(stat.assign(stat_avged))
+
+                        # Update gamma and beta so that initial values are preserved
+                        mu_avg, mu_ema_avg, sigma_avg, sigma_ema_avg = stats_avged
+                        gamma_avg = tf.math.sqrt((sigma_avg + epsilon)/(sigma + epsilon))*gamma
+                        gamma_ema_avg = tf.math.sqrt((sigma_ema_avg + epsilon)/(sigma_ema + epsilon))*gamma_ema
+                        beta_avg = gamma/tf.math.sqrt(sigma + epsilon)*(mu_avg - mu) + beta
+                        beta_ema_avg = gamma_ema/tf.math.sqrt(sigma_ema + epsilon)*(mu_ema_avg - mu_ema) + beta_ema
+                        self.init_ops.extend([gamma.assign(gamma_avg), gamma_ema.assign(gamma_ema_avg),
+                                              beta.assign(beta_avg), beta_ema.assign(beta_ema_avg)])
 
                 if self._curr_device == self.device_offset:
                     self._flops += h*w*in_channels
