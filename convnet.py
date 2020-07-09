@@ -2304,63 +2304,64 @@ class ConvNet(object):
                 moving_mean, moving_var = self.cond(self.is_train,
                                                     lambda: (mu, sigma),
                                                     lambda: (mu_ema, sigma_ema))
-                beta = self.cond(self.is_train, lambda: beta, lambda: beta_ema)
-                gamma = self.cond(self.is_train, lambda: gamma, lambda: gamma_ema)
-                beta = tf.reshape(beta, var_shape)
-                gamma = tf.reshape(gamma, var_shape)
 
-                if self.dtype is not tf.float32:
-                    x = tf.cast(x, dtype=tf.float32)
-                if update:
-                    def norm_fn(x_fn, batch_mean_fn, batch_var_fn, is_training=True):
-                        if is_training:
-                            x_fn = tf.reshape(x_fn, shape=x_shape)
-                            mean, var = tf.nn.moments(x_fn, axes=axis, keepdims=True)
-                            x_fn = (x_fn - mean)/tf.math.sqrt(var + epsilon)
-                            x_fn = tf.reshape(x_fn, shape=[batch_size] + in_shape[1:])
+            beta = self.cond(self.is_train, lambda: beta, lambda: beta_ema)
+            gamma = self.cond(self.is_train, lambda: gamma, lambda: gamma_ema)
+            beta = tf.reshape(beta, var_shape)
+            gamma = tf.reshape(gamma, var_shape)
 
-                            mean = tf.tile(tf.reshape(mean, shape=[num_groups, 1]),
-                                           multiples=[1, num_channels_per_group])
-                            var = tf.tile(tf.reshape(var, shape=[num_groups, 1]),
-                                          multiples=[1, num_channels_per_group])
-                            batch_mean_fn = tf.reshape(mean, shape=[in_channels])
-                            batch_var_fn = tf.reshape(var, shape=[in_channels])
-                        else:
-                            mean = tf.reshape(batch_mean_fn, shape=var_shape)
-                            var = tf.reshape(batch_var_fn, shape=var_shape)
-                            x_fn = (x_fn - mean)/tf.math.sqrt(var + epsilon)
-                        return x_fn, batch_mean_fn, batch_var_fn
+            if self.dtype is not tf.float32:
+                x = tf.cast(x, dtype=tf.float32)
+            if update:
+                def norm_fn(x_fn, batch_mean_fn, batch_var_fn, is_training=True):
+                    if is_training:
+                        x_fn = tf.reshape(x_fn, shape=x_shape)
+                        mean, var = tf.nn.moments(x_fn, axes=axis, keepdims=True)
+                        x_fn = (x_fn - mean)/tf.math.sqrt(var + epsilon)
+                        x_fn = tf.reshape(x_fn, shape=[batch_size] + in_shape[1:])
 
-                    x, batch_mean, batch_var = tf.cond(self.is_train,
-                                                       true_fn=lambda: norm_fn(x, None, None,
-                                                                               is_training=True),
-                                                       false_fn=lambda: norm_fn(x, moving_mean, moving_var,
-                                                                                is_training=False))
-                    update_rate = 1.0 - momentum
-                    if self._curr_device == self.device_offset:
-                        update_mu = momentum*mu + update_rate*batch_mean
-                        update_sigma = momentum*sigma + update_rate*batch_var
-                    else:  # Successive variable updates
-                        dep_ops = self.get_collection('dev_{}/update_ops'.format(self._curr_device - 1))
-                        updated_mu, updated_sigma = dep_ops[self._curr_dependent_op:self._curr_dependent_op + 2]
-                        update_mu = momentum*updated_mu + update_rate*batch_mean
-                        update_sigma = momentum*updated_sigma + update_rate*batch_var
-                    self.add_to_collection('dev_{}/update_ops'.format(self._curr_device), update_mu)
-                    self.add_to_collection('dev_{}/update_ops'.format(self._curr_device), update_sigma)
-                    self._curr_dependent_op += 2
-                    if self._curr_device == self.num_devices + self.device_offset - 1:
-                        update_mu = mu.assign(update_mu)
-                        update_sigma = sigma.assign(update_sigma)
-                        self.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_mu)
-                        self.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_sigma)
-                else:
-                    moving_mean = tf.reshape(moving_mean, shape=var_shape)
-                    moving_var = tf.reshape(moving_var, shape=var_shape)
-                    x = (x - moving_mean)/tf.math.sqrt(moving_var + epsilon)
-                x = gamma*x + beta
-                if self.dtype is not tf.float32:
-                    x = tf.cast(x, dtype=self.dtype)
-            return x
+                        mean = tf.tile(tf.reshape(mean, shape=[num_groups, 1]),
+                                       multiples=[1, num_channels_per_group])
+                        var = tf.tile(tf.reshape(var, shape=[num_groups, 1]),
+                                      multiples=[1, num_channels_per_group])
+                        batch_mean_fn = tf.reshape(mean, shape=[in_channels])
+                        batch_var_fn = tf.reshape(var, shape=[in_channels])
+                    else:
+                        mean = tf.reshape(batch_mean_fn, shape=var_shape)
+                        var = tf.reshape(batch_var_fn, shape=var_shape)
+                        x_fn = (x_fn - mean)/tf.math.sqrt(var + epsilon)
+                    return x_fn, batch_mean_fn, batch_var_fn
+
+                x, batch_mean, batch_var = tf.cond(self.is_train,
+                                                   true_fn=lambda: norm_fn(x, None, None,
+                                                                           is_training=True),
+                                                   false_fn=lambda: norm_fn(x, moving_mean, moving_var,
+                                                                            is_training=False))
+                update_rate = 1.0 - momentum
+                if self._curr_device == self.device_offset:
+                    update_mu = momentum*mu + update_rate*batch_mean
+                    update_sigma = momentum*sigma + update_rate*batch_var
+                else:  # Successive variable updates
+                    dep_ops = self.get_collection('dev_{}/update_ops'.format(self._curr_device - 1))
+                    updated_mu, updated_sigma = dep_ops[self._curr_dependent_op:self._curr_dependent_op + 2]
+                    update_mu = momentum*updated_mu + update_rate*batch_mean
+                    update_sigma = momentum*updated_sigma + update_rate*batch_var
+                self.add_to_collection('dev_{}/update_ops'.format(self._curr_device), update_mu)
+                self.add_to_collection('dev_{}/update_ops'.format(self._curr_device), update_sigma)
+                self._curr_dependent_op += 2
+                if self._curr_device == self.num_devices + self.device_offset - 1:
+                    update_mu = mu.assign(update_mu)
+                    update_sigma = sigma.assign(update_sigma)
+                    self.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_mu)
+                    self.add_to_collection(tf.GraphKeys.UPDATE_OPS, update_sigma)
+            else:
+                moving_mean = tf.reshape(moving_mean, shape=var_shape)
+                moving_var = tf.reshape(moving_var, shape=var_shape)
+                x = (x - moving_mean)/tf.math.sqrt(moving_var + epsilon)
+            x = gamma*x + beta
+            if self.dtype is not tf.float32:
+                x = tf.cast(x, dtype=self.dtype)
+        return x
 
     def upsampling_2d_layer(self, x, scale=2, out_shape=None, align_corners=False, force_unaligned=False,
                             upsampling_method='bilinear', name='upsampling'):
