@@ -207,8 +207,8 @@ class ConvNet(object):
                 self._block_list.remove(blk)
         self._set_num_blocks(len(self.block_list))
 
-        print('\nNumber of computing devices : {} {}(s)'.format(self.num_devices, self.compute_device))
-        print('Total number of variable blocks : {} {}'.format(self.num_blocks, self.block_list))
+        print('\n# computing devices : {} {}(s)'.format(self.num_devices, self.compute_device))
+        print('# variable blocks : {} {}'.format(self.num_blocks, self.block_list))
         print('\n# FLOPs : {:-15,}\n# Params: {:-15,}\n# Nodes : {:-15,}\n'.format(self.flops, self.params, self.nodes))
 
         info = sorted(self.layer_info, key=lambda layer: layer['flops'], reverse=True)
