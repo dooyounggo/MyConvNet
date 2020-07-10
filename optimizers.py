@@ -45,7 +45,7 @@ class Optimizer(object):
         self.augment_train = kwargs.get('augment_train', False)
         self.init_learning_rate = kwargs.get('base_learning_rate', 0.1)*self.batch_size/256
 
-        self.warmup_epoch = kwargs.get('learning_warmup_epoch', 0)
+        self.warmup_epoch = kwargs.get('learning_warmup_epochs', kwargs.get('learning_warmup_epoch', 1.0))
         self.decay_method = kwargs.get('learning_rate_decay_method', None)
         self.decay_params = kwargs.get('learning_rate_decay_params', (0.94, 2))
 

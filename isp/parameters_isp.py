@@ -69,7 +69,7 @@ class Parameters(object):
 
     d['learning_rate_decay_method'] = None  # None, 'step', 'exponential', 'polynomial', 'cosine' (default)
     d['learning_rate_decay_params'] = 0.0
-    d['learning_warmup_epoch'] = 1.0  # Linear warmup epoch
+    d['learning_warmup_epochs'] = 1.0  # Linear warmup epoch
 
     d['max_to_keep'] = 5  # Maximum number of models to save
     d['score_threshold'] = 0.0  # Model is saved if its score is better by this threshold
