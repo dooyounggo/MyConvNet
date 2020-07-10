@@ -349,8 +349,22 @@ class DataSet(object):
             image = sf.padded_resize(image, image_size, interpolation=interpolation,
                                      random=self.resize_randomness, scale=scale, pad_value=pad_value)
         elif resize_method == 'random_resized_crop' or resize_method == 'random_resize_crop':
-            scale = self._parameters.get('rand_resized_crop_scale', (0.08, 1.0))
-            ratio = self._parameters.get('rand_resized_crop_ratio', (3/4, 4/3))
+            prefixes = ['rand_resized_crop', 'random_resized_crop', 'rand_resize_crop', 'random_resize_crop',
+                        'resized_crop', 'resize_crop', 'rand_resize', 'random_resize']
+            scale, ratio = None, None
+            for prefix in prefixes:
+                if prefix + '_scale' in self._parameters:
+                    scale = self._parameters[prefix + '_scale']
+                if prefix + '_ratio' in self._parameters:
+                    ratio = self._parameters[prefix + '_ratio']
+            if scale is None:
+                scale = (0.08, 1.0)
+            if scale[0] > scale[1]:
+                scale = scale[::-1]
+            if ratio is None:
+                ratio = (3/4, 4/3)
+            if ratio[0] > ratio[1]:
+                ratio = ratio[::-1]
             max_attempts = self._parameters.get('max_crop_attempts', 10)
             min_object_size = self._parameters.get('min_object_size', None)
             image = sf.random_resized_crop(image, image_size, interpolation=interpolation,
