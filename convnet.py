@@ -1869,8 +1869,8 @@ class ConvNet(object):
                     beta = tf.zeros(in_channels, dtype=tf.float32, name='beta')
                     beta_ema = tf.zeros(in_channels, dtype=tf.float32, name='beta')
 
-                if self._curr_device == self.device_offset:
-                    self._flops += h*w*in_channels
+                # if self._curr_device == self.device_offset:
+                #     self._flops += h*w*in_channels
 
                 mean, var = self.cond(self.is_train,
                                       lambda: (mu, sigma),
