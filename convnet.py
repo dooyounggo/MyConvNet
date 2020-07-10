@@ -2315,7 +2315,7 @@ class ConvNet(object):
                         beta_ema_avg = gamma_ema*(mu_ema_avg - mu_ema)/tf.math.sqrt(sigma_ema + epsilon) + beta_ema
                         assign_ops = [gamma.assign(gamma_avg), gamma_ema.assign(gamma_ema_avg),
                                       beta.assign(beta_avg), beta_ema.assign(beta_ema_avg)]
-                        self.init_ops.extend(assign_ops)
+                        # self.init_ops.extend(assign_ops)
                         with tf.control_dependencies(assign_ops):
                             for stat, stat_avg in zip(stats, stats_avged):
                                 self.init_ops.append(stat.assign(stat_avg))
