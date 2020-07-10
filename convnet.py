@@ -2306,16 +2306,19 @@ class ConvNet(object):
                             stat_avged = tf.tile(stat_avged, multiples=[1, num_channels_per_group])
                             stat_avged = tf.reshape(stat_avged, shape=[in_channels])
                             stats_avged.append(stat_avged)
-                            self.init_ops.append(stat.assign(stat_avged))
 
                         # Update gamma and beta so that initial values are preserved
                         mu_avg, mu_ema_avg, sigma_avg, sigma_ema_avg = stats_avged
                         gamma_avg = tf.math.sqrt((sigma_avg + epsilon)/(sigma + epsilon))*gamma
                         gamma_ema_avg = tf.math.sqrt((sigma_ema_avg + epsilon)/(sigma_ema + epsilon))*gamma_ema
-                        beta_avg = gamma/tf.math.sqrt(sigma + epsilon)*(mu_avg - mu) + beta
-                        beta_ema_avg = gamma_ema/tf.math.sqrt(sigma_ema + epsilon)*(mu_ema_avg - mu_ema) + beta_ema
-                        self.init_ops.extend([gamma.assign(gamma_avg), gamma_ema.assign(gamma_ema_avg),
-                                              beta.assign(beta_avg), beta_ema.assign(beta_ema_avg)])
+                        beta_avg = gamma*(mu_avg - mu)/tf.math.sqrt(sigma + epsilon) + beta
+                        beta_ema_avg = gamma_ema*(mu_ema_avg - mu_ema)/tf.math.sqrt(sigma_ema + epsilon) + beta_ema
+                        assign_ops = [gamma.assign(gamma_avg), gamma_ema.assign(gamma_ema_avg),
+                                      beta.assign(beta_avg), beta_ema.assign(beta_ema_avg)]
+                        self.init_ops.extend(assign_ops)
+                        with tf.control_dependencies(assign_ops):
+                            for stat, stat_avg in zip(stats, stats_avged):
+                                self.init_ops.append(stat.assign(stat_avg))
 
                 # if self._curr_device == self.device_offset:
                 #     self._flops += h*w*in_channels
