@@ -351,12 +351,14 @@ class DataSet(object):
         elif resize_method == 'random_resized_crop' or resize_method == 'random_resize_crop':
             prefixes = ['rand_resized_crop', 'random_resized_crop', 'rand_resize_crop', 'random_resize_crop',
                         'resized_crop', 'resize_crop', 'rand_resize', 'random_resize']
-            scale, ratio = None, None
+            scale, ratio, padding = None, None, True
             for prefix in prefixes:
                 if prefix + '_scale' in self._parameters:
                     scale = self._parameters[prefix + '_scale']
                 if prefix + '_ratio' in self._parameters:
                     ratio = self._parameters[prefix + '_ratio']
+                if prefix + '_padding' in self._parameters:
+                    padding = self._parameters[prefix + '_padding']
             if scale is None:
                 scale = (0.08, 1.0)
             if scale[0] > scale[1]:
@@ -370,7 +372,7 @@ class DataSet(object):
             image = sf.random_resized_crop(image, image_size, interpolation=interpolation,
                                            random=self.resize_randomness, scale=scale, ratio=ratio,
                                            max_attempts=max_attempts, min_object_size=min_object_size,
-                                           pad_value=pad_value)
+                                           padding=padding, pad_value=pad_value)
         else:
             raise ValueError('Resize type of {} is not supported.'.format(self.resize_method))
 
