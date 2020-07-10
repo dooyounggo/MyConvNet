@@ -606,7 +606,7 @@ class ConvNet(object):
             labels = labels*(1.0 - ls_factor) + ls_factor/self.num_classes
         return labels
 
-    def predict(self, dataset, verbose=False, return_images=True, max_examples=None, **kwargs):
+    def predict(self, dataset, verbose=False, return_images=True, max_examples=None, run_init_ops=True, **kwargs):
         batch_size = dataset.batch_size
         augment_test = kwargs.get('augment_test', False)
 
@@ -619,6 +619,8 @@ class ConvNet(object):
 
         dataset.initialize(self.session)
         handles = dataset.get_string_handles(self.session)
+        if run_init_ops:
+            self.session.run(self.init_ops)
 
         if verbose:
             print('Running prediction loop...')
@@ -662,7 +664,7 @@ class ConvNet(object):
 
         return _X, _Y_true, _Y_pred, _loss_pred
 
-    def features(self, dataset, tensors, max_examples=None, **kwargs):  # Return any deep features
+    def features(self, dataset, tensors, max_examples=None, run_init_ops=True, **kwargs):  # Return any deep features
         batch_size = dataset.batch_size
         augment_test = kwargs.get('augment_test', False)
 
@@ -675,6 +677,8 @@ class ConvNet(object):
 
         dataset.initialize(self.session)
         handles = dataset.get_string_handles(self.session)
+        if run_init_ops:
+            self.session.run(self.init_ops)
 
         feed_dict = {self.is_train: False,
                      self.monte_carlo: monte_carlo,
@@ -2311,8 +2315,8 @@ class ConvNet(object):
                         self.init_ops.extend([gamma.assign(gamma_avg), gamma_ema.assign(gamma_ema_avg),
                                               beta.assign(beta_avg), beta_ema.assign(beta_ema_avg)])
 
-                if self._curr_device == self.device_offset:
-                    self._flops += h*w*in_channels
+                # if self._curr_device == self.device_offset:
+                #     self._flops += h*w*in_channels
 
                 moving_mean, moving_var = self.cond(self.is_train,
                                                     lambda: (mu, sigma),
