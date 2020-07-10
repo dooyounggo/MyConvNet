@@ -1757,7 +1757,9 @@ class ConvNet(object):
     def normalization(self, x, norm_type='batch', norm_param=None,
                       scale=True, shift=True, zero_scale_init=False, epsilon=1e-3, scope='norm'):
         supported_types = ['batch', 'group', 'grouped_batch']
-        if norm_type.lower() == 'batch':
+        if norm_type is None:
+            x = tf.identity(x)
+        elif norm_type.lower() == 'batch':
             x = self.batch_norm(x, scale=scale, shift=shift,
                                 zero_scale_init=zero_scale_init, epsilon=epsilon, scope=scope)
         elif norm_type.lower() == 'group':
