@@ -53,6 +53,7 @@ class DeepLabV3PlusResNet(SegNet, ResNet):  # No BN model
                 with tf.variable_scope('features'):
                     feat = tf.nn.dropout(feat, rate=self.dropout_rate_features*drop_rate_multipliers[i])
                     feat = self.conv_layer(feat, 1, 1, feature_channels[i], biased=False)
+                    feat = self.normalization(feat, norm_type=self.norm_type)
                 print('block_{}'.format(self._curr_block) + '/feature.shape', feat.get_shape().as_list())
 
                 size = feat.get_shape()[2:4] if self.channel_first else feat.get_shape()[1:3]
@@ -78,11 +79,13 @@ class DeepLabV3PlusResNet(SegNet, ResNet):  # No BN model
             ys = []
             with tf.variable_scope('conv_0'):
                 y = self.conv_layer(x, 1, 1, channels, padding='SAME', biased=False, depthwise=False)
+                y = self.normalization(y, norm_type=self.norm_type)
                 ys.append(y)
             for i in range(len(dilations)):
                 with tf.variable_scope('conv_{}'.format(i + 1)):
                     y = self.conv_layer(x, 3, 1, channels, padding='SAME', biased=False, depthwise=False,
                                         dilation=dilations[i])
+                    y = self.normalization(y, norm_type=self.norm_type)
                     ys.append(y)
             if level_feature:
                 with tf.variable_scope('conv_pool'):
@@ -91,11 +94,13 @@ class DeepLabV3PlusResNet(SegNet, ResNet):  # No BN model
                     y = tf.reduce_mean(x, axis=pool_axis, keepdims=True)
                     y = self.conv_layer(y, 1, 1, channels, padding='SAME', biased=False, depthwise=False,
                                         dilation=dilations[i])
+                    y = self.normalization(y, norm_type=self.norm_type)
                     y = self.upsampling_2d_layer(y, out_shape=shape)
                     ys.append(y)
             with tf.variable_scope('conv_out'):
                 x = tf.concat(ys, axis=axis)
                 x = self.conv_layer(x, 1, 1, channels, padding='SAME', biased=False, depthwise=False)
+                x = self.normalization(x, norm_type=self.norm_type)
 
         return x
 
@@ -106,6 +111,7 @@ class DeepLabV3PlusResNet(SegNet, ResNet):  # No BN model
             x = tf.concat([x, feature], axis=axis)
             with tf.variable_scope('conv_0'):
                 x = self.conv_layer(x, kernel, 1, out_channels, padding='SAME', biased=False, depthwise=False)
+                x = self.normalization(x, norm_type=self.norm_type)
                 print(name + '/conv_0.shape', x.get_shape().as_list())
                 d[name + '/conv_0'] = x
 

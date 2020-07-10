@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from initialization import init_params
 from dataset import DataSet
 from subsets.cityscapes import read_subset
-from models.deeplabv3plus_nobn import DeepLabV3PlusResNet as ConvNet
+from models.deeplabv3plus import DeepLabV3PlusResNet as ConvNet
 from optimizers import MomentumOptimizer as Optimizer
 from evaluators import AccuracyEvaluator as Evaluator
 from models.init_from_checkpoint import resnet_v1_50_101 as init_from_checkpoint
@@ -26,9 +26,9 @@ class Parameters(object):
     _test_dir = os.path.join(_root_dir, 'tfdatasets/cityscapes/validation')
     _test_sample_size = None
 
-    _save_dir = os.path.join(_root_dir, 'trained_models/DeepLab-V3P-ResNet-50-V1_5-OS16_Cityscapes')
+    _save_dir = os.path.join(_root_dir, 'trained_models/DeepLab-V3P-ResNet-101-V1_5-OS16_Cityscapes')
     _transfer_dir = None
-    _checkpoint_dir = os.path.join(_root_dir, 'pretrained_models', 'resnet_v1_50', 'resnet_v1_50.ckpt')
+    _checkpoint_dir = os.path.join(_root_dir, 'pretrained_models', 'resnet_v1_101', 'resnet_v1_101.ckpt')
 
     d = dict()
     # FIXME: Image pre-processing hyperparameters
