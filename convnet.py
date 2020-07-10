@@ -2172,7 +2172,7 @@ class ConvNet(object):
                 x = tf.cast(x, dtype=self.dtype)
         return x
 
-    # Experimental group-batch normalization
+    # Experimental grouped batch normalization
     def grouped_batch_norm(self, x, num_channels_per_group=8, scale=True, shift=True, zero_scale_init=False,
                            epsilon=1e-3, scope='gbn'):
         if isinstance(self.update_batch_norm, bool):
@@ -2306,7 +2306,9 @@ class ConvNet(object):
                         beta_ema_avg = gamma_ema*(mu_ema_avg - mu_ema)/tf.math.sqrt(sigma_ema + epsilon) + beta_ema
                         assign_ops = [gamma.assign(gamma_avg), gamma_ema.assign(gamma_ema_avg),
                                       beta.assign(beta_avg), beta_ema.assign(beta_ema_avg)]
+
                         # self.init_ops.extend(assign_ops)
+                        # Set control_dependencies to prevent mu and sigma from updating before gamma and beta.
                         with tf.control_dependencies(assign_ops):
                             for stat, stat_avg in zip(stats, stats_avged):
                                 self.init_ops.append(stat.assign(stat_avg))
