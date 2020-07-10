@@ -15,7 +15,7 @@
   
   [Getting started with Linux](https://www.dropbox.com/s/uiz95c6vnlsvcp0/TF_Linux_SSH.pptx?dl=0).
   
-  VGGNet demo: Edit [classification/parameters_vgg.py](http://image-net.org/challenges/LSVRC/2012/downloads) and run [classification/demo_vgg.py](http://image-net.org/challenges/LSVRC/2012/downloads)
+  VGGNet demo: Edit [classification/parameters_vgg.py](https://github.com/dooyounggo/MyConvNet/blob/master/classification/parameters_vgg.py) and run [classification/demo_vgg.py](https://github.com/dooyounggo/MyConvNet/blob/master/classification/demo_vgg.py)
 
 ## How To Run
 - Download all the files.
