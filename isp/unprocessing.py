@@ -411,6 +411,10 @@ class Unprocessing(ConvNet):
 
         shot_noise = kwargs.get('shot_noise')
         read_noise = kwargs.get('read_noise')
+        if shot_noise is None:
+            shot_noise = np.nan
+        if read_noise is None:
+            read_noise = np.nan
         # FIXME: High noise level
         self.custom_feed_dict[self._shot_noise] = shot_noise*10**0.4
         self.custom_feed_dict[self._read_noise] = read_noise*10**0.8
