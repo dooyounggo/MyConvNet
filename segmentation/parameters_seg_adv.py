@@ -45,7 +45,7 @@ class Parameters(object):
     d['min_object_size'] = None  # Minimum object area (proportion) of 'random_resized_crop'
     d['padded_resize_scale'] = 2.0  # Scale for 'padded_resize' method. (scale - 1)*num_pixels zeros are padded
 
-    d['input_size'] = (768, 768, 3)  # Network input size after augmentation
+    d['input_size'] = (769, 769, 3)  # Network input size after augmentation
     d['image_mean'] = 0.5  # If None, it will be calculated and it may take some time
     d['zero_center'] = True  # Whether to zero-center the images
     d['shuffle'] = True  # Whether to shuffle the data
@@ -73,7 +73,7 @@ class Parameters(object):
     d['num_gpus'] = 1
     d['batch_size'] = 2  # Total batch size (= batch_size_per_gpu*num_gpus)
     d['num_epochs'] = 500
-    d['base_learning_rate'] = 0.05  # Learning rate = base_learning_rate*batch_size/256 (linear scaling rule)
+    d['base_learning_rate'] = 0.1  # Learning rate = base_learning_rate*batch_size/256 (linear scaling rule)
     d['momentum'] = 0.9  # Momentum of optimizers
     d['moving_average_decay'] = 0.99  # Decay rate of exponential moving average
     d['batch_norm_decay'] = 0.99  # Decay rate of batch statistics
