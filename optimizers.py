@@ -101,8 +101,8 @@ class Optimizer(object):
                         loss = self.model.losses[i - self.model.device_offset]
                         if loss_scaling_factor > 1.0:
                             loss *= loss_scaling_factor
-                        # if self.model.dtype is not tf.float32:
-                        #     loss = tf.cast(loss, dtype=self.model.dtype)
+                        if self.model.dtype is not tf.float32:
+                            loss = tf.cast(loss, dtype=self.model.dtype)
                         grads_and_vars = optimizer.compute_gradients(loss, var_list=self.update_vars)
                         grads, gvars = zip(*grads_and_vars)
                         grads = list(grads)
