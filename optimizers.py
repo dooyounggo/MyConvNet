@@ -44,6 +44,7 @@ class Optimizer(object):
         self.monte_carlo = kwargs.get('monte_carlo', False)
         self.augment_train = kwargs.get('augment_train', False)
         self.init_learning_rate = kwargs.get('base_learning_rate', 0.1)*self.batch_size/256
+        self.gradient_threshold = kwargs.get('gradient_threshold', None)
 
         self.warmup_epoch = kwargs.get('learning_warmup_epochs', kwargs.get('learning_warmup_epoch', 1.0))
         self.decay_method = kwargs.get('learning_rate_decay_method', None)
@@ -58,9 +59,8 @@ class Optimizer(object):
         self.optimization_operation = self._optimize_and_update(self._optimizer(**kwargs), **kwargs)
         self._reset()
 
-        gradient_threshold = kwargs.get('gradient_threshold', None)
         print('Optimizer: {}. Initial learning rate: {:.6f}. Decay: {}. Gradient threshold: {}.\n'
-              .format(self.name, self.init_learning_rate, self.decay_method, gradient_threshold))
+              .format(self.name, self.init_learning_rate, self.decay_method, self.gradient_threshold))
 
     def _reset(self):
         self.curr_step = 0
@@ -87,7 +87,6 @@ class Optimizer(object):
         pass
 
     def _optimize_and_update(self, optimizer, **kwargs):
-        gradient_threshold = kwargs.get('gradient_threshold', None)
         loss_scaling_factor = kwargs.get('loss_scaling_factor', 1.0)
         weight_decay = kwargs.get('base_weight_decay', 0.0)*self.batch_size/256
         weight_decay_scheduling = kwargs.get('weight_decay_scheduling', True)
@@ -110,8 +109,8 @@ class Optimizer(object):
                         if loss_scaling_factor > 1.0:
                             for ng in range(len(grads)):
                                 grads[ng] /= loss_scaling_factor
-                        if gradient_threshold is not None:
-                            grads, _ = tf.clip_by_global_norm(grads, gradient_threshold)
+                        if self.gradient_threshold is not None:
+                            grads, _ = tf.clip_by_global_norm(grads, self.gradient_threshold)
                         tower_grads.append([gv for gv in zip(grads, gvars)])
                         tf.get_variable_scope().reuse_variables()
 
@@ -141,8 +140,8 @@ class Optimizer(object):
                         # Pointers to the variables are the same for all towers since the variables are shared.
                         avg_vars.append(grads_and_vars[0][1])
                         avg_grads.append(grad)
-                    # if gradient_threshold is not None:
-                    #     avg_grads, _ = tf.clip_by_global_norm(avg_grads, gradient_threshold)
+                    # if self.gradient_threshold is not None:
+                    #     avg_grads, _ = tf.clip_by_global_norm(avg_grads, self.gradient_threshold)
 
                     avg_grads_and_vars = [gv for gv in zip(avg_grads, avg_vars)]
                     self.avg_grads = avg_grads
