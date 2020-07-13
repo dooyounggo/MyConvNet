@@ -98,11 +98,11 @@ class Optimizer(object):
             for i in range(self.model.device_offset, self.model.num_devices + self.model.device_offset):
                 with tf.device('/{}:'.format(self.model.compute_device) + str(i)):
                     with tf.variable_scope('{}/gradients'.format(self.model.compute_device + '_' + str(i))):
-                        loss = self.model.losses[i - 0]
+                        loss = self.model.losses[i - self.model.device_offset]
                         if loss_scaling_factor > 1.0:
                             loss *= loss_scaling_factor
-                        if self.model.dtype is not tf.float32:
-                            loss = tf.cast(loss, dtype=self.model.dtype)
+                        # if self.model.dtype is not tf.float32:
+                        #     loss = tf.cast(loss, dtype=self.model.dtype)
                         grads_and_vars = optimizer.compute_gradients(loss, var_list=self.update_vars)
                         grads, gvars = zip(*grads_and_vars)
                         grads = list(grads)
